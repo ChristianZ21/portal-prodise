@@ -24,7 +24,7 @@ AIRTABLE_BASE_ID = "app2jaysCvPwvrBwI"
 # ==========================================
 def get_default_profile_pic():
     svg = """
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#E0E0E0" width="100%" height="100%">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#B0BEC5" width="100%" height="100%">
         <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
     </svg>
     """
@@ -34,7 +34,7 @@ def get_default_profile_pic():
 DEFAULT_IMG = get_default_profile_pic()
 
 # ==========================================
-# 3. ESTILOS VISUALES (MODO OSCURO FORZADO)
+# 3. ESTILOS VISUALES (DARK MODE FORZADO)
 # ==========================================
 def add_bg_from_local(image_file):
     if os.path.exists(image_file):
@@ -48,105 +48,104 @@ def add_bg_from_local(image_file):
                 background-position: center;
                 background-attachment: fixed;
             }}
-            /* Capa oscura para asegurar legibilidad */
+            /* Capa superpuesta MUY OSCURA para asegurar lectura */
             .stApp::before {{
                 content: "";
                 position: absolute;
                 top: 0; left: 0;
                 width: 100%; height: 100%;
-                background-color: rgba(14, 17, 23, 0.85); /* Fondo base muy oscuro */
+                background-color: rgba(5, 5, 10, 0.85); /* Casi negro transparente */
                 z-index: -1;
             }}
             </style>
             """, unsafe_allow_html=True)
     else:
-        st.markdown("<style>.stApp { background-color: #0E1117; }</style>", unsafe_allow_html=True)
+        # Fondo negro si falla la imagen
+        st.markdown("<style>.stApp { background-color: #000000; }</style>", unsafe_allow_html=True)
 
 add_bg_from_local('fondo.jpg')
 LOGO_FILE = "logo.png"
 
-# --- CSS PARA FORZAR MODO OSCURO Y ESTILOS ---
+# --- CSS AGRESIVO PARA MODO OSCURO ---
 st.markdown("""
 <style>
-    /* 1. FORZAR MODO OSCURO EN EL NAVEGADOR */
-    :root {
-        color-scheme: dark;
-    }
-
-    /* 2. FUENTES Y COLORES GLOBALES */
-    html, body, [class*="st-"] {
-        color: #E0E0E0; /* Texto claro por defecto */
-    }
+    /* 1. FORZAR ESQUEMA OSCURO TOTAL */
+    :root { color-scheme: dark; }
     
-    /* Títulos */
-    h1, h2 { color: #4FC3F7 !important; text-shadow: 2px 2px 4px #000; }
-    h3, h4, h5, h6 { color: #E0E0E0 !important; }
-    p, label, span, div, li { color: #CCCCCC; }
+    /* 2. TEXTOS Y ELEMENTOS GENERALES */
+    html, body, [class*="st-"] { color: #E0E0E0; }
+    h1, h2 { color: #4FC3F7 !important; text-shadow: 0px 0px 10px rgba(79, 195, 247, 0.4); }
+    h3, h4, h5 { color: #FFFFFF !important; }
+    p, label, span, li { color: #B0BEC5 !important; }
 
-    /* 3. TARJETAS DE CRISTAL (Glassmorphism Oscuro) */
-    .css-card {
-        background: rgba(30, 30, 40, 0.7); /* Fondo oscuro semitransparente */
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border-radius: 15px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        padding: 20px;
-        margin-bottom: 20px;
-        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
-    }
-    
-    /* 4. BOTONES */
-    div.stButton > button { 
-        background: #0288D1; 
-        color: white !important; 
-        border: none; 
-        font-weight: bold; 
-        transition: 0.3s; 
-        border-radius: 8px; 
-    }
-    div.stButton > button:hover { 
-        background: #03A9F4; 
-        transform: scale(1.02); 
-    }
-
-    /* 5. INPUTS Y SELECTBOX (Forzar fondo oscuro) */
-    .stSelectbox, .stTextInput, .stTextArea {
+    /* 3. INPUTS (ELIMINAR FONDO BLANCO) */
+    /* Cajas de texto, password, áreas de texto */
+    .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"] {
+        background-color: #1E1E2E !important; /* Fondo gris oscuro azulado */
         color: white !important;
+        border: 1px solid #444 !important;
     }
-    /* Fondo de las listas desplegables */
-    ul[data-testid="stSelectboxVirtualDropdown"] {
-        background-color: #262730 !important;
-    }
-
-    /* 6. SIDEBAR OSCURO */
-    [data-testid="stSidebar"] { 
-        background-color: #151922 !important; 
-        border-right: 1px solid #333; 
+    /* Al hacer click en el input */
+    .stTextInput input:focus, .stTextArea textarea:focus {
+        border-color: #4FC3F7 !important;
+        box-shadow: 0 0 5px rgba(79, 195, 247, 0.5);
     }
     
-    /* 7. OPCIONES DE RADIO (VERTICAL/HORIZONTAL) */
-    div[role="radiogroup"] label {
-        background-color: rgba(255,255,255,0.05);
-        border: 1px solid rgba(255,255,255,0.1);
-        padding: 10px;
+    /* 4. TARJETAS (Glassmorphism Oscuro) */
+    .css-card {
+        background: rgba(20, 20, 30, 0.75); /* Fondo negro/azul transparente */
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 24px;
+        margin-bottom: 20px;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+    }
+
+    /* 5. BOTONES */
+    div.stButton > button {
+        background: linear-gradient(135deg, #0288D1 0%, #01579B 100%);
+        color: white !important;
+        border: none;
+        font-weight: 600;
         border-radius: 8px;
-        margin-bottom: 5px;
-        transition: 0.3s;
-        width: 100%;
+        padding: 0.5rem 1rem;
+        transition: all 0.3s ease;
+    }
+    div.stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(2, 136, 209, 0.4);
+    }
+
+    /* 6. SIDEBAR Y OPCIONES */
+    [data-testid="stSidebar"] {
+        background-color: #0a0e14 !important;
+        border-right: 1px solid #222;
+    }
+    div[role="radiogroup"] label {
+        background-color: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.05);
+        color: #ddd !important;
     }
     div[role="radiogroup"] label:hover {
-        background-color: rgba(255,255,255,0.15);
+        background-color: rgba(255,255,255,0.1);
         border-color: #4FC3F7;
-        cursor: pointer;
     }
     
-    /* 8. PODIO EMOJIS */
-    .podio-emoji {
-        font-size: 3rem; 
-        margin: 0; 
-        text-align: center;
-        display: block;
+    /* 7. MENU DESPLEGABLE (Para que no sea blanco) */
+    ul[data-testid="stSelectboxVirtualDropdown"] {
+        background-color: #1E1E2E !important;
     }
+    li[role="option"] {
+        color: white !important;
+    }
+    li[role="option"]:hover {
+        background-color: #0288D1 !important;
+    }
+
+    /* 8. PODIO */
+    .podio-emoji { font-size: 3.5rem; display: block; margin-bottom: 10px; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -206,20 +205,21 @@ if 'usuario' not in st.session_state:
 
 # --- LOGIN ---
 if not st.session_state.usuario:
-    st.markdown("<br><br>", unsafe_allow_html=True)
-    c1, c2, c3 = st.columns([1,1,1])
+    st.markdown("<br><br><br>", unsafe_allow_html=True)
+    c1, c2, c3 = st.columns([1,0.8,1])
     with c2:
         st.markdown("""
         <div class="css-card" style="text-align: center;">
-            <h1 style="margin:0;">🔐 PRODISE</h1>
-            <p>Portal de Gestión</p>
+            <h1 style="margin:0; font-size: 2.5rem;">🔐 PRODISE</h1>
+            <p style="margin-top: 10px;">Acceso Corporativo Seguro</p>
         </div>
         """, unsafe_allow_html=True)
         
-        user = st.text_input("Usuario")
-        pw = st.text_input("Contraseña", type="password")
+        user = st.text_input("ID Usuario", placeholder="Ingrese su usuario")
+        pw = st.text_input("Contraseña", type="password", placeholder="••••••")
         
-        if st.button("INGRESAR", use_container_width=True):
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("INICIAR SESIÓN", use_container_width=True):
             if df_users is not None and not df_users.empty:
                 u = df_users[df_users['USUARIO'] == user]
                 if not u.empty and str(u.iloc[0]['PASS']) == pw and u.iloc[0]['ESTADO'] == 'ACTIVO':
@@ -228,8 +228,8 @@ if not st.session_state.usuario:
                     st.session_state.rol = str(u.iloc[0]['ID_ROL']).upper().strip()
                     st.session_state.dni_user = str(u.iloc[0]['DNI_TRABAJADOR'])
                     st.rerun()
-                else: st.error("❌ Datos incorrectos")
-            else: st.error("❌ Sin conexión")
+                else: st.error("❌ Credenciales incorrectas")
+            else: st.error("❌ Error de conexión")
 
 else:
     # --- SIDEBAR ---
@@ -240,14 +240,11 @@ else:
     with st.sidebar:
         if os.path.exists(LOGO_FILE): st.image(LOGO_FILE, use_container_width=True)
         
-        # Nombre Completo
         st.markdown(f"### 👤 {st.session_state.nombre_real}")
         st.caption(f"{st.session_state.rol}")
-        
-        # Parada Activa
         st.info(f"⚙️ Parada Activa:\n**{parada_actual}**")
         
-        seleccion = st.radio("Menú", opciones)
+        seleccion = st.radio("Navegación", opciones)
         
         st.markdown("---")
         if st.button("Cerrar Sesión"):
@@ -264,7 +261,7 @@ else:
             data_view = data_view[data_view['DNI'] != st.session_state.dni_user]
 
     # ----------------------------------------
-    # 1. EVALUACIÓN (PREGUNTAS VERTICALES)
+    # 1. EVALUACIÓN
     # ----------------------------------------
     if seleccion == "📝 Evaluar Personal":
         st.title(f"📝 Evaluación - {parada_actual}")
@@ -277,11 +274,11 @@ else:
             
             st.markdown(f"""
             <div class="css-card" style="display: flex; align-items: center; gap: 20px;">
-                <img src="{foto_final}" style="width: 90px; height: 90px; border-radius: 50%; border: 3px solid #4FC3F7; object-fit: cover; background-color: #333;">
+                <img src="{foto_final}" style="width: 100px; height: 100px; border-radius: 50%; border: 3px solid #4FC3F7; object-fit: cover; background-color: #222;">
                 <div>
                     <h2 style="margin:0; color: white !important;">{p['NOMBRE_COMPLETO']}</h2>
-                    <p style="margin:0; font-size: 1.1em; color: #B3E5FC;">{p['CARGO_ACTUAL']}</p>
-                    <span style="background: rgba(255,255,255,0.2); padding: 4px 8px; border-radius: 5px; font-size: 0.9em;">
+                    <p style="margin:0; font-size: 1.2em; color: #4FC3F7;">{p['CARGO_ACTUAL']}</p>
+                    <span style="background: rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 6px; font-size: 0.9em; margin-top: 5px; display: inline-block;">
                         {p['ID_GRUPO']} - {p['TURNO']}
                     </span>
                 </div>
@@ -300,10 +297,10 @@ else:
                     score_total = 0
                     notas_save = {}
                     
-                    st.markdown("### Criterios de Evaluación")
+                    st.markdown("### Criterios de Desempeño")
                     
                     for i, (idx, row) in enumerate(preguntas.iterrows(), 1):
-                        st.markdown(f"**{i}. {row['CRITERIO']}** <span style='font-size:0.8em; color:grey'>({row['PORCENTAJE']*100:.0f}%)</span>", unsafe_allow_html=True)
+                        st.markdown(f"**{i}. {row['CRITERIO']}** <span style='font-size:0.85em; color:#888'>({row['PORCENTAJE']*100:.0f}%)</span>", unsafe_allow_html=True)
                         
                         opciones = [
                             str(row.get('NIVEL_1', 'Nivel 1')),
@@ -314,7 +311,7 @@ else:
                         ]
                         
                         seleccion_texto = st.radio(
-                            label="Selección:",
+                            label=f"r_{i}",
                             options=opciones, 
                             key=f"rad_{i}", 
                             horizontal=True, 
@@ -326,7 +323,7 @@ else:
                         notas_save[f"NOTA_{i}"] = nota_numerica
                         st.divider()
                     
-                    obs = st.text_area("Observaciones")
+                    obs = st.text_area("Observaciones Generales", height=100)
                     enviar = st.form_submit_button("✅ GUARDAR EVALUACIÓN", use_container_width=True)
                     
                     if enviar:
@@ -346,16 +343,16 @@ else:
                             try:
                                 tbl_historial.create(record)
                                 st.balloons()
-                                st.success(f"¡Guardado! Nota Final: {round(score_total, 2)}")
+                                st.success(f"¡Registrado! Nota Final: {round(score_total, 2)}")
                             except Exception as e: st.error(f"Error: {e}")
                         else:
-                            st.warning("⚠️ Debes poner una observación.")
+                            st.warning("⚠️ La observación es obligatoria.")
 
     # ----------------------------------------
-    # 2. RANKING (CON PODIO GRANDE)
+    # 2. RANKING GLOBAL
     # ----------------------------------------
     elif seleccion == "🏆 Ranking Global" and st.session_state.rol == 'ADMIN':
-        st.title("🏆 Ranking Global")
+        st.title("🏆 Tabla de Posiciones")
         if df_historial is not None and not df_historial.empty:
             df_historial['DNI_TRABAJADOR'] = df_historial['DNI_TRABAJADOR'].astype(str)
             df_personal['DNI'] = df_personal['DNI'].astype(str)
@@ -375,53 +372,66 @@ else:
             
             if len(ranking) >= 3:
                 c2, c1, c3 = st.columns([1, 1.2, 1])
+                
+                # 2DO LUGAR
                 with c2:
                     p2 = ranking.iloc[1]
                     f2 = get_photo_url(p2.get('URL_FOTO', ''))
+                    # CAMBIO: NOMBRE_COMPLETO SIN SPLIT
                     st.markdown(f"""
                     <div class="css-card" style="text-align:center; border-top: 5px solid #C0C0C0;">
                         <span class="podio-emoji">🥈</span>
-                        <img src="{f2}" style="width:80px; height:80px; border-radius:50%; object-fit:cover; background:#333; margin: 10px 0;">
-                        <h3>{p2['NOMBRE_COMPLETO'].split()[0]}</h3>
+                        <img src="{f2}" style="width:90px; height:90px; border-radius:50%; object-fit:cover; background:#222; margin: 10px 0;">
+                        <h4 style="margin:5px 0;">{p2['NOMBRE_COMPLETO']}</h4>
                         <h2 style="color:#C0C0C0;">{p2['PROMEDIO']}</h2>
                     </div>""", unsafe_allow_html=True)
+                
+                # 1ER LUGAR
                 with c1:
                     p1 = ranking.iloc[0]
                     f1 = get_photo_url(p1.get('URL_FOTO', ''))
+                    # CAMBIO: NOMBRE_COMPLETO SIN SPLIT
                     st.markdown(f"""
                     <div class="css-card" style="text-align:center; border-top: 5px solid #FFD700; transform: scale(1.05);">
                         <span class="podio-emoji">🥇</span>
-                        <img src="{f1}" style="width:110px; height:110px; border-radius:50%; object-fit:cover; border: 4px solid #FFD700; background:#333; margin: 10px 0;">
-                        <h2>{p1['NOMBRE_COMPLETO'].split()[0]}</h2>
-                        <h1 style="color:#FFD700;">{p1['PROMEDIO']}</h1>
+                        <img src="{f1}" style="width:120px; height:120px; border-radius:50%; object-fit:cover; border: 4px solid #FFD700; background:#222; margin: 10px 0;">
+                        <h3 style="margin:5px 0; color:#FFD700;">{p1['NOMBRE_COMPLETO']}</h3>
+                        <h1 style="color:#FFD700; font-size:3rem;">{p1['PROMEDIO']}</h1>
                     </div>""", unsafe_allow_html=True)
+                
+                # 3ER LUGAR
                 with c3:
                     p3 = ranking.iloc[2]
                     f3 = get_photo_url(p3.get('URL_FOTO', ''))
+                    # CAMBIO: NOMBRE_COMPLETO SIN SPLIT
                     st.markdown(f"""
                     <div class="css-card" style="text-align:center; border-top: 5px solid #CD7F32;">
                         <span class="podio-emoji">🥉</span>
-                        <img src="{f3}" style="width:80px; height:80px; border-radius:50%; object-fit:cover; background:#333; margin: 10px 0;">
-                        <h3>{p3['NOMBRE_COMPLETO'].split()[0]}</h3>
+                        <img src="{f3}" style="width:90px; height:90px; border-radius:50%; object-fit:cover; background:#222; margin: 10px 0;">
+                        <h4 style="margin:5px 0;">{p3['NOMBRE_COMPLETO']}</h4>
                         <h2 style="color:#CD7F32;">{p3['PROMEDIO']}</h2>
                     </div>""", unsafe_allow_html=True)
 
-            st.markdown("### 📊 Listado General")
+            st.markdown("### 📊 Listado Completo")
             st.data_editor(
                 ranking[['NOMBRE_COMPLETO', 'CARGO_ACTUAL', 'PROMEDIO']],
-                column_config={"PROMEDIO": st.column_config.ProgressColumn("Nota", min_value=0, max_value=5, format="%.2f")},
+                column_config={
+                    "PROMEDIO": st.column_config.ProgressColumn("Nota Global", min_value=0, max_value=5, format="%.2f"),
+                    "NOMBRE_COMPLETO": "Colaborador",
+                    "CARGO_ACTUAL": "Cargo"
+                },
                 hide_index=True, use_container_width=True, disabled=True
             )
-        else: st.info("No hay datos de ranking.")
+        else: st.info("No hay datos de ranking disponibles.")
 
     # ----------------------------------------
     # 3. HISTORIAL
     # ----------------------------------------
     elif seleccion == "📂 Mi Historial":
-        st.title("📂 Historial")
+        st.title("📂 Historial de Registros")
         if df_historial is not None and not df_historial.empty:
             cols = ['COD_PARADA', 'DNI_TRABAJADOR', 'NOTA_FINAL', 'COMENTARIOS']
             actual_cols = [c for c in cols if c in df_historial.columns]
             st.dataframe(df_historial[actual_cols], use_container_width=True, hide_index=True)
         else:
-            st.info("Sin registros.")
+            st.info("No se encontraron registros.")
