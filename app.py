@@ -34,7 +34,7 @@ def get_default_profile_pic():
 DEFAULT_IMG = get_default_profile_pic()
 
 # ==========================================
-# 3. ESTILOS VISUALES (MODO INMERSIVO SIN BORDES)
+# 3. ESTILOS VISUALES (ZERO WHITE - MODO INMERSIVO)
 # ==========================================
 def add_bg_from_local(image_file):
     if os.path.exists(image_file):
@@ -46,9 +46,9 @@ def add_bg_from_local(image_file):
                 background-image: url(data:image/jpg;base64,{enc.decode()});
                 background-size: cover;
                 background-position: center;
-                background-attachment: fixed;
                 background-repeat: no-repeat;
-                background-color: #000000; /* Fondo negro de seguridad */
+                background-attachment: fixed;
+                background-color: #000000;
             }}
             /* Capa oscura superpuesta */
             .stApp::before {{
@@ -69,38 +69,77 @@ LOGO_FILE = "logo.png"
 
 st.markdown("""
 <style>
-    /* 1. RESET TOTAL (CERO BORDES BLANCOS) */
+    /* 1. RESET EXTREMO DE BORDES Y MÁRGENES */
     :root { color-scheme: dark !important; }
     
     html, body {
         margin: 0 !important;
         padding: 0 !important;
-        width: 100vw !important;
-        height: 100vh !important;
         background-color: #000000 !important;
-        overflow-x: hidden; /* Evitar scroll horizontal */
-    }
-
-    /* Ocultar la barra superior (Header) de Streamlit para ganar espacio arriba */
-    header[data-testid="stHeader"] {
-        background-color: rgba(0,0,0,0) !important;
-        visibility: hidden; /* Oculta los 3 puntos y el menú superior si lo deseas */
+        color: #E0E0E0 !important;
     }
     
-    /* Ajustar el contenedor principal para que suba al espacio ganado */
+    /* Eliminar padding superior extra de Streamlit */
     .block-container {
-        padding-top: 1rem !important; /* Menos espacio arriba */
+        padding-top: 1rem !important;
         padding-bottom: 2rem !important;
+        max-width: 100% !important;
     }
 
-    /* Texto global */
-    [class*="st-"], h1, h2, h3, p, span, label, div {
-        color: #E0E0E0;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    /* Ocultar barra superior (Header) y menú hamburguesa para inmersión total */
+    header[data-testid="stHeader"] {
+        display: none !important;
+        background: transparent !important;
     }
 
     /* ============================================================
-       CORRECCIÓN LISTAS DESPLEGABLES (DROPDOWN)
+       2. FIX "ESQUINAS BLANCAS" EN INPUTS (CRÍTICO)
+       ============================================================ */
+    
+    /* Hacemos transparentes todos los contenedores padre del input */
+    div[data-testid="stTextInput"] > div,
+    div[data-baseweb="input"] > div {
+        background-color: transparent !important;
+        background: transparent !important;
+        border: none !important;
+    }
+
+    /* Estilo del Input Real (El óvalo oscuro) */
+    .stTextInput input, 
+    div[data-baseweb="input"] {
+        background-color: #1E1E2E !important; 
+        color: white !important;
+        border: 1px solid #555 !important;
+        border-radius: 50px !important; /* Bordes redondos */
+    }
+    
+    /* Quitar borde cuadrado al contenedor interno de BaseWeb */
+    div[data-baseweb="input"] {
+        border: none !important; /* El borde lo tiene el input hijo o este mismo, controlamos conflicto */
+        background-color: transparent !important; 
+    }
+    
+    /* Aplicar estilo al input hijo directo para asegurar el color */
+    input[type="text"], input[type="password"] {
+        background-color: #1E1E2E !important;
+        border-radius: 50px !important;
+        padding: 10px 20px !important;
+        color: white !important;
+        border: 1px solid #555 !important;
+    }
+
+    /* FIX: AUTOCOMPLETADO DE CHROME (Evita el fondo amarillo/blanco al recordar contraseña) */
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover, 
+    input:-webkit-autofill:focus, 
+    input:-webkit-autofill:active {
+        -webkit-box-shadow: 0 0 0 30px #1E1E2E inset !important;
+        -webkit-text-fill-color: white !important;
+        border-radius: 50px !important;
+    }
+
+    /* ============================================================
+       3. LISTAS DESPLEGABLES (DROPDOWN OSCURO)
        ============================================================ */
     div[data-baseweb="popover"], div[data-baseweb="popover"] > div {
         background-color: #1E1E2E !important;
@@ -119,23 +158,13 @@ st.markdown("""
     li[data-baseweb="option"] * { color: inherit !important; }
 
     /* ============================================================
-       INPUTS & TARJETAS
+       4. COMPONENTES GENERALES
        ============================================================ */
-    .stTextInput input {
-        background-color: #1E1E2E !important;
-        color: white !important;
-        border: 1px solid #555 !important;
-        border-radius: 50px !important;
-        padding: 12px 25px !important;
-    }
-    .stTextInput input:focus {
-        border-color: #4FC3F7 !important;
-        box-shadow: 0 0 10px rgba(79, 195, 247, 0.3);
-    }
-    
-    h1, h2 { color: #4FC3F7 !important; text-shadow: 0px 0px 15px rgba(79, 195, 247, 0.5); }
+    h1, h2 { color: #4FC3F7 !important; text-shadow: 0px 0px 10px rgba(79, 195, 247, 0.4); }
     h3, h4, h5 { color: #FFFFFF !important; }
+    p, label, span, li, div { color: #B0BEC5; }
 
+    /* Tarjetas */
     .css-card {
         background: rgba(20, 20, 30, 0.75);
         backdrop-filter: blur(12px);
@@ -146,7 +175,13 @@ st.markdown("""
         margin-bottom: 20px;
         box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
     }
+    /* El texto dentro de las tarjetas forzado a claro */
+    .css-card h2, .css-card p, .css-card span {
+        color: #E0E0E0 !important;
+    }
+    .css-card h2 { color: white !important; }
 
+    /* Botones */
     div.stButton > button {
         background: linear-gradient(135deg, #0288D1 0%, #01579B 100%);
         color: white !important;
@@ -158,11 +193,11 @@ st.markdown("""
     }
     div.stButton > button:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 20px rgba(2, 136, 209, 0.5);
+        box-shadow: 0 4px 15px rgba(2, 136, 209, 0.4);
     }
 
     [data-testid="stSidebar"] {
-        background-color: #080A0C !important;
+        background-color: #0a0e14 !important;
         border-right: 1px solid #222;
     }
     
