@@ -34,7 +34,7 @@ def get_default_profile_pic():
 DEFAULT_IMG = get_default_profile_pic()
 
 # ==========================================
-# 3. ESTILOS VISUALES (FIX TOTAL: LOGIN, INPUTS, TEXTAREA, LISTAS)
+# 3. ESTILOS VISUALES (FIX FINAL: VISIBILIDAD TEXTAREA)
 # ==========================================
 def add_bg_from_local(image_file):
     if os.path.exists(image_file):
@@ -115,7 +115,6 @@ st.markdown("""
     }
 
     /* FIX CRÍTICO: AUTOCOMPLETADO DE CHROME (LOGIN) */
-    /* Esto evita que el navegador ponga fondo blanco/amarillo al recordar contraseña */
     input:-webkit-autofill,
     input:-webkit-autofill:hover, 
     input:-webkit-autofill:focus, 
@@ -127,19 +126,32 @@ st.markdown("""
     }
 
     /* ============================================================
-       3. FIX TEXT AREA (OBSERVACIONES)
+       3. FIX TEXT AREA (SUSTENTO DE NOTA) - MEJORA DE VISIBILIDAD
        ============================================================ */
+    
+    /* El contenedor BASE del text area (el que da la forma) */
     div[data-baseweb="textarea"] {
-        background-color: #1E1E2E !important;
-        border: 1px solid #555 !important;
-        border-radius: 15px !important;
+        background-color: #1E1E2E !important; /* Fondo oscuro sólido */
+        border: 2px solid #666 !important;    /* Borde más visible y claro */
+        border-radius: 12px !important;
+        transition: all 0.3s ease;            /* Transición suave */
     }
+
+    /* Cuando se hace clic dentro (Focus) - Resaltar en Azul */
+    div[data-baseweb="textarea"]:focus-within {
+        border-color: #4FC3F7 !important;
+        box-shadow: 0 0 8px rgba(79, 195, 247, 0.3) !important;
+    }
+    
+    /* El área de escritura real */
     .stTextArea textarea {
         background-color: transparent !important;
         color: white !important;
         border: none !important;
-        caret-color: white !important;
+        caret-color: white !important; /* Cursor blanco */
     }
+    
+    /* Eliminar fondos de contenedores padre de Streamlit */
     div[data-testid="stTextArea"] > div {
         background-color: transparent !important;
         border: none !important;
@@ -421,7 +433,8 @@ else:
                         notas_save[f"NOTA_{i}"] = nota_numerica
                         st.divider()
                     
-                    obs = st.text_area("Comentario sobre el trabajador", height=100)
+                    # AQUÍ ESTÁ EL CAMBIO DEL NOMBRE
+                    obs = st.text_area("Sustento de la Nota Final", height=100)
                     enviar = st.form_submit_button("✅ GUARDAR EVALUACIÓN", use_container_width=True)
                     
                     if enviar:
@@ -510,7 +523,6 @@ else:
         st.title("📂 Historial de Registros")
         
         if df_historial is not None and not df_historial.empty:
-            # LÓGICA DE CRUCE (MERGE) PARA TRAER EL NOMBRE
             df_historial['DNI_TRABAJADOR'] = df_historial['DNI_TRABAJADOR'].astype(str)
             df_personal['DNI'] = df_personal['DNI'].astype(str)
             
