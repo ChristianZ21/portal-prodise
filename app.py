@@ -34,7 +34,7 @@ def get_default_profile_pic():
 DEFAULT_IMG = get_default_profile_pic()
 
 # ==========================================
-# 3. ESTILOS VISUALES (FONDO ARRIBA + CAJA NOTORIA)
+# 3. ESTILOS VISUALES (FIX FINAL: FONDO ARRIBA + CAJA SÓLIDA)
 # ==========================================
 def add_bg_from_local(image_file):
     if os.path.exists(image_file):
@@ -45,8 +45,8 @@ def add_bg_from_local(image_file):
             .stApp {{
                 background-image: url(data:image/jpg;base64,{enc.decode()});
                 background-size: cover;
-                /* CAMBIO AQUÍ: Enfocar arriba */
-                background-position: top center; 
+                /* CAMBIO: ALINEACIÓN SUPERIOR */
+                background-position: center top; 
                 background-repeat: no-repeat;
                 background-attachment: fixed;
                 background-color: #000000;
@@ -70,7 +70,7 @@ LOGO_FILE = "logo.png"
 
 st.markdown("""
 <style>
-    /* 1. RESET EXTREMO (FONDO NEGRO DETRÁS DE TODO) */
+    /* 1. RESET EXTREMO */
     :root { color-scheme: dark !important; }
     
     html, body {
@@ -89,76 +89,66 @@ st.markdown("""
     header[data-testid="stHeader"] { display: none !important; }
 
     /* ============================================================
-       2. FIX SUPREMO PARA INPUTS (LOGIN & SEARCH)
+       2. FIX CAJA DE COMENTARIOS (SÓLIDA Y VISIBLE)
        ============================================================ */
     
-    /* Hacemos invisibles TODOS los contenedores que envuelven al input */
-    div[data-testid="stTextInput"],
-    div[data-testid="stTextInput"] > div,
-    div[data-baseweb="input"],
-    div[data-baseweb="input"] > div,
-    div[data-baseweb="base-input"] {
-        background-color: transparent !important;
-        background: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
+    /* El contenedor visible de la caja de texto */
+    div[data-baseweb="textarea"] {
+        /* FONDO SÓLIDO (Gris intermedio para contrastar con el negro de fondo) */
+        background-color: #262730 !important; 
+        
+        /* BORDE CLARO Y VISIBLE */
+        border: 2px solid #4FC3F7 !important; 
+        
+        border-radius: 12px !important;
+        padding: 5px !important;
     }
 
-    /* Estilo del INPUT REAL (El que escribe el usuario) */
+    /* Cuando escribes dentro */
+    div[data-baseweb="textarea"]:focus-within {
+        background-color: #2E303E !important; /* Se aclara ligeramente al escribir */
+        box-shadow: 0 0 10px rgba(79, 195, 247, 0.5) !important; /* Brillo azul */
+    }
+    
+    /* El texto dentro */
+    .stTextArea textarea {
+        background-color: transparent !important;
+        color: white !important;
+        caret-color: #4FC3F7 !important; /* Cursor azul */
+    }
+
+    /* Eliminar cualquier fondo transparente heredado */
+    div[data-testid="stTextArea"] > div {
+        background: transparent !important;
+        border: none !important;
+    }
+
+    /* ============================================================
+       3. INPUTS NORMALES (Buscador / Login)
+       ============================================================ */
+    div[data-testid="stTextInput"] > div,
+    div[data-baseweb="input"] > div {
+        background-color: transparent !important;
+        border: none !important;
+    }
+
     .stTextInput input, 
     input[type="text"], 
     input[type="password"] {
         background-color: #1E1E2E !important; 
         color: white !important;
         border: 1px solid #555 !important;
-        border-radius: 50px !important; /* Bordes redondos */
+        border-radius: 50px !important;
         padding: 10px 20px !important;
     }
 
-    /* FIX CRÍTICO: AUTOCOMPLETADO DE CHROME (LOGIN) */
+    /* Autocompletado Chrome */
     input:-webkit-autofill,
     input:-webkit-autofill:hover, 
     input:-webkit-autofill:focus, 
     input:-webkit-autofill:active {
-        -webkit-box-shadow: 0 0 0 30px #1E1E2E inset !important; /* Fuerza color oscuro */
+        -webkit-box-shadow: 0 0 0 30px #1E1E2E inset !important;
         -webkit-text-fill-color: white !important;
-        border-radius: 50px !important;
-        caret-color: white !important;
-    }
-
-    /* ============================================================
-       3. FIX TEXT AREA (SUSTENTO DE NOTA) - CAJA MUY VISIBLE
-       ============================================================ */
-    
-    /* El contenedor BASE del text area */
-    div[data-baseweb="textarea"] {
-        /* Fondo gris sólido y notorio, ya no transparente */
-        background-color: #2E3240 !important; 
-        /* Borde azul más grueso y evidente */
-        border: 3px solid #4FC3F7 !important; 
-        border-radius: 12px !important;
-        overflow: hidden !important; /* Mantiene esquinas limpias */
-        box-shadow: inset 0 2px 5px rgba(0,0,0,0.3) !important; /* Sombra interna para profundidad */
-    }
-
-    /* Cuando se hace clic dentro (Focus) */
-    div[data-baseweb="textarea"]:focus-within {
-        box-shadow: 0 0 15px rgba(79, 195, 247, 0.5) !important; /* Resplandor azul más fuerte */
-    }
-    
-    /* El área de escritura real */
-    .stTextArea textarea {
-        background-color: transparent !important;
-        color: white !important;
-        border: none !important;
-        caret-color: white !important; /* Cursor blanco */
-        padding: 10px !important;
-    }
-    
-    /* Eliminar fondos de contenedores padre de Streamlit */
-    div[data-testid="stTextArea"] > div {
-        background-color: transparent !important;
-        border: none !important;
     }
 
     /* ============================================================
