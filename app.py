@@ -34,7 +34,7 @@ def get_default_profile_pic():
 DEFAULT_IMG = get_default_profile_pic()
 
 # ==========================================
-# 3. ESTILOS VISUALES (FIX FINAL DROPDOWN + ZERO BORDERS)
+# 3. ESTILOS VISUALES (FIX FINAL SELECTBOX + HISTORIAL)
 # ==========================================
 def add_bg_from_local(image_file):
     if os.path.exists(image_file):
@@ -69,7 +69,7 @@ LOGO_FILE = "logo.png"
 
 st.markdown("""
 <style>
-    /* 1. RESET EXTREMO DE BORDES Y MÁRGENES */
+    /* 1. RESET EXTREMO */
     :root { color-scheme: dark !important; }
     
     html, body {
@@ -90,79 +90,69 @@ st.markdown("""
     }
 
     /* ============================================================
-       2. SOLUCIÓN FINAL: MENU DESPLEGABLE (DROPDOWN)
+       2. FIX SELECTBOX (CAJA SELECCIONADA BLANCA)
        ============================================================ */
     
-    /* El contenedor flotante general */
-    div[data-baseweb="popover"], 
-    div[data-baseweb="popover"] > div {
-        background-color: #1E1E2E !important; /* GRIS OSCURO */
+    /* Atacamos el contenedor directo del valor seleccionado */
+    div[data-baseweb="select"] > div:first-child {
+        background-color: #1E1E2E !important; /* Gris Oscuro */
+        color: white !important;
         border: 1px solid #444 !important;
+        border-radius: 8px !important;
     }
 
-    /* La lista (ul) */
+    /* El texto dentro de la selección */
+    div[data-baseweb="select"] span {
+        color: white !important;
+    }
+    
+    /* El icono de la flecha */
+    div[data-baseweb="select"] svg {
+        fill: #B0BEC5 !important;
+    }
+
+    /* LISTA DESPLEGABLE (POPOVER) */
+    div[data-baseweb="popover"], div[data-baseweb="popover"] > div {
+        background-color: #1E1E2E !important;
+        border: 1px solid #444 !important;
+    }
     ul[data-baseweb="menu"] {
         background-color: #1E1E2E !important;
         padding: 0 !important;
     }
-
-    /* Cada opción individual (li) */
-    li[role="option"] {
-        background-color: #1E1E2E !important; /* Fondo oscuro */
-        color: #E0E0E0 !important;             /* Texto claro */
-        border-bottom: 1px solid #333 !important; /* Separador sutil */
-    }
-
-    /* El texto DENTRO de la opción (a veces está en un div hijo) */
-    li[role="option"] div, 
-    li[role="option"] span {
+    li[data-baseweb="option"] {
+        background-color: #1E1E2E !important;
         color: #E0E0E0 !important;
     }
-
-    /* Al pasar el mouse (Hover) o seleccionar */
-    li[role="option"]:hover, 
-    li[role="option"][aria-selected="true"] {
-        background-color: #0288D1 !important; /* Azul */
+    li[data-baseweb="option"]:hover, 
+    li[data-baseweb="option"][aria-selected="true"] {
+        background-color: #0288D1 !important;
         color: white !important;
     }
-    
-    /* Texto al hacer hover */
-    li[role="option"]:hover *, 
-    li[role="option"][aria-selected="true"] * {
-        color: white !important;
-    }
+    li[data-baseweb="option"] * { color: inherit !important; }
 
     /* ============================================================
-       3. FIX ESQUINAS BLANCAS EN INPUTS
+       3. INPUTS DE TEXTO (BUSCADOR)
        ============================================================ */
+    /* Quitamos fondos transparentes/blancos de contenedores padre */
     div[data-testid="stTextInput"] > div,
     div[data-baseweb="input"] > div {
         background-color: transparent !important;
         border: none !important;
     }
 
+    /* Estilo del input real */
     .stTextInput input, 
-    div[data-baseweb="input"] {
+    input[type="text"], 
+    input[type="password"] {
         background-color: #1E1E2E !important; 
         color: white !important;
         border: 1px solid #555 !important;
         border-radius: 50px !important;
-    }
-    
-    div[data-baseweb="input"] {
-        border: none !important; 
-        background-color: transparent !important; 
-    }
-    
-    input[type="text"], input[type="password"] {
-        background-color: #1E1E2E !important;
-        border-radius: 50px !important;
         padding: 10px 20px !important;
-        color: white !important;
-        border: 1px solid #555 !important;
     }
-
-    /* Autocompletado de Chrome */
+    
+    /* Autocompletado Chrome */
     input:-webkit-autofill,
     input:-webkit-autofill:hover, 
     input:-webkit-autofill:focus, 
@@ -189,7 +179,6 @@ st.markdown("""
         margin-bottom: 20px;
         box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
     }
-    .css-card h2, .css-card p, .css-card span { color: #E0E0E0 !important; }
     .css-card h2 { color: white !important; }
 
     div.stButton > button {
@@ -211,7 +200,6 @@ st.markdown("""
         border-right: 1px solid #222;
     }
     
-    /* Radio Buttons */
     div[role="radiogroup"] label {
         background-color: rgba(255,255,255,0.03);
         border: 1px solid rgba(255,255,255,0.05);
@@ -340,11 +328,9 @@ else:
     if seleccion == "📝 Evaluar Personal":
         st.title(f"📝 Evaluación - {parada_actual}")
         
-        # 1. BARRA DE BÚSQUEDA
         st.markdown("##### 🔍 Buscar (Opcional)")
         filtro_texto = st.text_input("Filtro Rápido", placeholder="Escribe para filtrar la lista...", label_visibility="collapsed")
         
-        # 2. LÓGICA DE FILTRADO
         lista_final = []
         indice_defecto = None
         
@@ -360,7 +346,6 @@ else:
                 lista_final = todas_opciones
                 indice_defecto = None 
         
-        # 3. SELECTOR
         sel_nombre = None
         if lista_final:
             sel_nombre = st.selectbox(
@@ -373,7 +358,6 @@ else:
         elif data_view.empty:
             st.warning("⚠️ No tienes personal asignado a tu grupo/turno.")
         
-        # 4. FICHA
         if sel_nombre:
             p = data_view[data_view['NOMBRE_COMPLETO'] == sel_nombre].iloc[0]
             foto_final = get_photo_url(p.get('URL_FOTO', ''))
@@ -501,12 +485,40 @@ else:
         else: st.info("No hay datos de ranking disponibles.")
 
     # ----------------------------------------
-    # 3. HISTORIAL
+    # 3. HISTORIAL (CON NOMBRE COMPLETO)
     # ----------------------------------------
     elif seleccion == "📂 Mi Historial":
         st.title("📂 Historial de Registros")
+        
         if df_historial is not None and not df_historial.empty:
-            cols = ['COD_PARADA', 'DNI_TRABAJADOR', 'NOTA_FINAL', 'COMENTARIOS']
-            actual_cols = [c for c in cols if c in df_historial.columns]
-            st.dataframe(df_historial[actual_cols], use_container_width=True, hide_index=True)
-        else: st.info("No se encontraron registros.")
+            # LÓGICA DE CRUCE (MERGE) PARA TRAER EL NOMBRE
+            # 1. Aseguramos que los DNI sean texto en ambos lados
+            df_historial['DNI_TRABAJADOR'] = df_historial['DNI_TRABAJADOR'].astype(str)
+            df_personal['DNI'] = df_personal['DNI'].astype(str)
+            
+            # 2. Cruzamos historial con personal usando el DNI
+            # 'how=left' mantiene todos los registros del historial aunque no encuentre el nombre (seguridad)
+            df_merged = pd.merge(
+                df_historial, 
+                df_personal[['DNI', 'NOMBRE_COMPLETO']], 
+                left_on='DNI_TRABAJADOR', 
+                right_on='DNI', 
+                how='left'
+            )
+            
+            # 3. Rellenamos nombres no encontrados con el DNI por si acaso
+            df_merged['NOMBRE_COMPLETO'] = df_merged['NOMBRE_COMPLETO'].fillna(df_merged['DNI_TRABAJADOR'])
+            
+            # 4. Seleccionamos columnas finales a mostrar
+            cols_mostrar = ['COD_PARADA', 'NOMBRE_COMPLETO', 'NOTA_FINAL', 'COMENTARIOS']
+            
+            # Filtramos solo las que existen para evitar errores
+            cols_existentes = [c for c in cols_mostrar if c in df_merged.columns]
+            
+            st.dataframe(
+                df_merged[cols_existentes], 
+                use_container_width=True, 
+                hide_index=True
+            )
+        else:
+            st.info("No se encontraron registros.")
