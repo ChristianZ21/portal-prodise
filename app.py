@@ -34,7 +34,7 @@ def get_default_profile_pic():
 DEFAULT_IMG = get_default_profile_pic()
 
 # ==========================================
-# 3. ESTILOS VISUALES (FIX FINAL SELECTBOX + HISTORIAL)
+# 3. ESTILOS VISUALES (FIX FINAL: MENU OSCURO + RADIO VERTICAL)
 # ==========================================
 def add_bg_from_local(image_file):
     if os.path.exists(image_file):
@@ -90,58 +90,90 @@ st.markdown("""
     }
 
     /* ============================================================
-       2. FIX SELECTBOX (CAJA SELECCIONADA BLANCA)
+       2. FIX SELECTBOX & LISTAS DESPLEGABLES (ELIMINAR FONDO BLANCO)
        ============================================================ */
     
-    /* Atacamos el contenedor directo del valor seleccionado */
+    /* Input seleccionado (Caja cerrada) */
     div[data-baseweb="select"] > div:first-child {
-        background-color: #1E1E2E !important; /* Gris Oscuro */
+        background-color: #1E1E2E !important;
         color: white !important;
         border: 1px solid #444 !important;
         border-radius: 8px !important;
     }
 
-    /* El texto dentro de la selección */
-    div[data-baseweb="select"] span {
+    /* CONTENEDOR FLOTANTE (POPOVER) - EL CULPABLE DEL BLANCO */
+    div[data-baseweb="popover"],
+    div[data-baseweb="popover"] > div {
+        background-color: #1E1E2E !important;
+        color: white !important;
+        border: 1px solid #444 !important;
+    }
+
+    /* LA LISTA (UL) */
+    ul[data-baseweb="menu"],
+    ul[role="listbox"] {
+        background-color: #1E1E2E !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    /* LAS OPCIONES (LI) */
+    li[data-baseweb="option"],
+    li[role="option"] {
+        background-color: #1E1E2E !important; /* Fondo oscuro forzado */
+        color: #E0E0E0 !important;             /* Texto claro forzado */
+    }
+
+    /* HOVER EN LAS OPCIONES */
+    li[data-baseweb="option"]:hover, 
+    li[data-baseweb="option"][aria-selected="true"],
+    li[role="option"]:hover,
+    li[role="option"][aria-selected="true"] {
+        background-color: #0288D1 !important; /* Azul */
         color: white !important;
     }
     
-    /* El icono de la flecha */
-    div[data-baseweb="select"] svg {
-        fill: #B0BEC5 !important;
-    }
-
-    /* LISTA DESPLEGABLE (POPOVER) */
-    div[data-baseweb="popover"], div[data-baseweb="popover"] > div {
-        background-color: #1E1E2E !important;
-        border: 1px solid #444 !important;
-    }
-    ul[data-baseweb="menu"] {
-        background-color: #1E1E2E !important;
-        padding: 0 !important;
-    }
-    li[data-baseweb="option"] {
-        background-color: #1E1E2E !important;
-        color: #E0E0E0 !important;
-    }
-    li[data-baseweb="option"]:hover, 
-    li[data-baseweb="option"][aria-selected="true"] {
-        background-color: #0288D1 !important;
-        color: white !important;
-    }
-    li[data-baseweb="option"] * { color: inherit !important; }
+    /* Forzar color de texto interno en las opciones */
+    li[role="option"] * { color: inherit !important; }
 
     /* ============================================================
-       3. INPUTS DE TEXTO (BUSCADOR)
+       3. FIX RADIO BUTTONS (APILADOS VERTICALMENTE)
        ============================================================ */
-    /* Quitamos fondos transparentes/blancos de contenedores padre */
+    
+    /* Contenedor del grupo de opciones */
+    div[role="radiogroup"] {
+        display: flex;
+        flex-direction: column !important; /* FORZAR COLUMNA */
+        gap: 10px;
+    }
+
+    /* Cada opción individual */
+    div[role="radiogroup"] label {
+        background-color: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.05);
+        color: #ddd !important;
+        width: 100% !important; /* Ocupar todo el ancho */
+        margin-right: 0 !important;
+        display: flex;
+        align-items: center;
+        padding: 10px 15px;
+        border-radius: 8px;
+    }
+
+    div[role="radiogroup"] label:hover {
+        background-color: rgba(255,255,255,0.1);
+        border-color: #4FC3F7;
+    }
+
+    /* ============================================================
+       4. INPUTS DE TEXTO (BUSCADOR) & ESTILOS GENERALES
+       ============================================================ */
     div[data-testid="stTextInput"] > div,
     div[data-baseweb="input"] > div {
         background-color: transparent !important;
         border: none !important;
     }
 
-    /* Estilo del input real */
     .stTextInput input, 
     input[type="text"], 
     input[type="password"] {
@@ -162,9 +194,6 @@ st.markdown("""
         border-radius: 50px !important;
     }
 
-    /* ============================================================
-       4. COMPONENTES GENERALES
-       ============================================================ */
     h1, h2 { color: #4FC3F7 !important; text-shadow: 0px 0px 10px rgba(79, 195, 247, 0.4); }
     h3, h4, h5 { color: #FFFFFF !important; }
     p, label, span, li, div { color: #B0BEC5; }
@@ -198,16 +227,6 @@ st.markdown("""
     [data-testid="stSidebar"] {
         background-color: #0a0e14 !important;
         border-right: 1px solid #222;
-    }
-    
-    div[role="radiogroup"] label {
-        background-color: rgba(255,255,255,0.03);
-        border: 1px solid rgba(255,255,255,0.05);
-        color: #ddd !important;
-    }
-    div[role="radiogroup"] label:hover {
-        background-color: rgba(255,255,255,0.1);
-        border-color: #4FC3F7;
     }
     
     .podio-emoji { font-size: 3.5rem; display: block; margin-bottom: 10px; }
@@ -396,7 +415,14 @@ else:
                             str(row.get('NIVEL_4', 'Nivel 4')),
                             str(row.get('NIVEL_5', 'Nivel 5'))
                         ]
-                        seleccion_texto = st.radio(label=f"r_{i}", options=opciones, key=f"rad_{i}", horizontal=True, label_visibility="collapsed")
+                        # CAMBIO IMPORTANTE: horizontal=False PARA QUE ESTÉN APILADOS
+                        seleccion_texto = st.radio(
+                            label=f"r_{i}", 
+                            options=opciones, 
+                            key=f"rad_{i}", 
+                            horizontal=False, # <-- AQUI FORZAMOS VERTICAL
+                            label_visibility="collapsed"
+                        )
                         nota_numerica = opciones.index(seleccion_texto) + 1
                         score_total += nota_numerica * row['PORCENTAJE']
                         notas_save[f"NOTA_{i}"] = nota_numerica
@@ -492,12 +518,9 @@ else:
         
         if df_historial is not None and not df_historial.empty:
             # LÓGICA DE CRUCE (MERGE) PARA TRAER EL NOMBRE
-            # 1. Aseguramos que los DNI sean texto en ambos lados
             df_historial['DNI_TRABAJADOR'] = df_historial['DNI_TRABAJADOR'].astype(str)
             df_personal['DNI'] = df_personal['DNI'].astype(str)
             
-            # 2. Cruzamos historial con personal usando el DNI
-            # 'how=left' mantiene todos los registros del historial aunque no encuentre el nombre (seguridad)
             df_merged = pd.merge(
                 df_historial, 
                 df_personal[['DNI', 'NOMBRE_COMPLETO']], 
@@ -505,14 +528,9 @@ else:
                 right_on='DNI', 
                 how='left'
             )
-            
-            # 3. Rellenamos nombres no encontrados con el DNI por si acaso
             df_merged['NOMBRE_COMPLETO'] = df_merged['NOMBRE_COMPLETO'].fillna(df_merged['DNI_TRABAJADOR'])
             
-            # 4. Seleccionamos columnas finales a mostrar
             cols_mostrar = ['COD_PARADA', 'NOMBRE_COMPLETO', 'NOTA_FINAL', 'COMENTARIOS']
-            
-            # Filtramos solo las que existen para evitar errores
             cols_existentes = [c for c in cols_mostrar if c in df_merged.columns]
             
             st.dataframe(
