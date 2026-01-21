@@ -6,353 +6,328 @@ import base64
 from pyairtable import Api
 
 # ==========================================
-# 1. CONFIGURACIÓN DE PÁGINA Y ESTILOS
+# 1. CONFIGURACIÓN INICIAL
 # ==========================================
 st.set_page_config(
-    page_title="ProDise Executive", 
-    page_icon="💎", 
+    page_title="Portal PRODISE", 
+    page_icon="🏭", 
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# --- CLAVES (Ocultar en producción) ---
+# --- TUS CLAVES ---
 AIRTABLE_API_TOKEN = "pat3Ig7rAOvq7JdpN.fbef700fa804ae5692e3880899bba070239e9593f8d6fde958d9bd3d615aca14"
 AIRTABLE_BASE_ID = "app2jaysCvPwvrBwI"
 
-# --- PALETA DE COLORES EJECUTIVA ---
-COLOR_PRIMARIO = "#0F172A"       # Azul Marino Profundo (Navy)
-COLOR_SECUNDARIO = "#334155"     # Gris Pizarra
-COLOR_ACCENTO = "#3B82F6"        # Azul Brillante (Botones)
-COLOR_FONDO = "#F8FAFC"          # Blanco Hielo (Fondo limpio)
-COLOR_TEXTO = "#1E293B"          # Gris Oscuro (Lectura fácil)
+# ==========================================
+# 2. ESTILOS VISUALES
+# ==========================================
+def add_bg_from_local(image_file):
+    if os.path.exists(image_file):
+        with open(image_file, "rb") as file:
+            enc = base64.b64encode(file.read())
+        st.markdown(f"""
+            <style>
+            .stApp {{
+                background-image: url(data:image/jpg;base64,{enc.decode()});
+                background-size: cover;
+                background-position: center;
+                background-attachment: fixed;
+            }}
+            .stApp::before {{
+                content: "";
+                position: absolute;
+                top: 0; left: 0;
+                width: 100%; height: 100%;
+                background-color: rgba(0, 0, 0, 0.6); 
+                z-index: -1;
+            }}
+            </style>
+            """, unsafe_allow_html=True)
+    else:
+        st.markdown("<style>.stApp { background: linear-gradient(to right, #141e30, #243b55); }</style>", unsafe_allow_html=True)
 
-# --- CSS PERSONALIZADO (Look & Feel) ---
-st.markdown(f"""
+add_bg_from_local('fondo.jpg')
+LOGO_FILE = "logo.png"
+
+st.markdown("""
 <style>
-    /* Fondo General */
-    .stApp {{ background-color: {COLOR_FONDO}; }}
+    h1, h2, h3, p, label, span, div { color: #E0E0E0; }
+    h1, h2 { color: #4FC3F7 !important; text-shadow: 2px 2px 4px #000; }
     
-    /* Títulos Elegantes */
-    h1, h2, h3 {{ color: {COLOR_PRIMARIO} !important; font-family: 'Helvetica Neue', sans-serif; font-weight: 700; }}
-    
-    /* Tarjetas (Cards) */
-    .css-card {{
-        background-color: white;
+    .css-card {
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
         border-radius: 15px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
         padding: 20px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         margin-bottom: 20px;
-        border: 1px solid #E2E8F0;
-    }}
-    
-    /* Botones Premium */
-    div.stButton > button {{
-        background: linear-gradient(90deg, {COLOR_PRIMARIO} 0%, {COLOR_SECUNDARIO} 100%);
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
         color: white;
-        border: none;
-        border-radius: 8px;
-        padding: 10px 24px;
-        font-weight: 600;
-        transition: all 0.3s ease;
-    }}
-    div.stButton > button:hover {{
-        transform: translateY(-2px);
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    }}
-
-    /* Sidebar limpio */
-    [data-testid="stSidebar"] {{ background-color: white; border-right: 1px solid #E2E8F0; }}
+    }
     
-    /* Ajustes de métricas */
-    div[data-testid="metric-container"] {{
-        background-color: white;
-        padding: 15px;
-        border-radius: 10px;
-        border: 1px solid #E2E8F0;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }}
+    div.stButton > button { background: #0288D1; color: white; border: none; font-weight: bold; transition: 0.3s; }
+    div.stButton > button:hover { background: #03A9F4; transform: scale(1.02); }
+    [data-testid="stSidebar"] { background-color: rgba(20, 30, 48, 0.95); border-right: 1px solid #333; }
+    div[data-testid="metric-container"] { background-color: rgba(0,0,0,0.5); border: 1px solid #444; padding: 10px; border-radius: 8px; }
+    div[data-testid="stFeedback"] span { font-size: 1.5rem; }
 </style>
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 2. CONEXIÓN OPTIMIZADA (CACHÉ)
+# 3. CONEXIÓN Y CARGA DE DATOS
 # ==========================================
-# Usamos cache para que no recargue Airtable a cada click (SOLUCIÓN A PANTALLA BLANCA)
-@st.cache_data(ttl=60) # Recarga datos cada 60 segundos automáticamente
+@st.cache_data(ttl=60)
 def load_data():
     try:
         api = Api(AIRTABLE_API_TOKEN)
-        
-        def get_df(table_name):
-            t = api.table(AIRTABLE_BASE_ID, table_name)
-            records = t.all()
-            if not records: return pd.DataFrame(), t
-            df = pd.DataFrame([r['fields'] for r in records])
-            # Limpieza de datos
-            for c in df.columns: 
-                df[c] = df[c].astype(str).str.strip() # Quita espacios extra
-            return df, t
-
+        def get_df(t_name):
+            try:
+                t = api.table(AIRTABLE_BASE_ID, t_name)
+                recs = t.all()
+                if not recs: return pd.DataFrame(), t
+                df = pd.DataFrame([r['fields'] for r in recs])
+                for c in df.columns: df[c] = df[c].astype(str)
+                return df, t
+            except: return pd.DataFrame(), None
+            
         df_u, _ = get_df("DB_USUARIOS")
         df_p, _ = get_df("DB_PERSONAL")
         df_r, _ = get_df("CONFIG_ROLES")
         df_h, tbl_h = get_df("DB_HISTORIAL")
         df_c, _ = get_df("CONFIG")
         
-        # Conversiones numéricas seguras
         if not df_r.empty and 'PORCENTAJE' in df_r.columns:
             df_r['PORCENTAJE'] = pd.to_numeric(df_r['PORCENTAJE'], errors='coerce').fillna(0)
-        
         if not df_h.empty and 'NOTA_FINAL' in df_h.columns:
             df_h['NOTA_FINAL'] = pd.to_numeric(df_h['NOTA_FINAL'], errors='coerce').fillna(0)
             
         return df_u, df_p, df_r, df_h, tbl_h, df_c
-        
-    except Exception as e:
+    except:
         return None, None, None, None, None, None
 
-# Cargar Datos
-with st.spinner("Conectando con la base de datos..."):
-    df_users, df_personal, df_roles, df_historial, tbl_historial, df_config = load_data()
+df_users, df_personal, df_roles, df_historial, tbl_historial, df_config = load_data()
 
-# Verificación de Seguridad (Si falla la carga)
-if df_personal is None:
-    st.error("🚨 Error crítico de conexión. Verifica tu internet o las claves de Airtable.")
-    st.stop()
+# --- LÓGICA DE PARADA ACTUAL ---
+# Intenta buscar una columna llamada 'COD_PARADA' o 'VALOR' en la tabla CONFIG.
+# Si no, toma la primera celda disponible.
+parada_actual = "GENERAL"
+if df_config is not None and not df_config.empty:
+    if 'COD_PARADA' in df_config.columns:
+        parada_actual = str(df_config.iloc[0]['COD_PARADA'])
+    else:
+        # Toma el primer valor que encuentre si no existe la columna exacta
+        parada_actual = str(df_config.iloc[0].values[0])
 
-# Parada Actual
-parada_actual = df_config.iloc[0].values[0] if not df_config.empty else "P-GEN"
-
-# Session State
 if 'usuario' not in st.session_state:
     st.session_state.update({'usuario': None, 'nombre_real': None, 'rol': None, 'dni_user': None})
 
 # ==========================================
-# 3. LÓGICA DE LOGIN
+# 4. APLICACIÓN
 # ==========================================
+
+# --- LOGIN ---
 if not st.session_state.usuario:
-    col1, col2, col3 = st.columns([1, 0.8, 1])
-    with col2:
-        st.markdown("<br><br><br>", unsafe_allow_html=True)
-        st.markdown(f"""
-        <div style="text-align: center; padding: 30px; background: white; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
-            <h1 style="color:{COLOR_PRIMARIO}; margin-bottom: 0;">Portal PRODISE</h1>
-            <p style="color: grey;">Acceso Corporativo</p>
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    c1, c2, c3 = st.columns([1,1,1])
+    with c2:
+        st.markdown("""
+        <div class="css-card" style="text-align: center;">
+            <h1 style="margin:0;">🔐 PRODISE</h1>
+            <p>Acceso Seguro</p>
         </div>
         """, unsafe_allow_html=True)
-        st.markdown("<br>", unsafe_allow_html=True)
         
-        user = st.text_input("ID Usuario", placeholder="Ej. jperez")
-        pw = st.text_input("Contraseña", type="password", placeholder="••••••")
+        user = st.text_input("Usuario")
+        pw = st.text_input("Contraseña", type="password")
         
-        if st.button("INICIAR SESIÓN", use_container_width=True):
-            if not df_users.empty:
+        if st.button("INGRESAR", use_container_width=True):
+            if df_users is not None and not df_users.empty:
                 u = df_users[df_users['USUARIO'] == user]
-                if not u.empty and u.iloc[0]['PASS'] == pw and u.iloc[0]['ESTADO'] == 'ACTIVO':
+                if not u.empty and str(u.iloc[0]['PASS']) == pw and u.iloc[0]['ESTADO'] == 'ACTIVO':
                     st.session_state.usuario = user
                     st.session_state.nombre_real = u.iloc[0]['NOMBRE']
-                    st.session_state.rol = u.iloc[0]['ID_ROL'].upper()
-                    st.session_state.dni_user = u.iloc[0]['DNI_TRABAJADOR']
+                    st.session_state.rol = str(u.iloc[0]['ID_ROL']).upper().strip()
+                    st.session_state.dni_user = str(u.iloc[0]['DNI_TRABAJADOR'])
                     st.rerun()
-                else: st.error("Credenciales incorrectas")
-            else: st.error("Error de base de datos")
+                else: st.error("❌ Datos incorrectos")
+            else: st.error("❌ Sin conexión a base de datos")
 
 else:
-    # ==========================================
-    # 4. INTERFAZ PRINCIPAL (DASHBOARD)
-    # ==========================================
-    
-    # --- Sidebar ---
+    # --- SIDEBAR ---
+    opciones = ["📝 Evaluar Personal", "📂 Mi Historial"]
+    if st.session_state.rol == 'ADMIN':
+        opciones.insert(1, "🏆 Ranking Global")
+
     with st.sidebar:
-        st.image("logo.png", use_container_width=True) if os.path.exists("logo.png") else st.title("🏭")
-        st.markdown(f"**Hola, {st.session_state.nombre_real.split()[0]}**")
-        st.caption(f"{st.session_state.rol}")
+        if os.path.exists(LOGO_FILE): st.image(LOGO_FILE, use_container_width=True)
+        st.markdown(f"### 👤 {st.session_state.nombre_real.split()[0]}")
+        st.caption(f"Rol: {st.session_state.rol}")
         
-        # Menú con estilo de Botones (Pills)
-        opciones = ["Evaluar Personal", "Mi Historial"]
-        if st.session_state.rol == 'ADMIN': opciones.insert(1, "Ranking Gerencial")
+        # Muestra la parada actual activa
+        st.info(f"⚙️ Parada Activa:\n**{parada_actual}**")
         
-        seleccion = st.radio("Navegación", opciones, label_visibility="collapsed")
+        seleccion = st.radio("Navegación", opciones)
         
         st.markdown("---")
-        st.info(f"🔧 Parada: **{parada_actual}**")
-        if st.button("Cerrar Sesión", type="secondary"):
+        if st.button("Cerrar Sesión"):
             st.session_state.usuario = None
             st.rerun()
 
-    # --- Lógica de Filtros (Supervisor) ---
-    data_view = df_personal[df_personal['ESTADO'] == 'ACTIVO']
-    if st.session_state.rol == 'SUPERVISOR DE OPERACIONES':
-        me = df_personal[df_personal['DNI'] == st.session_state.dni_user]
+    # Filtros Supervisor
+    data_view = df_personal[df_personal['ESTADO'] == 'ACTIVO'] if df_personal is not None else pd.DataFrame()
+    if st.session_state.rol == 'SUPERVISOR DE OPERACIONES' and not data_view.empty:
+        me = data_view[data_view['DNI'] == st.session_state.dni_user]
         if not me.empty:
             grp, trn = me.iloc[0]['ID_GRUPO'], me.iloc[0]['TURNO']
             data_view = data_view[(data_view['ID_GRUPO'] == grp) & (data_view['TURNO'] == trn)]
             data_view = data_view[data_view['DNI'] != st.session_state.dni_user]
 
     # ----------------------------------------
-    # VISTA 1: EVALUACIÓN (REDISEÑADA)
+    # VISTA 1: EVALUACIÓN
     # ----------------------------------------
-    if seleccion == "Evaluar Personal":
-        st.title("📝 Centro de Evaluación")
+    if seleccion == "📝 Evaluar Personal":
+        st.title(f"📝 Evaluación - {parada_actual}")
         
-        # Selector Principal (Limpio)
-        col_sel, col_info = st.columns([1, 2])
-        with col_sel:
-            # Dropdown robusto
-            lista_nombres = data_view['NOMBRE_COMPLETO'].unique().tolist() if not data_view.empty else []
-            if not lista_nombres:
-                st.warning("⚠️ No hay personal asignado a tu grupo/turno.")
-                target_person = None
-            else:
-                target_person = st.selectbox("Seleccionar Colaborador:", lista_nombres)
-
-        if target_person:
-            p = data_view[data_view['NOMBRE_COMPLETO'] == target_person].iloc[0]
+        sel_nombre = st.selectbox("Seleccionar Trabajador:", data_view['NOMBRE_COMPLETO'].unique()) if not data_view.empty else None
+        
+        if sel_nombre:
+            p = data_view[data_view['NOMBRE_COMPLETO'] == sel_nombre].iloc[0]
             
-            # --- TARJETA DE IDENTIDAD (VISUAL) ---
-            with col_info:
-                st.markdown(f"""
-                <div class="css-card" style="display: flex; align-items: center; gap: 20px;">
-                    <img src="{p.get('URL_FOTO', '')}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid {COLOR_ACCENTO};">
-                    <div>
-                        <h3 style="margin:0; color:{COLOR_PRIMARIO};">{p['NOMBRE_COMPLETO']}</h3>
-                        <p style="margin:0; color:grey; font-weight:bold;">{p['CARGO_ACTUAL']}</p>
-                        <span style="background-color: #E2E8F0; padding: 2px 8px; border-radius: 4px; font-size: 0.8em;">{p['ID_GRUPO']} - {p['TURNO']}</span>
-                    </div>
+            st.markdown(f"""
+            <div class="css-card" style="display: flex; align-items: center; gap: 20px;">
+                <img src="{p.get('URL_FOTO','')}" style="width: 90px; height: 90px; border-radius: 50%; border: 3px solid #4FC3F7; object-fit: cover;">
+                <div>
+                    <h2 style="margin:0; color: white !important;">{p['NOMBRE_COMPLETO']}</h2>
+                    <p style="margin:0; font-size: 1.1em; color: #B3E5FC;">{p['CARGO_ACTUAL']}</p>
+                    <span style="background: rgba(255,255,255,0.2); padding: 4px 8px; border-radius: 5px; font-size: 0.9em;">
+                        {p['ID_GRUPO']} - {p['TURNO']}
+                    </span>
                 </div>
-                """, unsafe_allow_html=True)
-
-            # --- FORMULARIO DE ESTRELLAS (STAR RATING) ---
-            # Filtramos preguntas
+            </div>
+            """, unsafe_allow_html=True)
+            
             preguntas = pd.DataFrame()
-            if not df_roles.empty:
-                df_roles['CARGO_NORM'] = df_roles['CARGO'].str.upper().str.strip()
-                target_cargo = p['CARGO_ACTUAL'].upper().strip()
-                preguntas = df_roles[df_roles['CARGO_NORM'] == target_cargo]
+            if df_roles is not None and not df_roles.empty:
+                df_roles['CARGO_NORM'] = df_roles['CARGO'].astype(str).str.upper().str.strip()
+                preguntas = df_roles[df_roles['CARGO_NORM'] == str(p['CARGO_ACTUAL']).upper().strip()]
 
             if preguntas.empty:
-                st.info(f"ℹ️ No hay criterios de evaluación definidos para el cargo: {p['CARGO_ACTUAL']}")
+                st.warning("⚠️ No hay criterios configurados para este cargo.")
             else:
                 with st.form("frm_eval"):
-                    st.markdown("### 🎯 Criterios de Desempeño")
                     score_total = 0
-                    notas_guardar = {}
+                    notas_save = {}
                     
-                    # Iteramos preguntas
+                    st.markdown("### Calificación de Desempeño")
                     for i, (idx, row) in enumerate(preguntas.iterrows(), 1):
-                        col_preg, col_star = st.columns([2, 1])
-                        with col_preg:
+                        c_txt, c_star = st.columns([2, 1])
+                        with c_txt:
                             st.markdown(f"**{i}. {row['CRITERIO']}**")
-                            st.caption(f"Peso: {row['PORCENTAJE']*100:.0f}%")
-                        with col_star:
-                            # AQUÍ ESTÁ LA MAGIA VISUAL: st.feedback (Estrellas)
-                            # Nota: st.feedback devuelve 0-4 (índice), por eso sumamos +1
-                            val = st.feedback("stars", key=f"star_{i}")
-                            nota_real = (val + 1) if val is not None else 0
-                            
-                            score_total += nota_real * row['PORCENTAJE']
-                            notas_guardar[f"NOTA_{i}"] = nota_real
+                            st.caption(f"Importancia: {row['PORCENTAJE']*100:.0f}%")
+                        with c_star:
+                            val = st.feedback("stars", key=f"s_{i}")
+                            nota = (val + 1) if val is not None else 0
+                            score_total += nota * row['PORCENTAJE']
+                            notas_save[f"NOTA_{i}"] = nota
                         st.divider()
-
-                    observacion = st.text_area("💬 Observaciones / Feedback", placeholder="Escribe un comentario constructivo...")
                     
-                    # Botón de Guardado
-                    c_submit = st.columns([1, 2, 1])
-                    with c_submit[1]:
-                        submitted = st.form_submit_button("💾 GUARDAR EVALUACIÓN", use_container_width=True)
-                        
-                    if submitted:
-                        if observacion and tbl_historial:
+                    obs = st.text_area("Observaciones")
+                    enviar = st.form_submit_button("✅ GUARDAR EVALUACIÓN", use_container_width=True)
+                    
+                    if enviar:
+                        if obs and tbl_historial:
+                            # AQUÍ SE GUARDA LA PARADA ACTUAL (CONSTANTE)
                             record = {
                                 "FECHA_HORA": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                                "COD_PARADA": parada_actual,
+                                "COD_PARADA": parada_actual,  # <--- SE GUARDA EL DATO DE CONFIG
                                 "DNI_EVALUADOR": st.session_state.dni_user,
-                                "DNI_TRABAJADOR": p['DNI'],
-                                "CARGO_MOMENTO": p['CARGO_ACTUAL'],
-                                "GRUPO_MOMENTO": p['ID_GRUPO'],
-                                "TURNO_MOMENTO": p['TURNO'],
+                                "DNI_TRABAJADOR": str(p['DNI']),
+                                "CARGO_MOMENTO": str(p['CARGO_ACTUAL']),
+                                "GRUPO_MOMENTO": str(p['ID_GRUPO']),
+                                "TURNO_MOMENTO": str(p['TURNO']),
                                 "NOTA_FINAL": round(score_total, 2),
-                                "COMENTARIOS": observacion
+                                "COMENTARIOS": obs
                             }
-                            record.update(notas_guardar)
+                            record.update(notas_save)
                             try:
                                 tbl_historial.create(record)
-                                st.success("✅ Evaluación registrada correctamente")
                                 st.balloons()
-                            except Exception as e: st.error(f"Error técnico: {e}")
+                                st.success(f"¡Guardado en {parada_actual}! Nota: {round(score_total, 2)}")
+                            except Exception as e: st.error(f"Error: {e}")
                         else:
-                            st.warning("⚠️ Por favor completa las estrellas y añade un comentario.")
+                            st.warning("⚠️ Debes poner una observación.")
 
     # ----------------------------------------
-    # VISTA 2: RANKING GERENCIAL (PODIO)
+    # VISTA 2: RANKING
     # ----------------------------------------
-    elif seleccion == "Ranking Gerencial" and st.session_state.rol == 'ADMIN':
-        st.title("🏆 Ranking de Desempeño Global")
-        
-        if df_historial.empty:
-            st.info("No hay datos suficientes para generar el ranking.")
-        else:
-            # Procesamiento de datos
+    elif seleccion == "🏆 Ranking Global" and st.session_state.rol == 'ADMIN':
+        st.title("🏆 Tabla de Posiciones")
+        if df_historial is not None and not df_historial.empty:
+            df_historial['DNI_TRABAJADOR'] = df_historial['DNI_TRABAJADOR'].astype(str)
+            df_personal['DNI'] = df_personal['DNI'].astype(str)
+            
             resumen = df_historial.groupby('DNI_TRABAJADOR')['NOTA_FINAL'].mean().reset_index()
             resumen.columns = ['DNI', 'PROMEDIO']
             ranking = pd.merge(resumen, df_personal, on='DNI', how='left')
             ranking['PROMEDIO'] = ranking['PROMEDIO'].round(2)
             ranking = ranking.sort_values('PROMEDIO', ascending=False).reset_index(drop=True)
             
-            # --- PODIO VISUAL ---
             if len(ranking) >= 3:
-                c2, c1, c3 = st.columns([1, 1.2, 1]) # El 1ro al centro y más grande
-                
-                # Top 2
+                c2, c1, c3 = st.columns([1, 1.2, 1])
                 with c2:
                     p2 = ranking.iloc[1]
                     st.markdown(f"""
-                    <div class="css-card" style="text-align:center; border-top: 5px solid silver;">
-                        <h1>🥈</h1>
+                    <div class="css-card" style="text-align:center; border-top: 5px solid #C0C0C0;">
+                        <h1 style="margin:0;">🥈</h1>
                         <img src="{p2.get('URL_FOTO','')}" style="width:80px; height:80px; border-radius:50%; object-fit:cover;">
-                        <h4>{p2['NOMBRE_COMPLETO'].split()[0]}</h4>
-                        <h2 style="color:grey;">{p2['PROMEDIO']}</h2>
-                    </div>
-                    """, unsafe_allow_html=True)
-
-                # Top 1 (Centro)
+                        <h3>{p2['NOMBRE_COMPLETO'].split()[0]}</h3>
+                        <h2 style="color:#C0C0C0;">{p2['PROMEDIO']}</h2>
+                    </div>""", unsafe_allow_html=True)
                 with c1:
                     p1 = ranking.iloc[0]
                     st.markdown(f"""
-                    <div class="css-card" style="text-align:center; border-top: 5px solid gold; transform: scale(1.05);">
-                        <h1>👑</h1>
-                        <img src="{p1.get('URL_FOTO','')}" style="width:100px; height:100px; border-radius:50%; object-fit:cover; border: 4px solid gold;">
-                        <h3>{p1['NOMBRE_COMPLETO'].split()[0]}</h3>
-                        <h1 style="color:#DAA520;">{p1['PROMEDIO']}</h1>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
-                # Top 3
+                    <div class="css-card" style="text-align:center; border-top: 5px solid #FFD700; transform: scale(1.05);">
+                        <h1 style="margin:0; font-size: 3em;">👑</h1>
+                        <img src="{p1.get('URL_FOTO','')}" style="width:110px; height:110px; border-radius:50%; object-fit:cover; border: 4px solid #FFD700;">
+                        <h2>{p1['NOMBRE_COMPLETO'].split()[0]}</h2>
+                        <h1 style="color:#FFD700;">{p1['PROMEDIO']}</h1>
+                    </div>""", unsafe_allow_html=True)
                 with c3:
                     p3 = ranking.iloc[2]
                     st.markdown(f"""
                     <div class="css-card" style="text-align:center; border-top: 5px solid #CD7F32;">
-                        <h1>🥉</h1>
+                        <h1 style="margin:0;">🥉</h1>
                         <img src="{p3.get('URL_FOTO','')}" style="width:80px; height:80px; border-radius:50%; object-fit:cover;">
-                        <h4>{p3['NOMBRE_COMPLETO'].split()[0]}</h4>
-                        <h2 style="color:grey;">{p3['PROMEDIO']}</h2>
-                    </div>
-                    """, unsafe_allow_html=True)
-            
-            st.markdown("### 📊 Tabla General")
-            st.dataframe(
-                ranking[['NOMBRE_COMPLETO', 'CARGO_ACTUAL', 'PROMEDIO', 'ID_GRUPO']],
-                use_container_width=True,
-                hide_index=True,
-                column_config={
-                    "PROMEDIO": st.column_config.ProgressColumn("Puntaje", min_value=0, max_value=5, format="%.2f"),
-                    "URL_FOTO": st.column_config.ImageColumn("Foto")
-                }
+                        <h3>{p3['NOMBRE_COMPLETO'].split()[0]}</h3>
+                        <h2 style="color:#CD7F32;">{p3['PROMEDIO']}</h2>
+                    </div>""", unsafe_allow_html=True)
+
+            st.markdown("### 📊 Listado General")
+            st.data_editor(
+                ranking[['NOMBRE_COMPLETO', 'CARGO_ACTUAL', 'PROMEDIO']],
+                column_config={"PROMEDIO": st.column_config.ProgressColumn("Nota", min_value=0, max_value=5, format="%.2f")},
+                hide_index=True, use_container_width=True, disabled=True
             )
+        else: st.info("No hay datos de ranking aún.")
 
     # ----------------------------------------
-    # VISTA 3: HISTORIAL SIMPLE
+    # VISTA 3: HISTORIAL (MODIFICADA)
     # ----------------------------------------
-    elif seleccion == "Mi Historial":
-        st.title("📂 Historial de Registros")
-        st.dataframe(df_historial, use_container_width=True)
+    elif seleccion == "📂 Mi Historial":
+        st.title("📂 Registro de Evaluaciones")
+        if df_historial is not None and not df_historial.empty:
+            # Seleccionamos columnas: COD_PARADA primero, quitamos FECHA_HORA si deseas
+            cols_mostrar = ['COD_PARADA', 'DNI_TRABAJADOR', 'NOTA_FINAL', 'COMENTARIOS']
+            
+            # Filtramos solo las que existan para evitar errores
+            cols_finales = [c for c in cols_mostrar if c in df_historial.columns]
+            
+            st.dataframe(
+                df_historial[cols_finales], 
+                use_container_width=True,
+                hide_index=True
+            )
+        else:
+            st.info("Sin registros.")
