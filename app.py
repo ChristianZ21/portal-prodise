@@ -34,7 +34,7 @@ def get_default_profile_pic():
 DEFAULT_IMG = get_default_profile_pic()
 
 # ==========================================
-# 3. ESTILOS VISUALES
+# 3. ESTILOS VISUALES (MODO OSCURO FORZADO)
 # ==========================================
 def add_bg_from_local(image_file):
     if os.path.exists(image_file):
@@ -48,62 +48,99 @@ def add_bg_from_local(image_file):
                 background-position: center;
                 background-attachment: fixed;
             }}
+            /* Capa oscura para asegurar legibilidad */
             .stApp::before {{
                 content: "";
                 position: absolute;
                 top: 0; left: 0;
                 width: 100%; height: 100%;
-                background-color: rgba(0, 0, 0, 0.6); 
+                background-color: rgba(14, 17, 23, 0.85); /* Fondo base muy oscuro */
                 z-index: -1;
             }}
             </style>
             """, unsafe_allow_html=True)
     else:
-        st.markdown("<style>.stApp { background: linear-gradient(to right, #141e30, #243b55); }</style>", unsafe_allow_html=True)
+        st.markdown("<style>.stApp { background-color: #0E1117; }</style>", unsafe_allow_html=True)
 
 add_bg_from_local('fondo.jpg')
 LOGO_FILE = "logo.png"
 
+# --- CSS PARA FORZAR MODO OSCURO Y ESTILOS ---
 st.markdown("""
 <style>
-    h1, h2, h3, p, label, span, div, li { color: #E0E0E0; }
-    h1, h2 { color: #4FC3F7 !important; text-shadow: 2px 2px 4px #000; }
+    /* 1. FORZAR MODO OSCURO EN EL NAVEGADOR */
+    :root {
+        color-scheme: dark;
+    }
+
+    /* 2. FUENTES Y COLORES GLOBALES */
+    html, body, [class*="st-"] {
+        color: #E0E0E0; /* Texto claro por defecto */
+    }
     
-    /* TARJETAS DE CRISTAL */
+    /* Títulos */
+    h1, h2 { color: #4FC3F7 !important; text-shadow: 2px 2px 4px #000; }
+    h3, h4, h5, h6 { color: #E0E0E0 !important; }
+    p, label, span, div, li { color: #CCCCCC; }
+
+    /* 3. TARJETAS DE CRISTAL (Glassmorphism Oscuro) */
     .css-card {
-        background: rgba(255, 255, 255, 0.1);
+        background: rgba(30, 30, 40, 0.7); /* Fondo oscuro semitransparente */
         backdrop-filter: blur(10px);
         -webkit-backdrop-filter: blur(10px);
         border-radius: 15px;
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.1);
         padding: 20px;
         margin-bottom: 20px;
-        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
     }
     
-    /* Botones */
-    div.stButton > button { background: #0288D1; color: white; border: none; font-weight: bold; transition: 0.3s; border-radius: 8px; }
-    div.stButton > button:hover { background: #03A9F4; transform: scale(1.02); }
+    /* 4. BOTONES */
+    div.stButton > button { 
+        background: #0288D1; 
+        color: white !important; 
+        border: none; 
+        font-weight: bold; 
+        transition: 0.3s; 
+        border-radius: 8px; 
+    }
+    div.stButton > button:hover { 
+        background: #03A9F4; 
+        transform: scale(1.02); 
+    }
 
-    /* Radio Buttons */
+    /* 5. INPUTS Y SELECTBOX (Forzar fondo oscuro) */
+    .stSelectbox, .stTextInput, .stTextArea {
+        color: white !important;
+    }
+    /* Fondo de las listas desplegables */
+    ul[data-testid="stSelectboxVirtualDropdown"] {
+        background-color: #262730 !important;
+    }
+
+    /* 6. SIDEBAR OSCURO */
+    [data-testid="stSidebar"] { 
+        background-color: #151922 !important; 
+        border-right: 1px solid #333; 
+    }
+    
+    /* 7. OPCIONES DE RADIO (VERTICAL/HORIZONTAL) */
     div[role="radiogroup"] label {
-        background-color: rgba(255,255,255,0.1);
-        border: 1px solid rgba(255,255,255,0.2);
+        background-color: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.1);
         padding: 10px;
         border-radius: 8px;
         margin-bottom: 5px;
         transition: 0.3s;
-        width: 100%; /* Ocupar todo el ancho */
+        width: 100%;
     }
     div[role="radiogroup"] label:hover {
-        background-color: rgba(255,255,255,0.2);
+        background-color: rgba(255,255,255,0.15);
         border-color: #4FC3F7;
+        cursor: pointer;
     }
-
-    /* Sidebar */
-    [data-testid="stSidebar"] { background-color: rgba(20, 30, 48, 0.95); border-right: 1px solid #333; }
     
-    /* Centrado de emojis en Podio */
+    /* 8. PODIO EMOJIS */
     .podio-emoji {
         font-size: 3rem; 
         margin: 0; 
@@ -150,11 +187,9 @@ df_users, df_personal, df_roles, df_historial, tbl_historial, df_config = load_d
 # --- VALIDACIÓN DE PARADA ---
 parada_actual = "GENERAL"
 if df_config is not None and not df_config.empty:
-    # Prioridad: Columna llamada 'COD_PARADA'
     if 'COD_PARADA' in df_config.columns:
         parada_actual = str(df_config.iloc[0]['COD_PARADA'])
     else:
-        # Respaldo: Primera celda de la primera columna
         parada_actual = str(df_config.iloc[0].values[0])
 
 def get_photo_url(url_raw):
@@ -205,10 +240,11 @@ else:
     with st.sidebar:
         if os.path.exists(LOGO_FILE): st.image(LOGO_FILE, use_container_width=True)
         
-        # CAMBIO 1: Nombre completo (sin split)
-        st.markdown(f"### 👤 {st.session_state.nombre_real}") 
-        
+        # Nombre Completo
+        st.markdown(f"### 👤 {st.session_state.nombre_real}")
         st.caption(f"{st.session_state.rol}")
+        
+        # Parada Activa
         st.info(f"⚙️ Parada Activa:\n**{parada_actual}**")
         
         seleccion = st.radio("Menú", opciones)
@@ -265,7 +301,7 @@ else:
                     notas_save = {}
                     
                     st.markdown("### Criterios de Evaluación")
-                    # CAMBIO 4: Estructura vertical (Pregunta arriba, opciones abajo)
+                    
                     for i, (idx, row) in enumerate(preguntas.iterrows(), 1):
                         st.markdown(f"**{i}. {row['CRITERIO']}** <span style='font-size:0.8em; color:grey'>({row['PORCENTAJE']*100:.0f}%)</span>", unsafe_allow_html=True)
                         
@@ -277,9 +313,8 @@ else:
                             str(row.get('NIVEL_5', 'Nivel 5'))
                         ]
                         
-                        # Opciones debajo de la pregunta
                         seleccion_texto = st.radio(
-                            label="Seleccione nivel:", # Label oculto visualmente por CSS si se desea, pero necesario
+                            label="Selección:",
                             options=opciones, 
                             key=f"rad_{i}", 
                             horizontal=True, 
@@ -289,7 +324,6 @@ else:
                         nota_numerica = opciones.index(seleccion_texto) + 1
                         score_total += nota_numerica * row['PORCENTAJE']
                         notas_save[f"NOTA_{i}"] = nota_numerica
-                        
                         st.divider()
                     
                     obs = st.text_area("Observaciones")
@@ -318,7 +352,7 @@ else:
                             st.warning("⚠️ Debes poner una observación.")
 
     # ----------------------------------------
-    # 2. RANKING (CON FILTRO Y PODIO CENTRADO)
+    # 2. RANKING (CON PODIO GRANDE)
     # ----------------------------------------
     elif seleccion == "🏆 Ranking Global" and st.session_state.rol == 'ADMIN':
         st.title("🏆 Ranking Global")
@@ -331,7 +365,6 @@ else:
             ranking = pd.merge(resumen, df_personal, on='DNI', how='left')
             ranking['PROMEDIO'] = ranking['PROMEDIO'].round(2)
             
-            # CAMBIO 2: FILTRO POR CARGO
             cargos_disp = ["TODOS"] + sorted(ranking['CARGO_ACTUAL'].dropna().unique().tolist())
             filtro_cargo = st.selectbox("Filtrar por Cargo:", cargos_disp)
             
@@ -341,7 +374,6 @@ else:
             ranking = ranking.sort_values('PROMEDIO', ascending=False).reset_index(drop=True)
             
             if len(ranking) >= 3:
-                # CAMBIO 3: EMOJIS CENTRADOS Y GRANDES
                 c2, c1, c3 = st.columns([1, 1.2, 1])
                 with c2:
                     p2 = ranking.iloc[1]
