@@ -20,9 +20,8 @@ AIRTABLE_API_TOKEN = "pat3Ig7rAOvq7JdpN.fbef700fa804ae5692e3880899bba070239e9593
 AIRTABLE_BASE_ID = "app2jaysCvPwvrBwI"
 
 # ==========================================
-# 2. GENERADOR DE SILUETA (Auto-generado)
+# 2. GENERADOR DE SILUETA
 # ==========================================
-# Creamos una imagen SVG de silueta blanca en memoria para usar si no hay foto
 def get_default_profile_pic():
     svg = """
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#E0E0E0" width="100%" height="100%">
@@ -35,7 +34,7 @@ def get_default_profile_pic():
 DEFAULT_IMG = get_default_profile_pic()
 
 # ==========================================
-# 3. ESTILOS VISUALES (TRANSPARENTE / GLASS)
+# 3. ESTILOS VISUALES
 # ==========================================
 def add_bg_from_local(image_file):
     if os.path.exists(image_file):
@@ -67,11 +66,10 @@ LOGO_FILE = "logo.png"
 
 st.markdown("""
 <style>
-    /* Textos claros para fondo oscuro */
     h1, h2, h3, p, label, span, div, li { color: #E0E0E0; }
     h1, h2 { color: #4FC3F7 !important; text-shadow: 2px 2px 4px #000; }
     
-    /* TARJETAS DE CRISTAL (Glassmorphism) */
+    /* TARJETAS DE CRISTAL */
     .css-card {
         background: rgba(255, 255, 255, 0.1);
         backdrop-filter: blur(10px);
@@ -87,7 +85,7 @@ st.markdown("""
     div.stButton > button { background: #0288D1; color: white; border: none; font-weight: bold; transition: 0.3s; border-radius: 8px; }
     div.stButton > button:hover { background: #03A9F4; transform: scale(1.02); }
 
-    /* Radio Buttons personalizados (Opciones de texto) */
+    /* Radio Buttons */
     div[role="radiogroup"] label {
         background-color: rgba(255,255,255,0.1);
         border: 1px solid rgba(255,255,255,0.2);
@@ -95,17 +93,23 @@ st.markdown("""
         border-radius: 8px;
         margin-bottom: 5px;
         transition: 0.3s;
+        width: 100%; /* Ocupar todo el ancho */
     }
     div[role="radiogroup"] label:hover {
         background-color: rgba(255,255,255,0.2);
         border-color: #4FC3F7;
     }
-    div[role="radiogroup"] {
-        color: white;
-    }
 
     /* Sidebar */
     [data-testid="stSidebar"] { background-color: rgba(20, 30, 48, 0.95); border-right: 1px solid #333; }
+    
+    /* Centrado de emojis en Podio */
+    .podio-emoji {
+        font-size: 3rem; 
+        margin: 0; 
+        text-align: center;
+        display: block;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -146,12 +150,13 @@ df_users, df_personal, df_roles, df_historial, tbl_historial, df_config = load_d
 # --- VALIDACIÓN DE PARADA ---
 parada_actual = "GENERAL"
 if df_config is not None and not df_config.empty:
+    # Prioridad: Columna llamada 'COD_PARADA'
     if 'COD_PARADA' in df_config.columns:
         parada_actual = str(df_config.iloc[0]['COD_PARADA'])
     else:
+        # Respaldo: Primera celda de la primera columna
         parada_actual = str(df_config.iloc[0].values[0])
 
-# Función auxiliar para obtener foto segura
 def get_photo_url(url_raw):
     if not url_raw or str(url_raw).lower() == 'nan' or len(str(url_raw)) < 5:
         return DEFAULT_IMG
@@ -199,7 +204,10 @@ else:
 
     with st.sidebar:
         if os.path.exists(LOGO_FILE): st.image(LOGO_FILE, use_container_width=True)
-        st.markdown(f"### 👤 {st.session_state.nombre_real.split()[0]}")
+        
+        # CAMBIO 1: Nombre completo (sin split)
+        st.markdown(f"### 👤 {st.session_state.nombre_real}") 
+        
         st.caption(f"{st.session_state.rol}")
         st.info(f"⚙️ Parada Activa:\n**{parada_actual}**")
         
@@ -220,7 +228,7 @@ else:
             data_view = data_view[data_view['DNI'] != st.session_state.dni_user]
 
     # ----------------------------------------
-    # 1. EVALUACIÓN (CON OPCIONES DE TEXTO)
+    # 1. EVALUACIÓN (PREGUNTAS VERTICALES)
     # ----------------------------------------
     if seleccion == "📝 Evaluar Personal":
         st.title(f"📝 Evaluación - {parada_actual}")
@@ -231,7 +239,6 @@ else:
             p = data_view[data_view['NOMBRE_COMPLETO'] == sel_nombre].iloc[0]
             foto_final = get_photo_url(p.get('URL_FOTO', ''))
             
-            # Tarjeta de Identidad
             st.markdown(f"""
             <div class="css-card" style="display: flex; align-items: center; gap: 20px;">
                 <img src="{foto_final}" style="width: 90px; height: 90px; border-radius: 50%; border: 3px solid #4FC3F7; object-fit: cover; background-color: #333;">
@@ -245,7 +252,6 @@ else:
             </div>
             """, unsafe_allow_html=True)
             
-            # Cargar Preguntas
             preguntas = pd.DataFrame()
             if df_roles is not None and not df_roles.empty:
                 df_roles['CARGO_NORM'] = df_roles['CARGO'].astype(str).str.upper().str.strip()
@@ -259,10 +265,10 @@ else:
                     notas_save = {}
                     
                     st.markdown("### Criterios de Evaluación")
+                    # CAMBIO 4: Estructura vertical (Pregunta arriba, opciones abajo)
                     for i, (idx, row) in enumerate(preguntas.iterrows(), 1):
                         st.markdown(f"**{i}. {row['CRITERIO']}** <span style='font-size:0.8em; color:grey'>({row['PORCENTAJE']*100:.0f}%)</span>", unsafe_allow_html=True)
                         
-                        # AQUÍ ESTÁ EL CAMBIO: Usamos las columnas de TEXTO de la base de datos
                         opciones = [
                             str(row.get('NIVEL_1', 'Nivel 1')),
                             str(row.get('NIVEL_2', 'Nivel 2')),
@@ -271,10 +277,15 @@ else:
                             str(row.get('NIVEL_5', 'Nivel 5'))
                         ]
                         
-                        # Radio Button Horizontal con las descripciones reales
-                        seleccion_texto = st.radio(f"Calificación para {row['CRITERIO']}:", options=opciones, key=f"rad_{i}", horizontal=True, label_visibility="collapsed")
+                        # Opciones debajo de la pregunta
+                        seleccion_texto = st.radio(
+                            label="Seleccione nivel:", # Label oculto visualmente por CSS si se desea, pero necesario
+                            options=opciones, 
+                            key=f"rad_{i}", 
+                            horizontal=True, 
+                            label_visibility="collapsed"
+                        )
                         
-                        # Calculamos la nota basada en el índice (0 a 4 -> +1 -> 1 a 5)
                         nota_numerica = opciones.index(seleccion_texto) + 1
                         score_total += nota_numerica * row['PORCENTAJE']
                         notas_save[f"NOTA_{i}"] = nota_numerica
@@ -307,7 +318,7 @@ else:
                             st.warning("⚠️ Debes poner una observación.")
 
     # ----------------------------------------
-    # 2. RANKING
+    # 2. RANKING (CON FILTRO Y PODIO CENTRADO)
     # ----------------------------------------
     elif seleccion == "🏆 Ranking Global" and st.session_state.rol == 'ADMIN':
         st.title("🏆 Ranking Global")
@@ -319,17 +330,26 @@ else:
             resumen.columns = ['DNI', 'PROMEDIO']
             ranking = pd.merge(resumen, df_personal, on='DNI', how='left')
             ranking['PROMEDIO'] = ranking['PROMEDIO'].round(2)
+            
+            # CAMBIO 2: FILTRO POR CARGO
+            cargos_disp = ["TODOS"] + sorted(ranking['CARGO_ACTUAL'].dropna().unique().tolist())
+            filtro_cargo = st.selectbox("Filtrar por Cargo:", cargos_disp)
+            
+            if filtro_cargo != "TODOS":
+                ranking = ranking[ranking['CARGO_ACTUAL'] == filtro_cargo]
+            
             ranking = ranking.sort_values('PROMEDIO', ascending=False).reset_index(drop=True)
             
             if len(ranking) >= 3:
+                # CAMBIO 3: EMOJIS CENTRADOS Y GRANDES
                 c2, c1, c3 = st.columns([1, 1.2, 1])
                 with c2:
                     p2 = ranking.iloc[1]
                     f2 = get_photo_url(p2.get('URL_FOTO', ''))
                     st.markdown(f"""
                     <div class="css-card" style="text-align:center; border-top: 5px solid #C0C0C0;">
-                        <h1 style="margin:0;">🥈</h1>
-                        <img src="{f2}" style="width:80px; height:80px; border-radius:50%; object-fit:cover; background:#333;">
+                        <span class="podio-emoji">🥈</span>
+                        <img src="{f2}" style="width:80px; height:80px; border-radius:50%; object-fit:cover; background:#333; margin: 10px 0;">
                         <h3>{p2['NOMBRE_COMPLETO'].split()[0]}</h3>
                         <h2 style="color:#C0C0C0;">{p2['PROMEDIO']}</h2>
                     </div>""", unsafe_allow_html=True)
@@ -338,8 +358,8 @@ else:
                     f1 = get_photo_url(p1.get('URL_FOTO', ''))
                     st.markdown(f"""
                     <div class="css-card" style="text-align:center; border-top: 5px solid #FFD700; transform: scale(1.05);">
-                        <h1 style="margin:0; font-size: 3em;">👑</h1>
-                        <img src="{f1}" style="width:110px; height:110px; border-radius:50%; object-fit:cover; border: 4px solid #FFD700; background:#333;">
+                        <span class="podio-emoji">🥇</span>
+                        <img src="{f1}" style="width:110px; height:110px; border-radius:50%; object-fit:cover; border: 4px solid #FFD700; background:#333; margin: 10px 0;">
                         <h2>{p1['NOMBRE_COMPLETO'].split()[0]}</h2>
                         <h1 style="color:#FFD700;">{p1['PROMEDIO']}</h1>
                     </div>""", unsafe_allow_html=True)
@@ -348,15 +368,19 @@ else:
                     f3 = get_photo_url(p3.get('URL_FOTO', ''))
                     st.markdown(f"""
                     <div class="css-card" style="text-align:center; border-top: 5px solid #CD7F32;">
-                        <h1 style="margin:0;">🥉</h1>
-                        <img src="{f3}" style="width:80px; height:80px; border-radius:50%; object-fit:cover; background:#333;">
+                        <span class="podio-emoji">🥉</span>
+                        <img src="{f3}" style="width:80px; height:80px; border-radius:50%; object-fit:cover; background:#333; margin: 10px 0;">
                         <h3>{p3['NOMBRE_COMPLETO'].split()[0]}</h3>
                         <h2 style="color:#CD7F32;">{p3['PROMEDIO']}</h2>
                     </div>""", unsafe_allow_html=True)
 
             st.markdown("### 📊 Listado General")
-            st.dataframe(ranking[['NOMBRE_COMPLETO', 'CARGO_ACTUAL', 'PROMEDIO']], use_container_width=True, hide_index=True)
-        else: st.info("No hay datos.")
+            st.data_editor(
+                ranking[['NOMBRE_COMPLETO', 'CARGO_ACTUAL', 'PROMEDIO']],
+                column_config={"PROMEDIO": st.column_config.ProgressColumn("Nota", min_value=0, max_value=5, format="%.2f")},
+                hide_index=True, use_container_width=True, disabled=True
+            )
+        else: st.info("No hay datos de ranking.")
 
     # ----------------------------------------
     # 3. HISTORIAL
