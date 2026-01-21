@@ -34,7 +34,7 @@ def get_default_profile_pic():
 DEFAULT_IMG = get_default_profile_pic()
 
 # ==========================================
-# 3. ESTILOS VISUALES (ESTANDARIZACIÓN TOTAL)
+# 3. ESTILOS VISUALES (MODO INMERSIVO SIN BORDES)
 # ==========================================
 def add_bg_from_local(image_file):
     if os.path.exists(image_file):
@@ -47,13 +47,16 @@ def add_bg_from_local(image_file):
                 background-size: cover;
                 background-position: center;
                 background-attachment: fixed;
+                background-repeat: no-repeat;
+                background-color: #000000; /* Fondo negro de seguridad */
             }}
+            /* Capa oscura superpuesta */
             .stApp::before {{
                 content: "";
                 position: absolute;
                 top: 0; left: 0;
                 width: 100%; height: 100%;
-                background-color: rgba(5, 5, 10, 0.92); /* Fondo base muy oscuro */
+                background-color: rgba(5, 5, 10, 0.92);
                 z-index: -1;
             }}
             </style>
@@ -66,91 +69,73 @@ LOGO_FILE = "logo.png"
 
 st.markdown("""
 <style>
-    /* ============================================================
-       1. RESET GLOBAL (ELIMINA BORDES BLANCOS EXTERNOS)
-       ============================================================ */
-    :root { color-scheme: dark !important; } /* Fuerza al navegador a modo oscuro */
+    /* 1. RESET TOTAL (CERO BORDES BLANCOS) */
+    :root { color-scheme: dark !important; }
     
     html, body {
-        background-color: #000000 !important; /* Fondo negro detrás de la app */
-        color: #E0E0E0 !important;
-        margin: 0;
-        padding: 0;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        background-color: #000000 !important;
+        overflow-x: hidden; /* Evitar scroll horizontal */
+    }
+
+    /* Ocultar la barra superior (Header) de Streamlit para ganar espacio arriba */
+    header[data-testid="stHeader"] {
+        background-color: rgba(0,0,0,0) !important;
+        visibility: hidden; /* Oculta los 3 puntos y el menú superior si lo deseas */
     }
     
-    [class*="st-"] {
+    /* Ajustar el contenedor principal para que suba al espacio ganado */
+    .block-container {
+        padding-top: 1rem !important; /* Menos espacio arriba */
+        padding-bottom: 2rem !important;
+    }
+
+    /* Texto global */
+    [class*="st-"], h1, h2, h3, p, span, label, div {
         color: #E0E0E0;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
     /* ============================================================
-       2. SOLUCIÓN BLINDAJA PARA LISTAS DESPLEGABLES (DROPDOWNS)
+       CORRECCIÓN LISTAS DESPLEGABLES (DROPDOWN)
        ============================================================ */
-    
-    /* El contenedor flotante (Popover) */
-    div[data-baseweb="popover"],
-    div[data-baseweb="popover"] > div {
-        background-color: #151520 !important; /* Gris muy oscuro */
-        border: 1px solid #333 !important;
+    div[data-baseweb="popover"], div[data-baseweb="popover"] > div {
+        background-color: #1E1E2E !important;
+        border: 1px solid #444 !important;
     }
-
-    /* La lista interna (ul) */
-    ul[data-baseweb="menu"] {
-        background-color: #151520 !important;
-        padding: 5px !important;
-    }
-
-    /* Las opciones individuales (li) */
-    li[data-baseweb="option"],
-    li[role="option"],
-    div[role="option"] {
-        background-color: #151520 !important;
+    ul[data-baseweb="menu"] { background-color: #1E1E2E !important; }
+    li[data-baseweb="option"] {
+        background-color: #1E1E2E !important;
         color: #E0E0E0 !important;
-        border-radius: 4px;
-        margin-bottom: 2px;
     }
-
-    /* Hover y Selección */
-    li[data-baseweb="option"]:hover,
-    li[role="option"]:hover,
-    li[role="option"][aria-selected="true"] {
-        background-color: #0288D1 !important; /* Azul PRODISE */
+    li[data-baseweb="option"]:hover, 
+    li[data-baseweb="option"][aria-selected="true"] {
+        background-color: #0288D1 !important;
         color: white !important;
     }
-    
-    /* Asegurar que el texto interno no sea negro */
-    div[data-baseweb="menu"] * {
-        color: inherit !important;
-    }
+    li[data-baseweb="option"] * { color: inherit !important; }
 
     /* ============================================================
-       3. ESTILOS DE INPUTS (TIPO GOOGLE OSCURO)
+       INPUTS & TARJETAS
        ============================================================ */
-    
     .stTextInput input {
         background-color: #1E1E2E !important;
         color: white !important;
-        border: 1px solid #444 !important;
+        border: 1px solid #555 !important;
         border-radius: 50px !important;
         padding: 12px 25px !important;
     }
-    
-    .stSelectbox div[data-baseweb="select"] > div {
-        background-color: #1E1E2E !important;
-        border: 1px solid #444 !important;
-        color: white !important;
-        border-radius: 8px !important;
+    .stTextInput input:focus {
+        border-color: #4FC3F7 !important;
+        box-shadow: 0 0 10px rgba(79, 195, 247, 0.3);
     }
     
-    /* ============================================================
-       4. COMPONENTES GENERALES
-       ============================================================ */
-    
-    /* Títulos */
-    h1, h2 { color: #4FC3F7 !important; text-shadow: 0px 0px 10px rgba(79, 195, 247, 0.4); }
+    h1, h2 { color: #4FC3F7 !important; text-shadow: 0px 0px 15px rgba(79, 195, 247, 0.5); }
     h3, h4, h5 { color: #FFFFFF !important; }
-    p, label, span, li { color: #B0BEC5 !important; }
 
-    /* Tarjetas */
     .css-card {
         background: rgba(20, 20, 30, 0.75);
         backdrop-filter: blur(12px);
@@ -162,7 +147,6 @@ st.markdown("""
         box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
     }
 
-    /* Botones */
     div.stButton > button {
         background: linear-gradient(135deg, #0288D1 0%, #01579B 100%);
         color: white !important;
@@ -174,21 +158,26 @@ st.markdown("""
     }
     div.stButton > button:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(2, 136, 209, 0.4);
+        box-shadow: 0 4px 20px rgba(2, 136, 209, 0.5);
     }
 
-    /* Sidebar */
     [data-testid="stSidebar"] {
-        background-color: #0a0e14 !important;
+        background-color: #080A0C !important;
         border-right: 1px solid #222;
     }
     
-    /* Podio */
-    .podio-emoji { font-size: 3.5rem; display: block; margin-bottom: 10px; }
+    /* Radio Buttons */
+    div[role="radiogroup"] label {
+        background-color: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.05);
+        color: #ddd !important;
+    }
+    div[role="radiogroup"] label:hover {
+        background-color: rgba(255,255,255,0.1);
+        border-color: #4FC3F7;
+    }
     
-    /* Ajuste de scrollbar (opcional) */
-    ::-webkit-scrollbar { width: 10px; background: #000; }
-    ::-webkit-scrollbar-thumb { background: #333; border-radius: 5px; }
+    .podio-emoji { font-size: 3.5rem; display: block; margin-bottom: 10px; }
 </style>
 """, unsafe_allow_html=True)
 
