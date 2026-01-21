@@ -34,7 +34,7 @@ def get_default_profile_pic():
 DEFAULT_IMG = get_default_profile_pic()
 
 # ==========================================
-# 3. ESTILOS VISUALES (FIX FINAL: VISIBILIDAD TEXTAREA)
+# 3. ESTILOS VISUALES (FIX FINAL: CAJA AZUL SÓLIDA PARA TEXTAREA)
 # ==========================================
 def add_bg_from_local(image_file):
     if os.path.exists(image_file):
@@ -126,29 +126,31 @@ st.markdown("""
     }
 
     /* ============================================================
-       3. FIX TEXT AREA (SUSTENTO DE NOTA) - MEJORA DE VISIBILIDAD
+       3. FIX TEXT AREA (SUSTENTO DE NOTA) - LA CAJA AZUL SÓLIDA
        ============================================================ */
     
     /* El contenedor BASE del text area (el que da la forma) */
     div[data-baseweb="textarea"] {
-        background-color: #1E1E2E !important; /* Fondo oscuro sólido */
-        border: 2px solid #666 !important;    /* Borde más visible y claro */
+        background-color: #0f111a !important; /* Fondo MUY oscuro, casi negro azulado */
+        border: 2px solid #4FC3F7 !important; /* Borde AZUL brillante y visible */
         border-radius: 12px !important;
-        transition: all 0.3s ease;            /* Transición suave */
+        overflow: hidden !important; /* CRÍTICO: Recorta las esquinas para que no salga blanco */
+        box-shadow: inset 0 0 10px rgba(79, 195, 247, 0.1); /* Un ligero resplandor azul interno */
+        transition: all 0.3s ease;
     }
 
-    /* Cuando se hace clic dentro (Focus) - Resaltar en Azul */
+    /* Cuando se hace clic dentro (Focus) - Resaltar más */
     div[data-baseweb="textarea"]:focus-within {
-        border-color: #4FC3F7 !important;
-        box-shadow: 0 0 8px rgba(79, 195, 247, 0.3) !important;
+        box-shadow: 0 0 15px rgba(79, 195, 247, 0.4) !important;
     }
     
     /* El área de escritura real */
     .stTextArea textarea {
-        background-color: transparent !important;
+        background-color: transparent !important; /* Transparente para ver el fondo del padre */
         color: white !important;
         border: none !important;
         caret-color: white !important; /* Cursor blanco */
+        padding: 10px !important;
     }
     
     /* Eliminar fondos de contenedores padre de Streamlit */
@@ -433,7 +435,6 @@ else:
                         notas_save[f"NOTA_{i}"] = nota_numerica
                         st.divider()
                     
-                    # AQUÍ ESTÁ EL CAMBIO DEL NOMBRE
                     obs = st.text_area("Sustento de la Nota Final", height=100)
                     enviar = st.form_submit_button("✅ GUARDAR EVALUACIÓN", use_container_width=True)
                     
