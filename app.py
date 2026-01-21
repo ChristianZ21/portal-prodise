@@ -34,7 +34,7 @@ def get_default_profile_pic():
 DEFAULT_IMG = get_default_profile_pic()
 
 # ==========================================
-# 3. ESTILOS VISUALES (FIX FINAL: CAJA AZUL SÓLIDA PARA TEXTAREA)
+# 3. ESTILOS VISUALES (FONDO ARRIBA + CAJA NOTORIA)
 # ==========================================
 def add_bg_from_local(image_file):
     if os.path.exists(image_file):
@@ -45,7 +45,8 @@ def add_bg_from_local(image_file):
             .stApp {{
                 background-image: url(data:image/jpg;base64,{enc.decode()});
                 background-size: cover;
-                background-position: center;
+                /* CAMBIO AQUÍ: Enfocar arriba */
+                background-position: top center; 
                 background-repeat: no-repeat;
                 background-attachment: fixed;
                 background-color: #000000;
@@ -126,27 +127,28 @@ st.markdown("""
     }
 
     /* ============================================================
-       3. FIX TEXT AREA (SUSTENTO DE NOTA) - LA CAJA AZUL SÓLIDA
+       3. FIX TEXT AREA (SUSTENTO DE NOTA) - CAJA MUY VISIBLE
        ============================================================ */
     
-    /* El contenedor BASE del text area (el que da la forma) */
+    /* El contenedor BASE del text area */
     div[data-baseweb="textarea"] {
-        background-color: #0f111a !important; /* Fondo MUY oscuro, casi negro azulado */
-        border: 2px solid #4FC3F7 !important; /* Borde AZUL brillante y visible */
+        /* Fondo gris sólido y notorio, ya no transparente */
+        background-color: #2E3240 !important; 
+        /* Borde azul más grueso y evidente */
+        border: 3px solid #4FC3F7 !important; 
         border-radius: 12px !important;
-        overflow: hidden !important; /* CRÍTICO: Recorta las esquinas para que no salga blanco */
-        box-shadow: inset 0 0 10px rgba(79, 195, 247, 0.1); /* Un ligero resplandor azul interno */
-        transition: all 0.3s ease;
+        overflow: hidden !important; /* Mantiene esquinas limpias */
+        box-shadow: inset 0 2px 5px rgba(0,0,0,0.3) !important; /* Sombra interna para profundidad */
     }
 
-    /* Cuando se hace clic dentro (Focus) - Resaltar más */
+    /* Cuando se hace clic dentro (Focus) */
     div[data-baseweb="textarea"]:focus-within {
-        box-shadow: 0 0 15px rgba(79, 195, 247, 0.4) !important;
+        box-shadow: 0 0 15px rgba(79, 195, 247, 0.5) !important; /* Resplandor azul más fuerte */
     }
     
     /* El área de escritura real */
     .stTextArea textarea {
-        background-color: transparent !important; /* Transparente para ver el fondo del padre */
+        background-color: transparent !important;
         color: white !important;
         border: none !important;
         caret-color: white !important; /* Cursor blanco */
