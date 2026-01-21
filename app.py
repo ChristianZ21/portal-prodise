@@ -34,7 +34,7 @@ def get_default_profile_pic():
 DEFAULT_IMG = get_default_profile_pic()
 
 # ==========================================
-# 3. ESTILOS VISUALES (CORRECCIÓN FINAL DROPDOWN)
+# 3. ESTILOS VISUALES (FULL DARK + SEARCH FIX)
 # ==========================================
 def add_bg_from_local(image_file):
     if os.path.exists(image_file):
@@ -66,7 +66,6 @@ LOGO_FILE = "logo.png"
 
 st.markdown("""
 <style>
-    /* 1. MODO OSCURO GLOBAL */
     :root { color-scheme: dark; }
     html, body, [class*="st-"] { color: #E0E0E0; }
 
@@ -75,52 +74,34 @@ st.markdown("""
     h3, h4, h5 { color: #FFFFFF !important; }
     p, label, span, li { color: #B0BEC5 !important; }
 
-    /* ============================================================
-       FIX DROPDOWN MENU (FORZAR FONDO OSCURO EN LISTA)
-       ============================================================ */
+    /* --- FIX SEARCHBOX (Hacerlo tipo Google) --- */
+    /* El contenedor principal del input */
+    .stSelectbox div[data-baseweb="select"] > div {
+        background-color: #1E1E2E !important;
+        border: 1px solid #555 !important;
+        color: white !important;
+        cursor: text;
+    }
     
-    /* 1. El contenedor del menú desplegable (Popover) */
-    div[data-baseweb="popover"] > div {
-        background-color: #1E1E2E !important;
-        border: 1px solid #444 !important;
+    /* El texto del placeholder (cuando está vacío) */
+    .stSelectbox div[data-baseweb="select"] span {
+        color: #999 !important; 
+    }
+    
+    /* El texto cuando YA seleccionaste algo */
+    .stSelectbox div[data-baseweb="select"] div[data-testid="stMarkdownContainer"] p {
+        color: white !important;
+        font-weight: bold;
     }
 
-    /* 2. La lista interna (ul) */
-    ul[data-baseweb="menu"] {
-        background-color: #1E1E2E !important;
-    }
-
-    /* 3. Las opciones individuales (li) */
-    li[role="option"] {
-        background-color: #1E1E2E !important; /* Fondo oscuro forzado */
-        color: #E0E0E0 !important;             /* Texto claro forzado */
-    }
-
-    /* 4. Opción al pasar el mouse (Hover) */
+    /* DROPDOWN MENU */
+    ul[data-baseweb="menu"] { background-color: #1E1E2E !important; }
+    li[role="option"] { color: #E0E0E0 !important; }
     li[role="option"]:hover, li[role="option"][aria-selected="true"] {
-        background-color: #0288D1 !important;  /* Azul al seleccionar */
-        color: white !important;
-    }
-
-    /* 5. La barra de selección cerrada (Input) */
-    div[data-baseweb="select"] > div {
-        background-color: #1E1E2E !important;
-        color: white !important;
-        border: 1px solid #444 !important;
-    }
-    
-    /* Texto seleccionado visible */
-    div[data-baseweb="select"] span {
+        background-color: #0288D1 !important;
         color: white !important;
     }
     
-    /* Icono flecha */
-    div[data-baseweb="select"] svg {
-        fill: #B0BEC5 !important;
-    }
-
-    /* ============================================================ */
-
     /* TARJETAS */
     .css-card {
         background: rgba(20, 20, 30, 0.75);
@@ -294,8 +275,15 @@ else:
     if seleccion == "📝 Evaluar Personal":
         st.title(f"📝 Evaluación - {parada_actual}")
         
-        # Selector de Trabajador
-        sel_nombre = st.selectbox("Seleccionar Trabajador:", data_view['NOMBRE_COMPLETO'].unique()) if not data_view.empty else None
+        # === AQUÍ ESTÁ EL CAMBIO CLAVE PARA BÚSQUEDA DINÁMICA ===
+        # index=None -> Permite que empiece vacío
+        # placeholder="Escribe..." -> Indica que se puede buscar
+        sel_nombre = st.selectbox(
+            "Seleccionar Trabajador:", 
+            options=data_view['NOMBRE_COMPLETO'].unique(),
+            index=None,
+            placeholder="🔍 Escribe para buscar colaborador..."
+        ) if not data_view.empty else None
         
         if sel_nombre:
             p = data_view[data_view['NOMBRE_COMPLETO'] == sel_nombre].iloc[0]
