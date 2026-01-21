@@ -34,7 +34,7 @@ def get_default_profile_pic():
 DEFAULT_IMG = get_default_profile_pic()
 
 # ==========================================
-# 3. ESTILOS VISUALES (FIX FINAL: FONDO ARRIBA + CAJA SÓLIDA)
+# 3. ESTILOS VISUALES (FIX FINAL: TODO OSCURO/AZUL)
 # ==========================================
 def add_bg_from_local(image_file):
     if os.path.exists(image_file):
@@ -45,8 +45,7 @@ def add_bg_from_local(image_file):
             .stApp {{
                 background-image: url(data:image/jpg;base64,{enc.decode()});
                 background-size: cover;
-                /* CAMBIO: ALINEACIÓN SUPERIOR */
-                background-position: center top; 
+                background-position: top center; 
                 background-repeat: no-repeat;
                 background-attachment: fixed;
                 background-color: #000000;
@@ -89,73 +88,71 @@ st.markdown("""
     header[data-testid="stHeader"] { display: none !important; }
 
     /* ============================================================
-       2. FIX CAJA DE COMENTARIOS (SÓLIDA Y VISIBLE)
+       2. FIX TOTAL PARA INPUTS Y TEXTAREAS (ESTANDARIZACIÓN AZUL/OSCURO)
        ============================================================ */
     
-    /* El contenedor visible de la caja de texto */
-    div[data-baseweb="textarea"] {
-        /* FONDO SÓLIDO (Gris intermedio para contrastar con el negro de fondo) */
-        background-color: #262730 !important; 
-        
-        /* BORDE CLARO Y VISIBLE */
-        border: 2px solid #4FC3F7 !important; 
-        
-        border-radius: 12px !important;
-        padding: 5px !important;
-    }
-
-    /* Cuando escribes dentro */
-    div[data-baseweb="textarea"]:focus-within {
-        background-color: #2E303E !important; /* Se aclara ligeramente al escribir */
-        box-shadow: 0 0 10px rgba(79, 195, 247, 0.5) !important; /* Brillo azul */
-    }
-    
-    /* El texto dentro */
-    .stTextArea textarea {
+    /* ELIMINAR FONDOS BLANCOS DE CONTENEDORES PADRE */
+    div[data-testid="stTextInput"] > div,
+    div[data-testid="stTextArea"] > div,
+    div[data-baseweb="input"] > div,
+    div[data-baseweb="base-input"] {
         background-color: transparent !important;
-        color: white !important;
-        caret-color: #4FC3F7 !important; /* Cursor azul */
-    }
-
-    /* Eliminar cualquier fondo transparente heredado */
-    div[data-testid="stTextArea"] > div {
         background: transparent !important;
         border: none !important;
+        box-shadow: none !important;
     }
 
-    /* ============================================================
-       3. INPUTS NORMALES (Buscador / Login)
-       ============================================================ */
-    div[data-testid="stTextInput"] > div,
-    div[data-baseweb="input"] > div {
-        background-color: transparent !important;
-        border: none !important;
-    }
-
+    /* INPUTS DE UNA LÍNEA (LOGIN / BUSCADOR) */
     .stTextInput input, 
     input[type="text"], 
     input[type="password"] {
-        background-color: #1E1E2E !important; 
+        background-color: #1E1E2E !important; /* Gris Oscuro Azulado */
         color: white !important;
         border: 1px solid #555 !important;
         border-radius: 50px !important;
         padding: 10px 20px !important;
     }
 
-    /* Autocompletado Chrome */
+    /* CAJA DE COMENTARIOS (TEXTAREA) - AQUÍ ESTABA EL PROBLEMA */
+    /* 1. El contenedor del borde */
+    div[data-baseweb="textarea"] {
+        background-color: #1E1E2E !important; /* AHORA TIENE COLOR SÓLIDO */
+        border: 2px solid #4FC3F7 !important; /* Borde Azul */
+        border-radius: 12px !important;
+        padding: 5px !important;
+    }
+    
+    /* 2. El área donde escribes (Hijo) */
+    .stTextArea textarea {
+        background-color: #1E1E2E !important; /* FORZAR COLOR DE FONDO AQUÍ TAMBIÉN */
+        color: white !important;
+        caret-color: #4FC3F7 !important;
+        border: none !important; /* Sin borde extra */
+    }
+
+    /* Focus en Text Area */
+    div[data-baseweb="textarea"]:focus-within {
+        box-shadow: 0 0 15px rgba(79, 195, 247, 0.5) !important;
+    }
+
+    /* AUTOCOMPLETADO CHROME (Para que no se ponga blanco/amarillo) */
     input:-webkit-autofill,
     input:-webkit-autofill:hover, 
     input:-webkit-autofill:focus, 
-    input:-webkit-autofill:active {
+    input:-webkit-autofill:active,
+    textarea:-webkit-autofill,
+    textarea:-webkit-autofill:hover,
+    textarea:-webkit-autofill:focus,
+    textarea:-webkit-autofill:active {
         -webkit-box-shadow: 0 0 0 30px #1E1E2E inset !important;
         -webkit-text-fill-color: white !important;
+        transition: background-color 5000s ease-in-out 0s;
     }
 
     /* ============================================================
-       4. LISTAS DESPLEGABLES & RADIOS (MODO OSCURO)
+       3. LISTAS DESPLEGABLES & RADIOS (MODO OSCURO)
        ============================================================ */
     
-    /* Input Seleccionado */
     div[data-baseweb="select"] > div:first-child {
         background-color: #1E1E2E !important;
         color: white !important;
@@ -165,14 +162,12 @@ st.markdown("""
     div[data-baseweb="select"] span { color: white !important; }
     div[data-baseweb="select"] svg { fill: #B0BEC5 !important; }
 
-    /* Lista Flotante (Popover) */
     div[data-baseweb="popover"], div[data-baseweb="popover"] > div {
         background-color: #1E1E2E !important;
         border: 1px solid #444 !important;
     }
     ul[data-baseweb="menu"] { background-color: #1E1E2E !important; padding: 0 !important; }
     
-    /* Opciones */
     li[data-baseweb="option"], li[role="option"] {
         background-color: #1E1E2E !important;
         color: #E0E0E0 !important;
@@ -199,7 +194,7 @@ st.markdown("""
     }
 
     /* ============================================================
-       5. BOTONES Y TARJETAS
+       4. BOTONES Y TARJETAS
        ============================================================ */
     button[kind="primaryFormSubmit"],
     div[data-testid="stFormSubmitButton"] > button,
