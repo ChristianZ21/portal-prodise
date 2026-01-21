@@ -34,7 +34,7 @@ def get_default_profile_pic():
 DEFAULT_IMG = get_default_profile_pic()
 
 # ==========================================
-# 3. ESTILOS VISUALES (FIX FINAL: TEXTAREA + BUTTON)
+# 3. ESTILOS VISUALES (FIX FINAL: TEXT AREA BORDERS + BUTTON)
 # ==========================================
 def add_bg_from_local(image_file):
     if os.path.exists(image_file):
@@ -88,10 +88,31 @@ st.markdown("""
     header[data-testid="stHeader"] { display: none !important; }
 
     /* ============================================================
-       2. INPUTS DE TEXTO Y ÁREAS DE TEXTO (FIX OBSERVACIONES)
+       2. FIX TEXT AREA (OBSERVACIONES) - ELIMINAR BORDES BLANCOS
        ============================================================ */
     
-    /* Input simple (Buscador/Login) */
+    /* El contenedor BASE del text area (el que tiene el borde) */
+    div[data-baseweb="textarea"] {
+        background-color: #1E1E2E !important; /* Fondo oscuro forzado */
+        border: 1px solid #555 !important;
+        border-radius: 15px !important;
+    }
+    
+    /* El input real dentro del contenedor */
+    .stTextArea textarea {
+        background-color: transparent !important; /* Transparente para ver el fondo del padre */
+        color: white !important;
+        border: none !important;
+        caret-color: white !important; /* Cursor blanco */
+    }
+    
+    /* Contenedores padre de Streamlit */
+    div[data-testid="stTextArea"] > div {
+        background-color: transparent !important;
+        border: none !important;
+    }
+
+    /* Inputs simples (Login/Buscador) */
     .stTextInput input, 
     input[type="text"], 
     input[type="password"] {
@@ -102,23 +123,6 @@ st.markdown("""
         padding: 10px 20px !important;
     }
 
-    /* AREA DE TEXTO (Observaciones Generales) - EL FIX NUEVO */
-    .stTextArea textarea {
-        background-color: #1E1E2E !important;
-        color: white !important;
-        border: 1px solid #555 !important;
-        border-radius: 15px !important; /* Un poco menos redondo para áreas grandes */
-        caret-color: white !important;
-    }
-    
-    /* Eliminar fondos padre molestos */
-    div[data-testid="stTextInput"] > div,
-    div[data-baseweb="input"] > div,
-    div[data-testid="stTextArea"] > div {
-        background-color: transparent !important;
-        border: none !important;
-    }
-
     /* Autocompletado Chrome */
     input:-webkit-autofill, textarea:-webkit-autofill {
         -webkit-box-shadow: 0 0 0 30px #1E1E2E inset !important;
@@ -126,26 +130,36 @@ st.markdown("""
     }
 
     /* ============================================================
-       3. BOTONES (FIX GUARDAR EVALUACIÓN)
+       3. FIX BOTONES (INCLUIDO EL DE GUARDAR EVALUACIÓN)
        ============================================================ */
     
-    /* Apuntamos a TODOS los botones, incluidos los de formularios */
-    div.stButton > button,
-    div[data-testid="stFormSubmitButton"] > button {
-        background: linear-gradient(135deg, #0288D1 0%, #01579B 100%) !important;
+    /* Atacamos especificamente al botón dentro del formulario y botones generales */
+    button[kind="primaryFormSubmit"],
+    div[data-testid="stFormSubmitButton"] > button,
+    div.stButton > button {
+        background-color: #0288D1 !important; /* Color base */
+        background-image: linear-gradient(135deg, #0288D1 0%, #01579B 100%) !important;
         color: white !important;
         border: none !important;
         font-weight: 600;
         border-radius: 8px;
         padding: 0.6rem 1.2rem;
-        transition: all 0.3s ease;
         box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        transition: all 0.3s ease;
     }
 
-    div.stButton > button:hover,
-    div[data-testid="stFormSubmitButton"] > button:hover {
+    /* Estado Hover */
+    button[kind="primaryFormSubmit"]:hover,
+    div[data-testid="stFormSubmitButton"] > button:hover,
+    div.stButton > button:hover {
         transform: translateY(-2px);
         box-shadow: 0 6px 12px rgba(2, 136, 209, 0.5);
+        color: white !important;
+        background-color: #03A9F4 !important;
+    }
+    
+    /* Texto dentro del botón */
+    button * {
         color: white !important;
     }
 
