@@ -34,7 +34,7 @@ def get_default_profile_pic():
 DEFAULT_IMG = get_default_profile_pic()
 
 # ==========================================
-# 3. ESTILOS VISUALES (FIX FINAL: MENU OSCURO + RADIO VERTICAL)
+# 3. ESTILOS VISUALES (FIX FINAL: TEXTAREA + BUTTON)
 # ==========================================
 def add_bg_from_local(image_file):
     if os.path.exists(image_file):
@@ -85,95 +85,13 @@ st.markdown("""
         max-width: 100% !important;
     }
 
-    header[data-testid="stHeader"] {
-        display: none !important;
-    }
+    header[data-testid="stHeader"] { display: none !important; }
 
     /* ============================================================
-       2. FIX SELECTBOX & LISTAS DESPLEGABLES (ELIMINAR FONDO BLANCO)
+       2. INPUTS DE TEXTO Y ÁREAS DE TEXTO (FIX OBSERVACIONES)
        ============================================================ */
     
-    /* Input seleccionado (Caja cerrada) */
-    div[data-baseweb="select"] > div:first-child {
-        background-color: #1E1E2E !important;
-        color: white !important;
-        border: 1px solid #444 !important;
-        border-radius: 8px !important;
-    }
-
-    /* CONTENEDOR FLOTANTE (POPOVER) - EL CULPABLE DEL BLANCO */
-    div[data-baseweb="popover"],
-    div[data-baseweb="popover"] > div {
-        background-color: #1E1E2E !important;
-        color: white !important;
-        border: 1px solid #444 !important;
-    }
-
-    /* LA LISTA (UL) */
-    ul[data-baseweb="menu"],
-    ul[role="listbox"] {
-        background-color: #1E1E2E !important;
-        padding: 0 !important;
-        margin: 0 !important;
-    }
-
-    /* LAS OPCIONES (LI) */
-    li[data-baseweb="option"],
-    li[role="option"] {
-        background-color: #1E1E2E !important; /* Fondo oscuro forzado */
-        color: #E0E0E0 !important;             /* Texto claro forzado */
-    }
-
-    /* HOVER EN LAS OPCIONES */
-    li[data-baseweb="option"]:hover, 
-    li[data-baseweb="option"][aria-selected="true"],
-    li[role="option"]:hover,
-    li[role="option"][aria-selected="true"] {
-        background-color: #0288D1 !important; /* Azul */
-        color: white !important;
-    }
-    
-    /* Forzar color de texto interno en las opciones */
-    li[role="option"] * { color: inherit !important; }
-
-    /* ============================================================
-       3. FIX RADIO BUTTONS (APILADOS VERTICALMENTE)
-       ============================================================ */
-    
-    /* Contenedor del grupo de opciones */
-    div[role="radiogroup"] {
-        display: flex;
-        flex-direction: column !important; /* FORZAR COLUMNA */
-        gap: 10px;
-    }
-
-    /* Cada opción individual */
-    div[role="radiogroup"] label {
-        background-color: rgba(255,255,255,0.03);
-        border: 1px solid rgba(255,255,255,0.05);
-        color: #ddd !important;
-        width: 100% !important; /* Ocupar todo el ancho */
-        margin-right: 0 !important;
-        display: flex;
-        align-items: center;
-        padding: 10px 15px;
-        border-radius: 8px;
-    }
-
-    div[role="radiogroup"] label:hover {
-        background-color: rgba(255,255,255,0.1);
-        border-color: #4FC3F7;
-    }
-
-    /* ============================================================
-       4. INPUTS DE TEXTO (BUSCADOR) & ESTILOS GENERALES
-       ============================================================ */
-    div[data-testid="stTextInput"] > div,
-    div[data-baseweb="input"] > div {
-        background-color: transparent !important;
-        border: none !important;
-    }
-
+    /* Input simple (Buscador/Login) */
     .stTextInput input, 
     input[type="text"], 
     input[type="password"] {
@@ -183,17 +101,103 @@ st.markdown("""
         border-radius: 50px !important;
         padding: 10px 20px !important;
     }
+
+    /* AREA DE TEXTO (Observaciones Generales) - EL FIX NUEVO */
+    .stTextArea textarea {
+        background-color: #1E1E2E !important;
+        color: white !important;
+        border: 1px solid #555 !important;
+        border-radius: 15px !important; /* Un poco menos redondo para áreas grandes */
+        caret-color: white !important;
+    }
     
-    /* Autocompletado Chrome */
-    input:-webkit-autofill,
-    input:-webkit-autofill:hover, 
-    input:-webkit-autofill:focus, 
-    input:-webkit-autofill:active {
-        -webkit-box-shadow: 0 0 0 30px #1E1E2E inset !important;
-        -webkit-text-fill-color: white !important;
-        border-radius: 50px !important;
+    /* Eliminar fondos padre molestos */
+    div[data-testid="stTextInput"] > div,
+    div[data-baseweb="input"] > div,
+    div[data-testid="stTextArea"] > div {
+        background-color: transparent !important;
+        border: none !important;
     }
 
+    /* Autocompletado Chrome */
+    input:-webkit-autofill, textarea:-webkit-autofill {
+        -webkit-box-shadow: 0 0 0 30px #1E1E2E inset !important;
+        -webkit-text-fill-color: white !important;
+    }
+
+    /* ============================================================
+       3. BOTONES (FIX GUARDAR EVALUACIÓN)
+       ============================================================ */
+    
+    /* Apuntamos a TODOS los botones, incluidos los de formularios */
+    div.stButton > button,
+    div[data-testid="stFormSubmitButton"] > button {
+        background: linear-gradient(135deg, #0288D1 0%, #01579B 100%) !important;
+        color: white !important;
+        border: none !important;
+        font-weight: 600;
+        border-radius: 8px;
+        padding: 0.6rem 1.2rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    }
+
+    div.stButton > button:hover,
+    div[data-testid="stFormSubmitButton"] > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(2, 136, 209, 0.5);
+        color: white !important;
+    }
+
+    /* ============================================================
+       4. LISTAS DESPLEGABLES & RADIOS
+       ============================================================ */
+    div[data-baseweb="select"] > div:first-child {
+        background-color: #1E1E2E !important;
+        color: white !important;
+        border: 1px solid #444 !important;
+        border-radius: 8px !important;
+    }
+    div[data-baseweb="select"] span { color: white !important; }
+    div[data-baseweb="select"] svg { fill: #B0BEC5 !important; }
+
+    div[data-baseweb="popover"], div[data-baseweb="popover"] > div {
+        background-color: #1E1E2E !important;
+        border: 1px solid #444 !important;
+    }
+    ul[data-baseweb="menu"] { background-color: #1E1E2E !important; padding: 0 !important; }
+    li[data-baseweb="option"], li[role="option"] {
+        background-color: #1E1E2E !important;
+        color: #E0E0E0 !important;
+    }
+    li[data-baseweb="option"]:hover, li[role="option"]:hover, li[role="option"][aria-selected="true"] {
+        background-color: #0288D1 !important;
+        color: white !important;
+    }
+    li[role="option"] * { color: inherit !important; }
+
+    /* Radio Buttons Verticales */
+    div[role="radiogroup"] {
+        display: flex;
+        flex-direction: column !important;
+        gap: 10px;
+    }
+    div[role="radiogroup"] label {
+        background-color: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.05);
+        color: #ddd !important;
+        width: 100% !important;
+        padding: 10px 15px;
+        border-radius: 8px;
+    }
+    div[role="radiogroup"] label:hover {
+        background-color: rgba(255,255,255,0.1);
+        border-color: #4FC3F7;
+    }
+
+    /* ============================================================
+       5. GENERALES
+       ============================================================ */
     h1, h2 { color: #4FC3F7 !important; text-shadow: 0px 0px 10px rgba(79, 195, 247, 0.4); }
     h3, h4, h5 { color: #FFFFFF !important; }
     p, label, span, li, div { color: #B0BEC5; }
@@ -210,25 +214,10 @@ st.markdown("""
     }
     .css-card h2 { color: white !important; }
 
-    div.stButton > button {
-        background: linear-gradient(135deg, #0288D1 0%, #01579B 100%);
-        color: white !important;
-        border: none;
-        font-weight: 600;
-        border-radius: 8px;
-        padding: 0.5rem 1rem;
-        transition: all 0.3s ease;
-    }
-    div.stButton > button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(2, 136, 209, 0.4);
-    }
-
     [data-testid="stSidebar"] {
         background-color: #0a0e14 !important;
         border-right: 1px solid #222;
     }
-    
     .podio-emoji { font-size: 3.5rem; display: block; margin-bottom: 10px; }
 </style>
 """, unsafe_allow_html=True)
@@ -415,14 +404,7 @@ else:
                             str(row.get('NIVEL_4', 'Nivel 4')),
                             str(row.get('NIVEL_5', 'Nivel 5'))
                         ]
-                        # CAMBIO IMPORTANTE: horizontal=False PARA QUE ESTÉN APILADOS
-                        seleccion_texto = st.radio(
-                            label=f"r_{i}", 
-                            options=opciones, 
-                            key=f"rad_{i}", 
-                            horizontal=False, # <-- AQUI FORZAMOS VERTICAL
-                            label_visibility="collapsed"
-                        )
+                        seleccion_texto = st.radio(label=f"r_{i}", options=opciones, key=f"rad_{i}", horizontal=False, label_visibility="collapsed")
                         nota_numerica = opciones.index(seleccion_texto) + 1
                         score_total += nota_numerica * row['PORCENTAJE']
                         notas_save[f"NOTA_{i}"] = nota_numerica
@@ -517,7 +499,6 @@ else:
         st.title("📂 Historial de Registros")
         
         if df_historial is not None and not df_historial.empty:
-            # LÓGICA DE CRUCE (MERGE) PARA TRAER EL NOMBRE
             df_historial['DNI_TRABAJADOR'] = df_historial['DNI_TRABAJADOR'].astype(str)
             df_personal['DNI'] = df_personal['DNI'].astype(str)
             
