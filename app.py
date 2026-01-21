@@ -34,7 +34,7 @@ def get_default_profile_pic():
 DEFAULT_IMG = get_default_profile_pic()
 
 # ==========================================
-# 3. ESTILOS VISUALES (CORRECCIÓN DE SELECTBOX)
+# 3. ESTILOS VISUALES (CORRECCIÓN FINAL DROPDOWN)
 # ==========================================
 def add_bg_from_local(image_file):
     if os.path.exists(image_file):
@@ -64,7 +64,6 @@ def add_bg_from_local(image_file):
 add_bg_from_local('fondo.jpg')
 LOGO_FILE = "logo.png"
 
-# --- CSS AGRESIVO PARA UNIFICAR ESTILOS ---
 st.markdown("""
 <style>
     /* 1. MODO OSCURO GLOBAL */
@@ -77,45 +76,45 @@ st.markdown("""
     p, label, span, li { color: #B0BEC5 !important; }
 
     /* ============================================================
-       CORRECCIÓN DE CAJAS DE TEXTO Y SELECTOR (ESTILO LOGIN)
+       FIX DROPDOWN MENU (FORZAR FONDO OSCURO EN LISTA)
        ============================================================ */
     
-    /* Input Normal (Login) */
-    .stTextInput input {
+    /* 1. El contenedor del menú desplegable (Popover) */
+    div[data-baseweb="popover"] > div {
         background-color: #1E1E2E !important;
-        color: white !important;
         border: 1px solid #444 !important;
     }
 
-    /* SELECTBOX (La barra de selección de trabajador) */
-    div[data-baseweb="select"] > div {
-        background-color: #1E1E2E !important; /* Mismo fondo oscuro que Login */
-        color: white !important;
-        border: 1px solid #444 !important;
-    }
-
-    /* Texto seleccionado dentro del Selectbox */
-    div[data-baseweb="select"] span {
-        color: white !important; 
-    }
-
-    /* EL MENÚ DESPLEGABLE (La lista que se abre) */
+    /* 2. La lista interna (ul) */
     ul[data-baseweb="menu"] {
         background-color: #1E1E2E !important;
     }
-    
-    /* Opciones de la lista */
+
+    /* 3. Las opciones individuales (li) */
     li[role="option"] {
-        color: #E0E0E0 !important;
+        background-color: #1E1E2E !important; /* Fondo oscuro forzado */
+        color: #E0E0E0 !important;             /* Texto claro forzado */
+    }
+
+    /* 4. Opción al pasar el mouse (Hover) */
+    li[role="option"]:hover, li[role="option"][aria-selected="true"] {
+        background-color: #0288D1 !important;  /* Azul al seleccionar */
+        color: white !important;
+    }
+
+    /* 5. La barra de selección cerrada (Input) */
+    div[data-baseweb="select"] > div {
+        background-color: #1E1E2E !important;
+        color: white !important;
+        border: 1px solid #444 !important;
     }
     
-    /* Opción al pasar el mouse (Hover) */
-    li[role="option"]:hover, li[role="option"][aria-selected="true"] {
-        background-color: #0288D1 !important;
+    /* Texto seleccionado visible */
+    div[data-baseweb="select"] span {
         color: white !important;
     }
     
-    /* Icono de flecha del dropdown */
+    /* Icono flecha */
     div[data-baseweb="select"] svg {
         fill: #B0BEC5 !important;
     }
@@ -165,9 +164,16 @@ st.markdown("""
         background-color: rgba(255,255,255,0.1);
         border-color: #4FC3F7;
     }
-
+    
     /* PODIO */
     .podio-emoji { font-size: 3.5rem; display: block; margin-bottom: 10px; }
+    
+    /* INPUTS LOGIN */
+    .stTextInput input {
+        background-color: #1E1E2E !important;
+        color: white !important;
+        border: 1px solid #444 !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -288,7 +294,7 @@ else:
     if seleccion == "📝 Evaluar Personal":
         st.title(f"📝 Evaluación - {parada_actual}")
         
-        # Selector de Trabajador (AHORA SÍ SE VE BIEN)
+        # Selector de Trabajador
         sel_nombre = st.selectbox("Seleccionar Trabajador:", data_view['NOMBRE_COMPLETO'].unique()) if not data_view.empty else None
         
         if sel_nombre:
