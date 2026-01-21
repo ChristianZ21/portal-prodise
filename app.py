@@ -34,7 +34,7 @@ def get_default_profile_pic():
 DEFAULT_IMG = get_default_profile_pic()
 
 # ==========================================
-# 3. ESTILOS VISUALES (FIX FINAL: TEXT AREA BORDERS + BUTTON)
+# 3. ESTILOS VISUALES (FIX TOTAL: LOGIN, INPUTS, TEXTAREA, LISTAS)
 # ==========================================
 def add_bg_from_local(image_file):
     if os.path.exists(image_file):
@@ -69,7 +69,7 @@ LOGO_FILE = "logo.png"
 
 st.markdown("""
 <style>
-    /* 1. RESET EXTREMO */
+    /* 1. RESET EXTREMO (FONDO NEGRO DETRÁS DE TODO) */
     :root { color-scheme: dark !important; }
     
     html, body {
@@ -88,84 +88,68 @@ st.markdown("""
     header[data-testid="stHeader"] { display: none !important; }
 
     /* ============================================================
-       2. FIX TEXT AREA (OBSERVACIONES) - ELIMINAR BORDES BLANCOS
+       2. FIX SUPREMO PARA INPUTS (LOGIN & SEARCH)
        ============================================================ */
     
-    /* El contenedor BASE del text area (el que tiene el borde) */
-    div[data-baseweb="textarea"] {
-        background-color: #1E1E2E !important; /* Fondo oscuro forzado */
-        border: 1px solid #555 !important;
-        border-radius: 15px !important;
-    }
-    
-    /* El input real dentro del contenedor */
-    .stTextArea textarea {
-        background-color: transparent !important; /* Transparente para ver el fondo del padre */
-        color: white !important;
-        border: none !important;
-        caret-color: white !important; /* Cursor blanco */
-    }
-    
-    /* Contenedores padre de Streamlit */
-    div[data-testid="stTextArea"] > div {
+    /* Hacemos invisibles TODOS los contenedores que envuelven al input */
+    div[data-testid="stTextInput"],
+    div[data-testid="stTextInput"] > div,
+    div[data-baseweb="input"],
+    div[data-baseweb="input"] > div,
+    div[data-baseweb="base-input"] {
         background-color: transparent !important;
+        background: transparent !important;
         border: none !important;
+        box-shadow: none !important;
     }
 
-    /* Inputs simples (Login/Buscador) */
+    /* Estilo del INPUT REAL (El que escribe el usuario) */
     .stTextInput input, 
     input[type="text"], 
     input[type="password"] {
         background-color: #1E1E2E !important; 
         color: white !important;
         border: 1px solid #555 !important;
-        border-radius: 50px !important;
+        border-radius: 50px !important; /* Bordes redondos */
         padding: 10px 20px !important;
     }
 
-    /* Autocompletado Chrome */
-    input:-webkit-autofill, textarea:-webkit-autofill {
-        -webkit-box-shadow: 0 0 0 30px #1E1E2E inset !important;
+    /* FIX CRÍTICO: AUTOCOMPLETADO DE CHROME (LOGIN) */
+    /* Esto evita que el navegador ponga fondo blanco/amarillo al recordar contraseña */
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover, 
+    input:-webkit-autofill:focus, 
+    input:-webkit-autofill:active {
+        -webkit-box-shadow: 0 0 0 30px #1E1E2E inset !important; /* Fuerza color oscuro */
         -webkit-text-fill-color: white !important;
+        border-radius: 50px !important;
+        caret-color: white !important;
     }
 
     /* ============================================================
-       3. FIX BOTONES (INCLUIDO EL DE GUARDAR EVALUACIÓN)
+       3. FIX TEXT AREA (OBSERVACIONES)
        ============================================================ */
-    
-    /* Atacamos especificamente al botón dentro del formulario y botones generales */
-    button[kind="primaryFormSubmit"],
-    div[data-testid="stFormSubmitButton"] > button,
-    div.stButton > button {
-        background-color: #0288D1 !important; /* Color base */
-        background-image: linear-gradient(135deg, #0288D1 0%, #01579B 100%) !important;
+    div[data-baseweb="textarea"] {
+        background-color: #1E1E2E !important;
+        border: 1px solid #555 !important;
+        border-radius: 15px !important;
+    }
+    .stTextArea textarea {
+        background-color: transparent !important;
         color: white !important;
         border: none !important;
-        font-weight: 600;
-        border-radius: 8px;
-        padding: 0.6rem 1.2rem;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        transition: all 0.3s ease;
+        caret-color: white !important;
     }
-
-    /* Estado Hover */
-    button[kind="primaryFormSubmit"]:hover,
-    div[data-testid="stFormSubmitButton"] > button:hover,
-    div.stButton > button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 12px rgba(2, 136, 209, 0.5);
-        color: white !important;
-        background-color: #03A9F4 !important;
-    }
-    
-    /* Texto dentro del botón */
-    button * {
-        color: white !important;
+    div[data-testid="stTextArea"] > div {
+        background-color: transparent !important;
+        border: none !important;
     }
 
     /* ============================================================
-       4. LISTAS DESPLEGABLES & RADIOS
+       4. LISTAS DESPLEGABLES & RADIOS (MODO OSCURO)
        ============================================================ */
+    
+    /* Input Seleccionado */
     div[data-baseweb="select"] > div:first-child {
         background-color: #1E1E2E !important;
         color: white !important;
@@ -175,11 +159,14 @@ st.markdown("""
     div[data-baseweb="select"] span { color: white !important; }
     div[data-baseweb="select"] svg { fill: #B0BEC5 !important; }
 
+    /* Lista Flotante (Popover) */
     div[data-baseweb="popover"], div[data-baseweb="popover"] > div {
         background-color: #1E1E2E !important;
         border: 1px solid #444 !important;
     }
     ul[data-baseweb="menu"] { background-color: #1E1E2E !important; padding: 0 !important; }
+    
+    /* Opciones */
     li[data-baseweb="option"], li[role="option"] {
         background-color: #1E1E2E !important;
         color: #E0E0E0 !important;
@@ -190,12 +177,8 @@ st.markdown("""
     }
     li[role="option"] * { color: inherit !important; }
 
-    /* Radio Buttons Verticales */
-    div[role="radiogroup"] {
-        display: flex;
-        flex-direction: column !important;
-        gap: 10px;
-    }
+    /* Radios Verticales */
+    div[role="radiogroup"] { display: flex; flex-direction: column !important; gap: 10px; }
     div[role="radiogroup"] label {
         background-color: rgba(255,255,255,0.03);
         border: 1px solid rgba(255,255,255,0.05);
@@ -210,11 +193,24 @@ st.markdown("""
     }
 
     /* ============================================================
-       5. GENERALES
+       5. BOTONES Y TARJETAS
        ============================================================ */
-    h1, h2 { color: #4FC3F7 !important; text-shadow: 0px 0px 10px rgba(79, 195, 247, 0.4); }
-    h3, h4, h5 { color: #FFFFFF !important; }
-    p, label, span, li, div { color: #B0BEC5; }
+    button[kind="primaryFormSubmit"],
+    div[data-testid="stFormSubmitButton"] > button,
+    div.stButton > button {
+        background: linear-gradient(135deg, #0288D1 0%, #01579B 100%) !important;
+        color: white !important;
+        border: none !important;
+        font-weight: 600;
+        border-radius: 8px;
+        padding: 0.6rem 1.2rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        transition: all 0.3s ease;
+    }
+    div.stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(2, 136, 209, 0.5);
+    }
 
     .css-card {
         background: rgba(20, 20, 30, 0.75);
@@ -227,11 +223,12 @@ st.markdown("""
         box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
     }
     .css-card h2 { color: white !important; }
+    
+    h1, h2 { color: #4FC3F7 !important; text-shadow: 0px 0px 10px rgba(79, 195, 247, 0.4); }
+    h3, h4, h5 { color: #FFFFFF !important; }
+    p, label, span, li, div { color: #B0BEC5; }
 
-    [data-testid="stSidebar"] {
-        background-color: #0a0e14 !important;
-        border-right: 1px solid #222;
-    }
+    [data-testid="stSidebar"] { background-color: #0a0e14 !important; border-right: 1px solid #222; }
     .podio-emoji { font-size: 3.5rem; display: block; margin-bottom: 10px; }
 </style>
 """, unsafe_allow_html=True)
@@ -513,6 +510,7 @@ else:
         st.title("📂 Historial de Registros")
         
         if df_historial is not None and not df_historial.empty:
+            # LÓGICA DE CRUCE (MERGE) PARA TRAER EL NOMBRE
             df_historial['DNI_TRABAJADOR'] = df_historial['DNI_TRABAJADOR'].astype(str)
             df_personal['DNI'] = df_personal['DNI'].astype(str)
             
