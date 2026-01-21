@@ -34,7 +34,7 @@ def get_default_profile_pic():
 DEFAULT_IMG = get_default_profile_pic()
 
 # ==========================================
-# 3. ESTILOS VISUALES (ZERO WHITE - MODO INMERSIVO)
+# 3. ESTILOS VISUALES (FIX FINAL DROPDOWN + ZERO BORDERS)
 # ==========================================
 def add_bg_from_local(image_file):
     if os.path.exists(image_file):
@@ -79,47 +79,81 @@ st.markdown("""
         color: #E0E0E0 !important;
     }
     
-    /* Eliminar padding superior extra de Streamlit */
     .block-container {
         padding-top: 1rem !important;
         padding-bottom: 2rem !important;
         max-width: 100% !important;
     }
 
-    /* Ocultar barra superior (Header) y menú hamburguesa para inmersión total */
     header[data-testid="stHeader"] {
         display: none !important;
-        background: transparent !important;
     }
 
     /* ============================================================
-       2. FIX "ESQUINAS BLANCAS" EN INPUTS (CRÍTICO)
+       2. SOLUCIÓN FINAL: MENU DESPLEGABLE (DROPDOWN)
        ============================================================ */
     
-    /* Hacemos transparentes todos los contenedores padre del input */
+    /* El contenedor flotante general */
+    div[data-baseweb="popover"], 
+    div[data-baseweb="popover"] > div {
+        background-color: #1E1E2E !important; /* GRIS OSCURO */
+        border: 1px solid #444 !important;
+    }
+
+    /* La lista (ul) */
+    ul[data-baseweb="menu"] {
+        background-color: #1E1E2E !important;
+        padding: 0 !important;
+    }
+
+    /* Cada opción individual (li) */
+    li[role="option"] {
+        background-color: #1E1E2E !important; /* Fondo oscuro */
+        color: #E0E0E0 !important;             /* Texto claro */
+        border-bottom: 1px solid #333 !important; /* Separador sutil */
+    }
+
+    /* El texto DENTRO de la opción (a veces está en un div hijo) */
+    li[role="option"] div, 
+    li[role="option"] span {
+        color: #E0E0E0 !important;
+    }
+
+    /* Al pasar el mouse (Hover) o seleccionar */
+    li[role="option"]:hover, 
+    li[role="option"][aria-selected="true"] {
+        background-color: #0288D1 !important; /* Azul */
+        color: white !important;
+    }
+    
+    /* Texto al hacer hover */
+    li[role="option"]:hover *, 
+    li[role="option"][aria-selected="true"] * {
+        color: white !important;
+    }
+
+    /* ============================================================
+       3. FIX ESQUINAS BLANCAS EN INPUTS
+       ============================================================ */
     div[data-testid="stTextInput"] > div,
     div[data-baseweb="input"] > div {
         background-color: transparent !important;
-        background: transparent !important;
         border: none !important;
     }
 
-    /* Estilo del Input Real (El óvalo oscuro) */
     .stTextInput input, 
     div[data-baseweb="input"] {
         background-color: #1E1E2E !important; 
         color: white !important;
         border: 1px solid #555 !important;
-        border-radius: 50px !important; /* Bordes redondos */
+        border-radius: 50px !important;
     }
     
-    /* Quitar borde cuadrado al contenedor interno de BaseWeb */
     div[data-baseweb="input"] {
-        border: none !important; /* El borde lo tiene el input hijo o este mismo, controlamos conflicto */
+        border: none !important; 
         background-color: transparent !important; 
     }
     
-    /* Aplicar estilo al input hijo directo para asegurar el color */
     input[type="text"], input[type="password"] {
         background-color: #1E1E2E !important;
         border-radius: 50px !important;
@@ -128,7 +162,7 @@ st.markdown("""
         border: 1px solid #555 !important;
     }
 
-    /* FIX: AUTOCOMPLETADO DE CHROME (Evita el fondo amarillo/blanco al recordar contraseña) */
+    /* Autocompletado de Chrome */
     input:-webkit-autofill,
     input:-webkit-autofill:hover, 
     input:-webkit-autofill:focus, 
@@ -139,32 +173,12 @@ st.markdown("""
     }
 
     /* ============================================================
-       3. LISTAS DESPLEGABLES (DROPDOWN OSCURO)
-       ============================================================ */
-    div[data-baseweb="popover"], div[data-baseweb="popover"] > div {
-        background-color: #1E1E2E !important;
-        border: 1px solid #444 !important;
-    }
-    ul[data-baseweb="menu"] { background-color: #1E1E2E !important; }
-    li[data-baseweb="option"] {
-        background-color: #1E1E2E !important;
-        color: #E0E0E0 !important;
-    }
-    li[data-baseweb="option"]:hover, 
-    li[data-baseweb="option"][aria-selected="true"] {
-        background-color: #0288D1 !important;
-        color: white !important;
-    }
-    li[data-baseweb="option"] * { color: inherit !important; }
-
-    /* ============================================================
        4. COMPONENTES GENERALES
        ============================================================ */
     h1, h2 { color: #4FC3F7 !important; text-shadow: 0px 0px 10px rgba(79, 195, 247, 0.4); }
     h3, h4, h5 { color: #FFFFFF !important; }
     p, label, span, li, div { color: #B0BEC5; }
 
-    /* Tarjetas */
     .css-card {
         background: rgba(20, 20, 30, 0.75);
         backdrop-filter: blur(12px);
@@ -175,13 +189,9 @@ st.markdown("""
         margin-bottom: 20px;
         box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
     }
-    /* El texto dentro de las tarjetas forzado a claro */
-    .css-card h2, .css-card p, .css-card span {
-        color: #E0E0E0 !important;
-    }
+    .css-card h2, .css-card p, .css-card span { color: #E0E0E0 !important; }
     .css-card h2 { color: white !important; }
 
-    /* Botones */
     div.stButton > button {
         background: linear-gradient(135deg, #0288D1 0%, #01579B 100%);
         color: white !important;
