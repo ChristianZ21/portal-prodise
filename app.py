@@ -6,7 +6,7 @@ import base64
 from pyairtable import Api
 
 # ==========================================
-# 1. TUS CLAVES (YA CONFIGURADAS)
+# 1. TUS CLAVES
 # ==========================================
 AIRTABLE_API_TOKEN = "pat3Ig7rAOvq7JdpN.fbef700fa804ae5692e3880899bba070239e9593f8d6fde958d9bd3d615aca14"
 AIRTABLE_BASE_ID = "app2jaysCvPwvrBwI"
@@ -31,10 +31,11 @@ def get_airtable_data(table_name):
         if not records: return pd.DataFrame(), table
         data = [r['fields'] for r in records]
         df = pd.DataFrame(data)
+        # Convertir todo a string inicialmente para evitar errores de tipo
         for col in df.columns: df[col] = df[col].astype(str)
         return df, table
     except Exception as e:
-        # st.error(f"Error conectando a {table_name}: {e}") # Descomentar para depurar
+        # st.error(f"Error conectando a {table_name}: {e}") 
         return pd.DataFrame(), None
 
 # ==========================================
@@ -86,7 +87,6 @@ df_config, _ = get_airtable_data("CONFIG")
 if not df_roles.empty:
     if 'PORCENTAJE' in df_roles.columns:
         df_roles['PORCENTAJE'] = pd.to_numeric(df_roles['PORCENTAJE'], errors='coerce').fillna(0)
-    # Mapeo de seguridad para los roles
     map_cols = {'CARGO':'CARGO', 'CRITERIO':'CRITERIO', 'PORCENTAJE':'PORCENTAJE', 
                 'NIVEL 1':'NIVEL_1', 'NIVEL 2':'NIVEL_2', 'NIVEL 3':'NIVEL_3', 'NIVEL 4':'NIVEL_4', 'NIVEL 5':'NIVEL_5'}
     df_roles.rename(columns=map_cols, inplace=True)
@@ -97,14 +97,13 @@ if not df_historial.empty and 'NOTA_FINAL' in df_historial.columns:
 # Parada
 parada_actual = "No Configurada"
 if not df_config.empty:
-    # Intenta tomar el primer valor
     parada_actual = str(df_config.iloc[0].values[0])
 
 if 'usuario' not in st.session_state:
     st.session_state.update({'usuario': None, 'nombre_real': None, 'rol': None, 'dni_user': None})
 
 # ==========================================
-# 6. APP LOGIC
+# 6. APP LOGIC (LOGIN)
 # ==========================================
 if not st.session_state.usuario:
     st.markdown("<br><br>", unsafe_allow_html=True)
@@ -123,19 +122,31 @@ if not st.session_state.usuario:
                     st.session_state.dni_user = str(u.iloc[0]['DNI_TRABAJADOR']).split('.')[0]
                     st.rerun()
                 else: st.error("Acceso denegado")
-            else: st.error("Error conectando a la base de usuarios. Revisa tu internet o Airtable.")
+            else: st.error("Error conectando a la base de usuarios.")
 else:
+    # ==========================================
+    # LÓGICA DEL MENÚ DINÁMICO
+    # ==========================================
+    opciones_menu = ["📝 Evaluar", "📈 Historial"]
+    
+    # SOLO SI ES ADMIN AGREGAMOS EL RANKING
+    if st.session_state.rol == 'ADMIN':
+        opciones_menu.insert(1, "🏆 Ranking Global")
+
     with st.sidebar:
         if os.path.exists(LOGO_FILE): st.image(LOGO_FILE, use_container_width=True)
         st.markdown(f"### {st.session_state.nombre_real}")
         st.caption(f"Rol: {st.session_state.rol}")
         st.info(f"Parada: {parada_actual}")
-        menu = st.radio("Menú", ["📝 Evaluar", "📈 Historial"], label_visibility="collapsed")
+        
+        menu = st.radio("Menú", opciones_menu, label_visibility="collapsed")
+        
+        st.markdown("---")
         if st.button("Salir"): 
             st.session_state.usuario = None
             st.rerun()
 
-    # Filtros
+    # Filtros de Supervisor
     data_view = df_personal[df_personal['ESTADO'] == 'ACTIVO'] if not df_personal.empty else pd.DataFrame()
     if st.session_state.rol == 'SUPERVISOR DE OPERACIONES' and not df_personal.empty:
         me = df_personal[df_personal['DNI'] == st.session_state.dni_user]
@@ -144,6 +155,9 @@ else:
             data_view = data_view[(data_view['ID_GRUPO'] == grp) & (data_view['TURNO'] == trn) & (data_view['DNI'] != st.session_state.dni_user)]
             st.success(f"Filtro: Grupo {grp} - Turno {trn}")
 
+    # ==========================================
+    # VISTA 1: EVALUACIÓN
+    # ==========================================
     if menu == "📝 Evaluar":
         st.title("Evaluación de Personal")
         sel = st.selectbox("Seleccionar:", data_view['NOMBRE_COMPLETO'].unique()) if not data_view.empty else None
@@ -161,7 +175,7 @@ else:
 
             with st.form("frm"):
                 if preguntas.empty:
-                    st.warning("No hay preguntas para este cargo")
+                    st.warning("No hay preguntas configuradas para este cargo")
                     st.form_submit_button("Volver")
                 else:
                     score = 0
@@ -177,7 +191,6 @@ else:
                     obs = st.text_area("Observaciones")
                     if st.form_submit_button("GUARDAR EN NUBE"):
                         if obs and tbl_historial:
-                            # MAPEO A TUS COLUMNAS DE LA ÚLTIMA CAPTURA
                             record = {
                                 "FECHA_HORA": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                                 "COD_PARADA": parada_actual,              
@@ -189,25 +202,89 @@ else:
                                 "NOTA_FINAL": round(score, 2),
                                 "COMENTARIOS": obs
                             }
-                            # Añadir notas 1-5 si creaste las columnas NOTA_1, etc.
                             record.update(notas)
                             
                             try:
                                 tbl_historial.create(record)
-                                st.success("¡Guardado exitosamente!")
+                                st.success(f"¡Evaluación guardada! Nota: {round(score,2)}")
                                 st.balloons()
                             except Exception as e:
                                 st.error(f"Error Airtable: {e}")
                         else: st.error("Falta comentario o conexión")
 
+    # ==========================================
+    # VISTA 2: RANKING (NUEVO)
+    # ==========================================
+    elif menu == "🏆 Ranking Global" and st.session_state.rol == 'ADMIN':
+        st.title("🏆 Ranking de Desempeño")
+        
+        if df_historial.empty:
+            st.info("Aún no hay evaluaciones registradas.")
+        else:
+            # Preparar datos
+            df_historial['DNI_TRABAJADOR'] = df_historial['DNI_TRABAJADOR'].astype(str)
+            df_personal['DNI'] = df_personal['DNI'].astype(str)
+
+            # Calcular promedio por persona
+            ranking = df_historial.groupby('DNI_TRABAJADOR')['NOTA_FINAL'].mean().reset_index()
+            ranking.columns = ['DNI', 'PROMEDIO']
+            ranking['PROMEDIO'] = ranking['PROMEDIO'].round(2)
+
+            # Cruzar con info personal para tener nombres y cargos
+            ranking_completo = pd.merge(ranking, df_personal[['DNI', 'NOMBRE_COMPLETO', 'CARGO_ACTUAL']], on='DNI', how='left')
+
+            # Filtro por Cargo
+            cargos_disponibles = ["TODOS"] + sorted(ranking_completo['CARGO_ACTUAL'].dropna().unique().tolist())
+            filtro_cargo = st.selectbox("Filtrar por Cargo:", cargos_disponibles)
+
+            if filtro_cargo != "TODOS":
+                ranking_completo = ranking_completo[ranking_completo['CARGO_ACTUAL'] == filtro_cargo]
+
+            # Ordenar descendente
+            ranking_completo = ranking_completo.sort_values(by='PROMEDIO', ascending=False).reset_index(drop=True)
+
+            # Podio
+            if len(ranking_completo) >= 3:
+                c1, c2, c3 = st.columns(3)
+                with c2: 
+                    st.markdown(f"🥇 **1er: {ranking_completo.iloc[0]['NOMBRE_COMPLETO']}**")
+                    st.metric("Nota", ranking_completo.iloc[0]['PROMEDIO'])
+                with c1: 
+                    st.markdown(f"🥈 **2do: {ranking_completo.iloc[1]['NOMBRE_COMPLETO']}**")
+                    st.metric("Nota", ranking_completo.iloc[1]['PROMEDIO'])
+                with c3: 
+                    st.markdown(f"🥉 **3er: {ranking_completo.iloc[2]['NOMBRE_COMPLETO']}**")
+                    st.metric("Nota", ranking_completo.iloc[2]['PROMEDIO'])
+                st.markdown("---")
+
+            # Tabla Interactiva
+            st.data_editor(
+                ranking_completo[['NOMBRE_COMPLETO', 'CARGO_ACTUAL', 'PROMEDIO']],
+                column_config={
+                    "PROMEDIO": st.column_config.ProgressColumn(
+                        "Puntaje Global",
+                        help="Promedio acumulado",
+                        format="%.2f",
+                        min_value=0,
+                        max_value=5,
+                    ),
+                    "NOMBRE_COMPLETO": st.column_config.TextColumn("Colaborador"),
+                },
+                hide_index=True,
+                use_container_width=True,
+                disabled=True
+            )
+
+    # ==========================================
+    # VISTA 3: HISTORIAL
+    # ==========================================
     elif menu == "📈 Historial":
-        st.title("Historial")
+        st.title("Historial de Evaluaciones")
         sel = st.selectbox("Ver a:", data_view['NOMBRE_COMPLETO'].unique()) if not data_view.empty else None
         if sel and not df_historial.empty:
             dni = data_view[data_view['NOMBRE_COMPLETO'] == sel].iloc[0]['DNI']
             h = df_historial[df_historial['DNI_TRABAJADOR'] == dni]
             if not h.empty:
-                # Mostrar columnas si existen
                 cols_to_show = [c for c in ['FECHA_HORA', 'NOTA_FINAL', 'COMENTARIOS'] if c in h.columns]
-                st.dataframe(h[cols_to_show])
+                st.dataframe(h[cols_to_show], use_container_width=True)
             else: st.info("Sin registros")
