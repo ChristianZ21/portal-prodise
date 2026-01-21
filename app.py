@@ -34,7 +34,7 @@ def get_default_profile_pic():
 DEFAULT_IMG = get_default_profile_pic()
 
 # ==========================================
-# 3. ESTILOS VISUALES (SOLUCIÓN NUCLEAR DARK MODE)
+# 3. ESTILOS VISUALES (ESTANDARIZACIÓN TOTAL)
 # ==========================================
 def add_bg_from_local(image_file):
     if os.path.exists(image_file):
@@ -53,7 +53,7 @@ def add_bg_from_local(image_file):
                 position: absolute;
                 top: 0; left: 0;
                 width: 100%; height: 100%;
-                background-color: rgba(5, 5, 10, 0.92); /* Fondo MUY oscuro */
+                background-color: rgba(5, 5, 10, 0.92); /* Fondo base muy oscuro */
                 z-index: -1;
             }}
             </style>
@@ -66,49 +66,91 @@ LOGO_FILE = "logo.png"
 
 st.markdown("""
 <style>
-    /* 1. FORZAR ESQUEMA OSCURO */
-    :root { color-scheme: dark; }
-    html, body, [class*="st-"] { color: #E0E0E0; }
+    /* ============================================================
+       1. RESET GLOBAL (ELIMINA BORDES BLANCOS EXTERNOS)
+       ============================================================ */
+    :root { color-scheme: dark !important; } /* Fuerza al navegador a modo oscuro */
+    
+    html, body {
+        background-color: #000000 !important; /* Fondo negro detrás de la app */
+        color: #E0E0E0 !important;
+        margin: 0;
+        padding: 0;
+    }
+    
+    [class*="st-"] {
+        color: #E0E0E0;
+    }
 
     /* ============================================================
-       CORRECCIÓN DE LISTAS BLANCAS (DROPDOWN FIX)
+       2. SOLUCIÓN BLINDAJA PARA LISTAS DESPLEGABLES (DROPDOWNS)
        ============================================================ */
-    div[data-baseweb="popover"], div[data-baseweb="popover"] > div {
-        background-color: #1E1E2E !important;
-        border: 1px solid #444 !important;
+    
+    /* El contenedor flotante (Popover) */
+    div[data-baseweb="popover"],
+    div[data-baseweb="popover"] > div {
+        background-color: #151520 !important; /* Gris muy oscuro */
+        border: 1px solid #333 !important;
     }
-    ul[data-baseweb="menu"] { background-color: #1E1E2E !important; }
-    li[data-baseweb="option"] {
-        background-color: #1E1E2E !important;
+
+    /* La lista interna (ul) */
+    ul[data-baseweb="menu"] {
+        background-color: #151520 !important;
+        padding: 5px !important;
+    }
+
+    /* Las opciones individuales (li) */
+    li[data-baseweb="option"],
+    li[role="option"],
+    div[role="option"] {
+        background-color: #151520 !important;
         color: #E0E0E0 !important;
+        border-radius: 4px;
+        margin-bottom: 2px;
     }
-    li[data-baseweb="option"]:hover, 
-    li[data-baseweb="option"][aria-selected="true"] {
-        background-color: #0288D1 !important;
+
+    /* Hover y Selección */
+    li[data-baseweb="option"]:hover,
+    li[role="option"]:hover,
+    li[role="option"][aria-selected="true"] {
+        background-color: #0288D1 !important; /* Azul PRODISE */
         color: white !important;
     }
-    li[data-baseweb="option"] * { color: inherit !important; }
+    
+    /* Asegurar que el texto interno no sea negro */
+    div[data-baseweb="menu"] * {
+        color: inherit !important;
+    }
 
     /* ============================================================
-       ESTILOS DEL BUSCADOR Y TARJETAS
+       3. ESTILOS DE INPUTS (TIPO GOOGLE OSCURO)
        ============================================================ */
+    
     .stTextInput input {
         background-color: #1E1E2E !important;
         color: white !important;
-        border: 1px solid #555 !important;
+        border: 1px solid #444 !important;
         border-radius: 50px !important;
         padding: 12px 25px !important;
-        font-size: 1.1rem !important;
     }
-    .stTextInput input:focus {
-        border-color: #4FC3F7 !important;
-        box-shadow: 0 0 10px rgba(79, 195, 247, 0.3);
+    
+    .stSelectbox div[data-baseweb="select"] > div {
+        background-color: #1E1E2E !important;
+        border: 1px solid #444 !important;
+        color: white !important;
+        border-radius: 8px !important;
     }
-
+    
+    /* ============================================================
+       4. COMPONENTES GENERALES
+       ============================================================ */
+    
+    /* Títulos */
     h1, h2 { color: #4FC3F7 !important; text-shadow: 0px 0px 10px rgba(79, 195, 247, 0.4); }
     h3, h4, h5 { color: #FFFFFF !important; }
     p, label, span, li { color: #B0BEC5 !important; }
 
+    /* Tarjetas */
     .css-card {
         background: rgba(20, 20, 30, 0.75);
         backdrop-filter: blur(12px);
@@ -120,6 +162,7 @@ st.markdown("""
         box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
     }
 
+    /* Botones */
     div.stButton > button {
         background: linear-gradient(135deg, #0288D1 0%, #01579B 100%);
         color: white !important;
@@ -134,21 +177,18 @@ st.markdown("""
         box-shadow: 0 4px 15px rgba(2, 136, 209, 0.4);
     }
 
+    /* Sidebar */
     [data-testid="stSidebar"] {
         background-color: #0a0e14 !important;
         border-right: 1px solid #222;
     }
-
-    div[role="radiogroup"] label {
-        background-color: rgba(255,255,255,0.03);
-        border: 1px solid rgba(255,255,255,0.05);
-        color: #ddd !important;
-    }
-    div[role="radiogroup"] label:hover {
-        background-color: rgba(255,255,255,0.1);
-        border-color: #4FC3F7;
-    }
+    
+    /* Podio */
     .podio-emoji { font-size: 3.5rem; display: block; margin-bottom: 10px; }
+    
+    /* Ajuste de scrollbar (opcional) */
+    ::-webkit-scrollbar { width: 10px; background: #000; }
+    ::-webkit-scrollbar-thumb { background: #333; border-radius: 5px; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -270,26 +310,23 @@ else:
         st.markdown("##### 🔍 Buscar (Opcional)")
         filtro_texto = st.text_input("Filtro Rápido", placeholder="Escribe para filtrar la lista...", label_visibility="collapsed")
         
-        # 2. LÓGICA DE FILTRADO (AHORA SIEMPRE MUESTRA LA LISTA)
+        # 2. LÓGICA DE FILTRADO
         lista_final = []
         indice_defecto = None
         
         if not data_view.empty:
             todas_opciones = data_view['NOMBRE_COMPLETO'].unique().tolist()
-            
             if filtro_texto:
-                # Si hay texto, filtramos
                 lista_final = [x for x in todas_opciones if filtro_texto.upper() in x.upper()]
                 if not lista_final:
                     st.warning(f"⚠️ No hay coincidencias para: '{filtro_texto}'")
                 elif len(lista_final) == 1:
-                    indice_defecto = 0 # Autoseleccionar si es único
+                    indice_defecto = 0
             else:
-                # Si NO hay texto, MOSTRAR TODOS (Esto faltaba)
                 lista_final = todas_opciones
-                indice_defecto = None # No seleccionar a nadie por defecto para obligar a elegir
+                indice_defecto = None 
         
-        # 3. SELECTOR (Siempre visible si hay datos)
+        # 3. SELECTOR
         sel_nombre = None
         if lista_final:
             sel_nombre = st.selectbox(
