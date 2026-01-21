@@ -34,7 +34,7 @@ def get_default_profile_pic():
 DEFAULT_IMG = get_default_profile_pic()
 
 # ==========================================
-# 3. ESTILOS VISUALES (FULL DARK + SEARCH FIX)
+# 3. ESTILOS VISUALES (LA SOLUCIÓN NUCLEAR)
 # ==========================================
 def add_bg_from_local(image_file):
     if os.path.exists(image_file):
@@ -53,7 +53,7 @@ def add_bg_from_local(image_file):
                 position: absolute;
                 top: 0; left: 0;
                 width: 100%; height: 100%;
-                background-color: rgba(5, 5, 10, 0.85);
+                background-color: rgba(5, 5, 10, 0.92); /* Fondo MUY oscuro para contraste */
                 z-index: -1;
             }}
             </style>
@@ -66,42 +66,66 @@ LOGO_FILE = "logo.png"
 
 st.markdown("""
 <style>
+    /* 1. FORZAR ESQUEMA OSCURO A NIVEL DE NAVEGADOR */
     :root { color-scheme: dark; }
     html, body, [class*="st-"] { color: #E0E0E0; }
+
+    /* ============================================================
+       SOLUCIÓN NUCLEAR PARA LISTAS BLANCAS (DROPDOWN FIX)
+       ============================================================ */
+    
+    /* El contenedor flotante (Popover) que aparece al hacer clic */
+    div[data-baseweb="popover"], div[data-baseweb="popover"] > div {
+        background-color: #1E1E2E !important; /* Fondo Gris Oscuro */
+        border: 1px solid #444 !important;
+    }
+
+    /* La lista de opciones (ul) */
+    ul[data-baseweb="menu"] {
+        background-color: #1E1E2E !important;
+    }
+
+    /* Cada opción individual (li) */
+    li[data-baseweb="option"] {
+        background-color: #1E1E2E !important;
+        color: #E0E0E0 !important; /* Texto Gris Claro */
+    }
+
+    /* Cuando pasas el mouse por encima (Hover) o seleccionas */
+    li[data-baseweb="option"]:hover, 
+    li[data-baseweb="option"][aria-selected="true"] {
+        background-color: #0288D1 !important; /* Azul PRODISE */
+        color: white !important;
+    }
+
+    /* El texto de la opción (span interno) */
+    li[data-baseweb="option"] * {
+        color: inherit !important; /* Heredar color del padre */
+    }
+
+    /* ============================================================
+       ESTILOS DEL BUSCADOR Y TARJETAS
+       ============================================================ */
+
+    /* Input estilo Google (Redondeado) */
+    .stTextInput input {
+        background-color: #1E1E2E !important;
+        color: white !important;
+        border: 1px solid #555 !important;
+        border-radius: 50px !important;
+        padding: 12px 25px !important;
+        font-size: 1.1rem !important;
+    }
+    .stTextInput input:focus {
+        border-color: #4FC3F7 !important;
+        box-shadow: 0 0 10px rgba(79, 195, 247, 0.3);
+    }
 
     /* TÍTULOS */
     h1, h2 { color: #4FC3F7 !important; text-shadow: 0px 0px 10px rgba(79, 195, 247, 0.4); }
     h3, h4, h5 { color: #FFFFFF !important; }
     p, label, span, li { color: #B0BEC5 !important; }
 
-    /* --- FIX SEARCHBOX (Hacerlo tipo Google) --- */
-    /* El contenedor principal del input */
-    .stSelectbox div[data-baseweb="select"] > div {
-        background-color: #1E1E2E !important;
-        border: 1px solid #555 !important;
-        color: white !important;
-        cursor: text;
-    }
-    
-    /* El texto del placeholder (cuando está vacío) */
-    .stSelectbox div[data-baseweb="select"] span {
-        color: #999 !important; 
-    }
-    
-    /* El texto cuando YA seleccionaste algo */
-    .stSelectbox div[data-baseweb="select"] div[data-testid="stMarkdownContainer"] p {
-        color: white !important;
-        font-weight: bold;
-    }
-
-    /* DROPDOWN MENU */
-    ul[data-baseweb="menu"] { background-color: #1E1E2E !important; }
-    li[role="option"] { color: #E0E0E0 !important; }
-    li[role="option"]:hover, li[role="option"][aria-selected="true"] {
-        background-color: #0288D1 !important;
-        color: white !important;
-    }
-    
     /* TARJETAS */
     .css-card {
         background: rgba(20, 20, 30, 0.75);
@@ -148,13 +172,6 @@ st.markdown("""
     
     /* PODIO */
     .podio-emoji { font-size: 3.5rem; display: block; margin-bottom: 10px; }
-    
-    /* INPUTS LOGIN */
-    .stTextInput input {
-        background-color: #1E1E2E !important;
-        color: white !important;
-        border: 1px solid #444 !important;
-    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -270,27 +287,55 @@ else:
             data_view = data_view[data_view['DNI'] != st.session_state.dni_user]
 
     # ----------------------------------------
-    # 1. EVALUACIÓN
+    # 1. EVALUACIÓN (BUSCADOR TIPO GOOGLE 2.0)
     # ----------------------------------------
     if seleccion == "📝 Evaluar Personal":
         st.title(f"📝 Evaluación - {parada_actual}")
         
-        # === AQUÍ ESTÁ EL CAMBIO CLAVE PARA BÚSQUEDA DINÁMICA ===
-        # index=None -> Permite que empiece vacío
-        # placeholder="Escribe..." -> Indica que se puede buscar
-        sel_nombre = st.selectbox(
-            "Seleccionar Trabajador:", 
-            options=data_view['NOMBRE_COMPLETO'].unique(),
-            index=None,
-            placeholder="🔍 Escribe para buscar colaborador..."
-        ) if not data_view.empty else None
+        st.markdown("##### 🔍 Buscar Colaborador")
         
+        # 1. BARRA DE BÚSQUEDA LIBRE (TEXT INPUT)
+        # Esto soluciona tu problema de "selección rápida y borrado".
+        # Escribes aquí lo que quieras y presionas Enter.
+        filtro_texto = st.text_input(
+            "Buscador", 
+            placeholder="Escribe nombre, apellido o cargo...", 
+            label_visibility="collapsed"
+        )
+        
+        # 2. LÓGICA DE FILTRADO
+        sel_nombre = None
+        if not data_view.empty:
+            if filtro_texto:
+                # Filtrar ignorando mayúsculas/minúsculas
+                mask = data_view['NOMBRE_COMPLETO'].str.contains(filtro_texto.upper(), na=False)
+                df_filtrado = data_view[mask]
+                lista_filtrada = df_filtrado['NOMBRE_COMPLETO'].unique().tolist()
+                
+                if not lista_filtrada:
+                    st.warning(f"⚠️ No se encontraron resultados para: '{filtro_texto}'")
+                elif len(lista_filtrada) == 1:
+                    # Si solo hay uno, selecciónalo automáticamente
+                    sel_nombre = lista_filtrada[0]
+                    st.success(f"✅ Encontrado: {sel_nombre}")
+                else:
+                    # Si hay varios, muestra el selector para elegir uno específico
+                    sel_nombre = st.selectbox(
+                        f"Se encontraron {len(lista_filtrada)} coincidencias:", 
+                        lista_filtrada,
+                        index=0
+                    )
+            else:
+                # Si no escribe nada, no mostramos selector para mantener limpieza (o puedes mostrar todos)
+                st.info("👆 Escribe arriba para buscar al personal...")
+        
+        # 3. FICHA DEL TRABAJADOR
         if sel_nombre:
             p = data_view[data_view['NOMBRE_COMPLETO'] == sel_nombre].iloc[0]
             foto_final = get_photo_url(p.get('URL_FOTO', ''))
             
             st.markdown(f"""
-            <div class="css-card" style="display: flex; align-items: center; gap: 20px;">
+            <div class="css-card" style="display: flex; align-items: center; gap: 20px; margin-top: 15px;">
                 <img src="{foto_final}" style="width: 100px; height: 100px; border-radius: 50%; border: 3px solid #4FC3F7; object-fit: cover; background-color: #222;">
                 <div>
                     <h2 style="margin:0; color: white !important;">{p['NOMBRE_COMPLETO']}</h2>
