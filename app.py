@@ -34,7 +34,7 @@ def get_default_profile_pic():
 DEFAULT_IMG = get_default_profile_pic()
 
 # ==========================================
-# 3. ESTILOS VISUALES (DARK MODE FORZADO)
+# 3. ESTILOS VISUALES (CORRECCIÓN DE SELECTBOX)
 # ==========================================
 def add_bg_from_local(image_file):
     if os.path.exists(image_file):
@@ -48,52 +48,83 @@ def add_bg_from_local(image_file):
                 background-position: center;
                 background-attachment: fixed;
             }}
-            /* Capa superpuesta MUY OSCURA para asegurar lectura */
             .stApp::before {{
                 content: "";
                 position: absolute;
                 top: 0; left: 0;
                 width: 100%; height: 100%;
-                background-color: rgba(5, 5, 10, 0.85); /* Casi negro transparente */
+                background-color: rgba(5, 5, 10, 0.85);
                 z-index: -1;
             }}
             </style>
             """, unsafe_allow_html=True)
     else:
-        # Fondo negro si falla la imagen
         st.markdown("<style>.stApp { background-color: #000000; }</style>", unsafe_allow_html=True)
 
 add_bg_from_local('fondo.jpg')
 LOGO_FILE = "logo.png"
 
-# --- CSS AGRESIVO PARA MODO OSCURO ---
+# --- CSS AGRESIVO PARA UNIFICAR ESTILOS ---
 st.markdown("""
 <style>
-    /* 1. FORZAR ESQUEMA OSCURO TOTAL */
+    /* 1. MODO OSCURO GLOBAL */
     :root { color-scheme: dark; }
-    
-    /* 2. TEXTOS Y ELEMENTOS GENERALES */
     html, body, [class*="st-"] { color: #E0E0E0; }
+
+    /* TÍTULOS */
     h1, h2 { color: #4FC3F7 !important; text-shadow: 0px 0px 10px rgba(79, 195, 247, 0.4); }
     h3, h4, h5 { color: #FFFFFF !important; }
     p, label, span, li { color: #B0BEC5 !important; }
 
-    /* 3. INPUTS (ELIMINAR FONDO BLANCO) */
-    /* Cajas de texto, password, áreas de texto */
-    .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"] {
-        background-color: #1E1E2E !important; /* Fondo gris oscuro azulado */
+    /* ============================================================
+       CORRECCIÓN DE CAJAS DE TEXTO Y SELECTOR (ESTILO LOGIN)
+       ============================================================ */
+    
+    /* Input Normal (Login) */
+    .stTextInput input {
+        background-color: #1E1E2E !important;
         color: white !important;
         border: 1px solid #444 !important;
     }
-    /* Al hacer click en el input */
-    .stTextInput input:focus, .stTextArea textarea:focus {
-        border-color: #4FC3F7 !important;
-        box-shadow: 0 0 5px rgba(79, 195, 247, 0.5);
+
+    /* SELECTBOX (La barra de selección de trabajador) */
+    div[data-baseweb="select"] > div {
+        background-color: #1E1E2E !important; /* Mismo fondo oscuro que Login */
+        color: white !important;
+        border: 1px solid #444 !important;
+    }
+
+    /* Texto seleccionado dentro del Selectbox */
+    div[data-baseweb="select"] span {
+        color: white !important; 
+    }
+
+    /* EL MENÚ DESPLEGABLE (La lista que se abre) */
+    ul[data-baseweb="menu"] {
+        background-color: #1E1E2E !important;
     }
     
-    /* 4. TARJETAS (Glassmorphism Oscuro) */
+    /* Opciones de la lista */
+    li[role="option"] {
+        color: #E0E0E0 !important;
+    }
+    
+    /* Opción al pasar el mouse (Hover) */
+    li[role="option"]:hover, li[role="option"][aria-selected="true"] {
+        background-color: #0288D1 !important;
+        color: white !important;
+    }
+    
+    /* Icono de flecha del dropdown */
+    div[data-baseweb="select"] svg {
+        fill: #B0BEC5 !important;
+    }
+
+    /* ============================================================ */
+
+    /* TARJETAS */
     .css-card {
-        background: rgba(20, 20, 30, 0.75); /* Fondo negro/azul transparente */
+        background: rgba(20, 20, 30, 0.75);
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
         border-radius: 16px;
@@ -103,7 +134,7 @@ st.markdown("""
         box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
     }
 
-    /* 5. BOTONES */
+    /* BOTONES */
     div.stButton > button {
         background: linear-gradient(135deg, #0288D1 0%, #01579B 100%);
         color: white !important;
@@ -118,11 +149,13 @@ st.markdown("""
         box-shadow: 0 4px 15px rgba(2, 136, 209, 0.4);
     }
 
-    /* 6. SIDEBAR Y OPCIONES */
+    /* SIDEBAR */
     [data-testid="stSidebar"] {
         background-color: #0a0e14 !important;
         border-right: 1px solid #222;
     }
+
+    /* RADIO BUTTONS */
     div[role="radiogroup"] label {
         background-color: rgba(255,255,255,0.03);
         border: 1px solid rgba(255,255,255,0.05);
@@ -132,19 +165,8 @@ st.markdown("""
         background-color: rgba(255,255,255,0.1);
         border-color: #4FC3F7;
     }
-    
-    /* 7. MENU DESPLEGABLE (Para que no sea blanco) */
-    ul[data-testid="stSelectboxVirtualDropdown"] {
-        background-color: #1E1E2E !important;
-    }
-    li[role="option"] {
-        color: white !important;
-    }
-    li[role="option"]:hover {
-        background-color: #0288D1 !important;
-    }
 
-    /* 8. PODIO */
+    /* PODIO */
     .podio-emoji { font-size: 3.5rem; display: block; margin-bottom: 10px; }
 </style>
 """, unsafe_allow_html=True)
@@ -266,6 +288,7 @@ else:
     if seleccion == "📝 Evaluar Personal":
         st.title(f"📝 Evaluación - {parada_actual}")
         
+        # Selector de Trabajador (AHORA SÍ SE VE BIEN)
         sel_nombre = st.selectbox("Seleccionar Trabajador:", data_view['NOMBRE_COMPLETO'].unique()) if not data_view.empty else None
         
         if sel_nombre:
@@ -373,11 +396,9 @@ else:
             if len(ranking) >= 3:
                 c2, c1, c3 = st.columns([1, 1.2, 1])
                 
-                # 2DO LUGAR
                 with c2:
                     p2 = ranking.iloc[1]
                     f2 = get_photo_url(p2.get('URL_FOTO', ''))
-                    # CAMBIO: NOMBRE_COMPLETO SIN SPLIT
                     st.markdown(f"""
                     <div class="css-card" style="text-align:center; border-top: 5px solid #C0C0C0;">
                         <span class="podio-emoji">🥈</span>
@@ -386,11 +407,9 @@ else:
                         <h2 style="color:#C0C0C0;">{p2['PROMEDIO']}</h2>
                     </div>""", unsafe_allow_html=True)
                 
-                # 1ER LUGAR
                 with c1:
                     p1 = ranking.iloc[0]
                     f1 = get_photo_url(p1.get('URL_FOTO', ''))
-                    # CAMBIO: NOMBRE_COMPLETO SIN SPLIT
                     st.markdown(f"""
                     <div class="css-card" style="text-align:center; border-top: 5px solid #FFD700; transform: scale(1.05);">
                         <span class="podio-emoji">🥇</span>
@@ -399,11 +418,9 @@ else:
                         <h1 style="color:#FFD700; font-size:3rem;">{p1['PROMEDIO']}</h1>
                     </div>""", unsafe_allow_html=True)
                 
-                # 3ER LUGAR
                 with c3:
                     p3 = ranking.iloc[2]
                     f3 = get_photo_url(p3.get('URL_FOTO', ''))
-                    # CAMBIO: NOMBRE_COMPLETO SIN SPLIT
                     st.markdown(f"""
                     <div class="css-card" style="text-align:center; border-top: 5px solid #CD7F32;">
                         <span class="podio-emoji">🥉</span>
