@@ -34,7 +34,7 @@ def get_default_profile_pic():
 DEFAULT_IMG = get_default_profile_pic()
 
 # ==========================================
-# 3. ESTILOS VISUALES (LA SOLUCIÓN NUCLEAR)
+# 3. ESTILOS VISUALES (SOLUCIÓN NUCLEAR DARK MODE)
 # ==========================================
 def add_bg_from_local(image_file):
     if os.path.exists(image_file):
@@ -53,7 +53,7 @@ def add_bg_from_local(image_file):
                 position: absolute;
                 top: 0; left: 0;
                 width: 100%; height: 100%;
-                background-color: rgba(5, 5, 10, 0.92); /* Fondo MUY oscuro para contraste */
+                background-color: rgba(5, 5, 10, 0.92); /* Fondo MUY oscuro */
                 z-index: -1;
             }}
             </style>
@@ -66,48 +66,32 @@ LOGO_FILE = "logo.png"
 
 st.markdown("""
 <style>
-    /* 1. FORZAR ESQUEMA OSCURO A NIVEL DE NAVEGADOR */
+    /* 1. FORZAR ESQUEMA OSCURO */
     :root { color-scheme: dark; }
     html, body, [class*="st-"] { color: #E0E0E0; }
 
     /* ============================================================
-       SOLUCIÓN NUCLEAR PARA LISTAS BLANCAS (DROPDOWN FIX)
+       CORRECCIÓN DE LISTAS BLANCAS (DROPDOWN FIX)
        ============================================================ */
-    
-    /* El contenedor flotante (Popover) que aparece al hacer clic */
     div[data-baseweb="popover"], div[data-baseweb="popover"] > div {
-        background-color: #1E1E2E !important; /* Fondo Gris Oscuro */
+        background-color: #1E1E2E !important;
         border: 1px solid #444 !important;
     }
-
-    /* La lista de opciones (ul) */
-    ul[data-baseweb="menu"] {
-        background-color: #1E1E2E !important;
-    }
-
-    /* Cada opción individual (li) */
+    ul[data-baseweb="menu"] { background-color: #1E1E2E !important; }
     li[data-baseweb="option"] {
         background-color: #1E1E2E !important;
-        color: #E0E0E0 !important; /* Texto Gris Claro */
+        color: #E0E0E0 !important;
     }
-
-    /* Cuando pasas el mouse por encima (Hover) o seleccionas */
     li[data-baseweb="option"]:hover, 
     li[data-baseweb="option"][aria-selected="true"] {
-        background-color: #0288D1 !important; /* Azul PRODISE */
+        background-color: #0288D1 !important;
         color: white !important;
     }
-
-    /* El texto de la opción (span interno) */
-    li[data-baseweb="option"] * {
-        color: inherit !important; /* Heredar color del padre */
-    }
+    li[data-baseweb="option"] * { color: inherit !important; }
 
     /* ============================================================
        ESTILOS DEL BUSCADOR Y TARJETAS
        ============================================================ */
-
-    /* Input estilo Google (Redondeado) */
     .stTextInput input {
         background-color: #1E1E2E !important;
         color: white !important;
@@ -121,12 +105,10 @@ st.markdown("""
         box-shadow: 0 0 10px rgba(79, 195, 247, 0.3);
     }
 
-    /* TÍTULOS */
     h1, h2 { color: #4FC3F7 !important; text-shadow: 0px 0px 10px rgba(79, 195, 247, 0.4); }
     h3, h4, h5 { color: #FFFFFF !important; }
     p, label, span, li { color: #B0BEC5 !important; }
 
-    /* TARJETAS */
     .css-card {
         background: rgba(20, 20, 30, 0.75);
         backdrop-filter: blur(12px);
@@ -138,7 +120,6 @@ st.markdown("""
         box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
     }
 
-    /* BOTONES */
     div.stButton > button {
         background: linear-gradient(135deg, #0288D1 0%, #01579B 100%);
         color: white !important;
@@ -153,13 +134,11 @@ st.markdown("""
         box-shadow: 0 4px 15px rgba(2, 136, 209, 0.4);
     }
 
-    /* SIDEBAR */
     [data-testid="stSidebar"] {
         background-color: #0a0e14 !important;
         border-right: 1px solid #222;
     }
 
-    /* RADIO BUTTONS */
     div[role="radiogroup"] label {
         background-color: rgba(255,255,255,0.03);
         border: 1px solid rgba(255,255,255,0.05);
@@ -169,8 +148,6 @@ st.markdown("""
         background-color: rgba(255,255,255,0.1);
         border-color: #4FC3F7;
     }
-    
-    /* PODIO */
     .podio-emoji { font-size: 3.5rem; display: block; margin-bottom: 10px; }
 </style>
 """, unsafe_allow_html=True)
@@ -265,13 +242,10 @@ else:
 
     with st.sidebar:
         if os.path.exists(LOGO_FILE): st.image(LOGO_FILE, use_container_width=True)
-        
         st.markdown(f"### 👤 {st.session_state.nombre_real}")
         st.caption(f"{st.session_state.rol}")
         st.info(f"⚙️ Parada Activa:\n**{parada_actual}**")
-        
         seleccion = st.radio("Navegación", opciones)
-        
         st.markdown("---")
         if st.button("Cerrar Sesión"):
             st.session_state.usuario = None
@@ -287,49 +261,48 @@ else:
             data_view = data_view[data_view['DNI'] != st.session_state.dni_user]
 
     # ----------------------------------------
-    # 1. EVALUACIÓN (BUSCADOR TIPO GOOGLE 2.0)
+    # 1. EVALUACIÓN (BÚSQUEDA HÍBRIDA)
     # ----------------------------------------
     if seleccion == "📝 Evaluar Personal":
         st.title(f"📝 Evaluación - {parada_actual}")
         
-        st.markdown("##### 🔍 Buscar Colaborador")
+        # 1. BARRA DE BÚSQUEDA
+        st.markdown("##### 🔍 Buscar (Opcional)")
+        filtro_texto = st.text_input("Filtro Rápido", placeholder="Escribe para filtrar la lista...", label_visibility="collapsed")
         
-        # 1. BARRA DE BÚSQUEDA LIBRE (TEXT INPUT)
-        # Esto soluciona tu problema de "selección rápida y borrado".
-        # Escribes aquí lo que quieras y presionas Enter.
-        filtro_texto = st.text_input(
-            "Buscador", 
-            placeholder="Escribe nombre, apellido o cargo...", 
-            label_visibility="collapsed"
-        )
+        # 2. LÓGICA DE FILTRADO (AHORA SIEMPRE MUESTRA LA LISTA)
+        lista_final = []
+        indice_defecto = None
         
-        # 2. LÓGICA DE FILTRADO
-        sel_nombre = None
         if not data_view.empty:
+            todas_opciones = data_view['NOMBRE_COMPLETO'].unique().tolist()
+            
             if filtro_texto:
-                # Filtrar ignorando mayúsculas/minúsculas
-                mask = data_view['NOMBRE_COMPLETO'].str.contains(filtro_texto.upper(), na=False)
-                df_filtrado = data_view[mask]
-                lista_filtrada = df_filtrado['NOMBRE_COMPLETO'].unique().tolist()
-                
-                if not lista_filtrada:
-                    st.warning(f"⚠️ No se encontraron resultados para: '{filtro_texto}'")
-                elif len(lista_filtrada) == 1:
-                    # Si solo hay uno, selecciónalo automáticamente
-                    sel_nombre = lista_filtrada[0]
-                    st.success(f"✅ Encontrado: {sel_nombre}")
-                else:
-                    # Si hay varios, muestra el selector para elegir uno específico
-                    sel_nombre = st.selectbox(
-                        f"Se encontraron {len(lista_filtrada)} coincidencias:", 
-                        lista_filtrada,
-                        index=0
-                    )
+                # Si hay texto, filtramos
+                lista_final = [x for x in todas_opciones if filtro_texto.upper() in x.upper()]
+                if not lista_final:
+                    st.warning(f"⚠️ No hay coincidencias para: '{filtro_texto}'")
+                elif len(lista_final) == 1:
+                    indice_defecto = 0 # Autoseleccionar si es único
             else:
-                # Si no escribe nada, no mostramos selector para mantener limpieza (o puedes mostrar todos)
-                st.info("👆 Escribe arriba para buscar al personal...")
+                # Si NO hay texto, MOSTRAR TODOS (Esto faltaba)
+                lista_final = todas_opciones
+                indice_defecto = None # No seleccionar a nadie por defecto para obligar a elegir
         
-        # 3. FICHA DEL TRABAJADOR
+        # 3. SELECTOR (Siempre visible si hay datos)
+        sel_nombre = None
+        if lista_final:
+            sel_nombre = st.selectbox(
+                "Seleccionar Colaborador:", 
+                lista_final,
+                index=indice_defecto,
+                placeholder="👇 Despliega la lista completa aquí...",
+                key="selector_final"
+            )
+        elif data_view.empty:
+            st.warning("⚠️ No tienes personal asignado a tu grupo/turno.")
+        
+        # 4. FICHA
         if sel_nombre:
             p = data_view[data_view['NOMBRE_COMPLETO'] == sel_nombre].iloc[0]
             foto_final = get_photo_url(p.get('URL_FOTO', ''))
@@ -358,12 +331,9 @@ else:
                 with st.form("frm_eval"):
                     score_total = 0
                     notas_save = {}
-                    
                     st.markdown("### Criterios de Desempeño")
-                    
                     for i, (idx, row) in enumerate(preguntas.iterrows(), 1):
                         st.markdown(f"**{i}. {row['CRITERIO']}** <span style='font-size:0.85em; color:#888'>({row['PORCENTAJE']*100:.0f}%)</span>", unsafe_allow_html=True)
-                        
                         opciones = [
                             str(row.get('NIVEL_1', 'Nivel 1')),
                             str(row.get('NIVEL_2', 'Nivel 2')),
@@ -371,15 +341,7 @@ else:
                             str(row.get('NIVEL_4', 'Nivel 4')),
                             str(row.get('NIVEL_5', 'Nivel 5'))
                         ]
-                        
-                        seleccion_texto = st.radio(
-                            label=f"r_{i}",
-                            options=opciones, 
-                            key=f"rad_{i}", 
-                            horizontal=True, 
-                            label_visibility="collapsed"
-                        )
-                        
+                        seleccion_texto = st.radio(label=f"r_{i}", options=opciones, key=f"rad_{i}", horizontal=True, label_visibility="collapsed")
                         nota_numerica = opciones.index(seleccion_texto) + 1
                         score_total += nota_numerica * row['PORCENTAJE']
                         notas_save[f"NOTA_{i}"] = nota_numerica
@@ -407,8 +369,7 @@ else:
                                 st.balloons()
                                 st.success(f"¡Registrado! Nota Final: {round(score_total, 2)}")
                             except Exception as e: st.error(f"Error: {e}")
-                        else:
-                            st.warning("⚠️ La observación es obligatoria.")
+                        else: st.warning("⚠️ La observación es obligatoria.")
 
     # ----------------------------------------
     # 2. RANKING GLOBAL
@@ -418,23 +379,17 @@ else:
         if df_historial is not None and not df_historial.empty:
             df_historial['DNI_TRABAJADOR'] = df_historial['DNI_TRABAJADOR'].astype(str)
             df_personal['DNI'] = df_personal['DNI'].astype(str)
-            
             resumen = df_historial.groupby('DNI_TRABAJADOR')['NOTA_FINAL'].mean().reset_index()
             resumen.columns = ['DNI', 'PROMEDIO']
             ranking = pd.merge(resumen, df_personal, on='DNI', how='left')
             ranking['PROMEDIO'] = ranking['PROMEDIO'].round(2)
-            
             cargos_disp = ["TODOS"] + sorted(ranking['CARGO_ACTUAL'].dropna().unique().tolist())
             filtro_cargo = st.selectbox("Filtrar por Cargo:", cargos_disp)
-            
-            if filtro_cargo != "TODOS":
-                ranking = ranking[ranking['CARGO_ACTUAL'] == filtro_cargo]
-            
+            if filtro_cargo != "TODOS": ranking = ranking[ranking['CARGO_ACTUAL'] == filtro_cargo]
             ranking = ranking.sort_values('PROMEDIO', ascending=False).reset_index(drop=True)
             
             if len(ranking) >= 3:
                 c2, c1, c3 = st.columns([1, 1.2, 1])
-                
                 with c2:
                     p2 = ranking.iloc[1]
                     f2 = get_photo_url(p2.get('URL_FOTO', ''))
@@ -445,7 +400,6 @@ else:
                         <h4 style="margin:5px 0;">{p2['NOMBRE_COMPLETO']}</h4>
                         <h2 style="color:#C0C0C0;">{p2['PROMEDIO']}</h2>
                     </div>""", unsafe_allow_html=True)
-                
                 with c1:
                     p1 = ranking.iloc[0]
                     f1 = get_photo_url(p1.get('URL_FOTO', ''))
@@ -456,7 +410,6 @@ else:
                         <h3 style="margin:5px 0; color:#FFD700;">{p1['NOMBRE_COMPLETO']}</h3>
                         <h1 style="color:#FFD700; font-size:3rem;">{p1['PROMEDIO']}</h1>
                     </div>""", unsafe_allow_html=True)
-                
                 with c3:
                     p3 = ranking.iloc[2]
                     f3 = get_photo_url(p3.get('URL_FOTO', ''))
@@ -471,11 +424,7 @@ else:
             st.markdown("### 📊 Listado Completo")
             st.data_editor(
                 ranking[['NOMBRE_COMPLETO', 'CARGO_ACTUAL', 'PROMEDIO']],
-                column_config={
-                    "PROMEDIO": st.column_config.ProgressColumn("Nota Global", min_value=0, max_value=5, format="%.2f"),
-                    "NOMBRE_COMPLETO": "Colaborador",
-                    "CARGO_ACTUAL": "Cargo"
-                },
+                column_config={"PROMEDIO": st.column_config.ProgressColumn("Nota Global", min_value=0, max_value=5, format="%.2f"), "NOMBRE_COMPLETO": "Colaborador", "CARGO_ACTUAL": "Cargo"},
                 hide_index=True, use_container_width=True, disabled=True
             )
         else: st.info("No hay datos de ranking disponibles.")
@@ -489,5 +438,4 @@ else:
             cols = ['COD_PARADA', 'DNI_TRABAJADOR', 'NOTA_FINAL', 'COMENTARIOS']
             actual_cols = [c for c in cols if c in df_historial.columns]
             st.dataframe(df_historial[actual_cols], use_container_width=True, hide_index=True)
-        else:
-            st.info("No se encontraron registros.")
+        else: st.info("No se encontraron registros.")
