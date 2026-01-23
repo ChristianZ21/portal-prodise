@@ -34,7 +34,7 @@ def get_default_profile_pic():
 DEFAULT_IMG = get_default_profile_pic()
 
 # ==========================================
-# 3. ESTILOS VISUALES (FIX FINAL: TODO OSCURO/AZUL)
+# 3. ESTILOS VISUALES (FIX FINAL: ALTERNATIVAS AZULES VISIBLES)
 # ==========================================
 def add_bg_from_local(image_file):
     if os.path.exists(image_file):
@@ -88,71 +88,89 @@ st.markdown("""
     header[data-testid="stHeader"] { display: none !important; }
 
     /* ============================================================
-       2. FIX TOTAL PARA INPUTS Y TEXTAREAS (ESTANDARIZACIÓN AZUL/OSCURO)
+       2. FIX: ALTERNATIVAS (RADIO BUTTONS) - ESTILO AZUL SÓLIDO
        ============================================================ */
     
-    /* ELIMINAR FONDOS BLANCOS DE CONTENEDORES PADRE */
-    div[data-testid="stTextInput"] > div,
-    div[data-testid="stTextArea"] > div,
-    div[data-baseweb="input"] > div,
-    div[data-baseweb="base-input"] {
+    /* Contenedor Vertical */
+    div[role="radiogroup"] { 
+        display: flex; 
+        flex-direction: column !important; 
+        gap: 10px; 
+    }
+
+    /* La Tarjeta de la Opción */
+    div[role="radiogroup"] label {
+        background-color: #131720 !important; /* FONDO AZUL OSCURO SÓLIDO (Ya no transparente) */
+        border: 1px solid #0288D1 !important; /* BORDE AZUL CORPORATIVO (No blanco) */
+        color: #E0E0E0 !important;            /* Texto claro */
+        width: 100% !important;
+        padding: 12px 15px !important;        /* Más gordito para leer mejor */
+        border-radius: 10px !important;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3) !important; /* Sombra para que flote */
+        transition: all 0.2s ease !important;
+    }
+
+    /* Efecto al pasar el mouse (Hover) */
+    div[role="radiogroup"] label:hover {
+        background-color: #1E2A3A !important; /* Se aclara un poco a azul acero */
+        border-color: #4FC3F7 !important;     /* Borde se pone Cyan brillante */
+        transform: translateX(5px);           /* Se mueve a la derecha un poquito */
+        cursor: pointer;
+    }
+
+    /* ============================================================
+       3. FIX TEXT AREA (COMENTARIOS) - CAJA SÓLIDA
+       ============================================================ */
+    div[data-baseweb="textarea"] {
+        background-color: #262730 !important; 
+        border: 2px solid #4FC3F7 !important; 
+        border-radius: 12px !important;
+        padding: 5px !important;
+    }
+    div[data-baseweb="textarea"]:focus-within {
+        box-shadow: 0 0 15px rgba(79, 195, 247, 0.5) !important;
+    }
+    .stTextArea textarea {
         background-color: transparent !important;
+        color: white !important;
+        caret-color: #4FC3F7 !important;
+        border: none !important;
+    }
+    div[data-testid="stTextArea"] > div {
         background: transparent !important;
+        border: none !important;
+    }
+
+    /* ============================================================
+       4. INPUTS SIMPLES (LOGIN/BUSCADOR) - FIX BORDES BLANCOS
+       ============================================================ */
+    div[data-testid="stTextInput"] > div,
+    div[data-baseweb="input"] > div {
+        background-color: transparent !important;
         border: none !important;
         box-shadow: none !important;
     }
 
-    /* INPUTS DE UNA LÍNEA (LOGIN / BUSCADOR) */
-    .stTextInput input, 
-    input[type="text"], 
-    input[type="password"] {
-        background-color: #1E1E2E !important; /* Gris Oscuro Azulado */
+    .stTextInput input, input[type="text"], input[type="password"] {
+        background-color: #1E1E2E !important; 
         color: white !important;
         border: 1px solid #555 !important;
         border-radius: 50px !important;
         padding: 10px 20px !important;
     }
 
-    /* CAJA DE COMENTARIOS (TEXTAREA) - AQUÍ ESTABA EL PROBLEMA */
-    /* 1. El contenedor del borde */
-    div[data-baseweb="textarea"] {
-        background-color: #1E1E2E !important; /* AHORA TIENE COLOR SÓLIDO */
-        border: 2px solid #4FC3F7 !important; /* Borde Azul */
-        border-radius: 12px !important;
-        padding: 5px !important;
-    }
-    
-    /* 2. El área donde escribes (Hijo) */
-    .stTextArea textarea {
-        background-color: #1E1E2E !important; /* FORZAR COLOR DE FONDO AQUÍ TAMBIÉN */
-        color: white !important;
-        caret-color: #4FC3F7 !important;
-        border: none !important; /* Sin borde extra */
-    }
-
-    /* Focus en Text Area */
-    div[data-baseweb="textarea"]:focus-within {
-        box-shadow: 0 0 15px rgba(79, 195, 247, 0.5) !important;
-    }
-
-    /* AUTOCOMPLETADO CHROME (Para que no se ponga blanco/amarillo) */
+    /* Autocompletado Chrome */
     input:-webkit-autofill,
     input:-webkit-autofill:hover, 
     input:-webkit-autofill:focus, 
-    input:-webkit-autofill:active,
-    textarea:-webkit-autofill,
-    textarea:-webkit-autofill:hover,
-    textarea:-webkit-autofill:focus,
-    textarea:-webkit-autofill:active {
+    input:-webkit-autofill:active {
         -webkit-box-shadow: 0 0 0 30px #1E1E2E inset !important;
         -webkit-text-fill-color: white !important;
-        transition: background-color 5000s ease-in-out 0s;
     }
 
     /* ============================================================
-       3. LISTAS DESPLEGABLES & RADIOS (MODO OSCURO)
+       5. LISTAS DESPLEGABLES (DROPDOWN) - FIX BLANCO
        ============================================================ */
-    
     div[data-baseweb="select"] > div:first-child {
         background-color: #1E1E2E !important;
         color: white !important;
@@ -167,7 +185,6 @@ st.markdown("""
         border: 1px solid #444 !important;
     }
     ul[data-baseweb="menu"] { background-color: #1E1E2E !important; padding: 0 !important; }
-    
     li[data-baseweb="option"], li[role="option"] {
         background-color: #1E1E2E !important;
         color: #E0E0E0 !important;
@@ -178,23 +195,8 @@ st.markdown("""
     }
     li[role="option"] * { color: inherit !important; }
 
-    /* Radios Verticales */
-    div[role="radiogroup"] { display: flex; flex-direction: column !important; gap: 10px; }
-    div[role="radiogroup"] label {
-        background-color: rgba(255,255,255,0.03);
-        border: 1px solid rgba(255,255,255,0.05);
-        color: #ddd !important;
-        width: 100% !important;
-        padding: 10px 15px;
-        border-radius: 8px;
-    }
-    div[role="radiogroup"] label:hover {
-        background-color: rgba(255,255,255,0.1);
-        border-color: #4FC3F7;
-    }
-
     /* ============================================================
-       4. BOTONES Y TARJETAS
+       6. BOTONES Y TARJETAS
        ============================================================ */
     button[kind="primaryFormSubmit"],
     div[data-testid="stFormSubmitButton"] > button,
