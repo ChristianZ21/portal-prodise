@@ -172,7 +172,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 5. CONEXIÓN Y CARGA DE DATOS
+# 5. CONEXIÓN Y CARGA DE DATOS (CORREGIDO ERROR 2: TEXTO ORIGINAL)
 # ==========================================
 @st.cache_data(ttl=60)
 def load_data():
@@ -185,15 +185,31 @@ def load_data():
                 if not recs: return pd.DataFrame(), t
                 df = pd.DataFrame([r['fields'] for r in recs])
                 
-                # --- LIMPIEZA INTELIGENTE ---
+                # --- LIMPIEZA QUIRÚRGICA ---
+                # Solo convertimos a Mayúsculas las columnas TÉCNICAS para que el código cruce bien.
+                # Dejamos intactas: Contraseñas, Criterios, Niveles, Comentarios.
+                
+                cols_force_upper = [
+                    'USUARIO', 'ID_ROL', 'ESTADO', 'TURNO', 'COD_PARADA',
+                    'DNI', 'DNI_TRABAJADOR', 'DNI_EVALUADOR',
+                    'CARGO', 'CARGO_ACTUAL', 'CARGO_MOMENTO', 'TURNO_MOMENTO',
+                    'NOMBRE_COMPLETO', 'APELLIDOS Y NOMBRES', 'NOMBRE_EVALUADOR', 'NOMBRE_TRABAJADOR'
+                ]
+                
+                cols_grupos = ['ID_GRUPO', 'GRUPO', 'GRUPO_MOMENTO']
+
                 for c in df.columns:
+                    # 1. Asegurar string y quitar espacios borde
                     df[c] = df[c].astype(str).str.strip()
-                    # NO TOCAR MAYÚSCULAS DE CONTRASEÑA
-                    if c != 'PASS':
+                    
+                    # 2. Mayúsculas solo si es columna técnica
+                    if c in cols_force_upper:
                         df[c] = df[c].str.upper()
-                    # FIX GRUPOS (2.0 -> 2)
-                    if c in ['ID_GRUPO', 'GRUPO']:
-                        df[c] = df[c].str.replace('.0', '', regex=False)
+                    
+                    # 3. Grupos: Mayúsculas y quitar decimales
+                    if c in cols_grupos:
+                        df[c] = df[c].str.upper().str.replace('.0', '', regex=False)
+                        
                 return df, t
             except: return pd.DataFrame(), None
             
@@ -326,6 +342,7 @@ else:
     if seleccion == "📝 Evaluar Personal":
         st.title(f"📝 Evaluación - {parada_actual}")
         
+        # --- FILTRO: EXCLUIR YA EVALUADOS ---
         dnis_ya_evaluados = []
         if df_historial is not None and not df_historial.empty:
             filtro_historial = df_historial[
@@ -394,9 +411,9 @@ else:
                                     "FECHA_HORA": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                                     "COD_PARADA": parada_actual,
                                     "DNI_EVALUADOR": st.session_state.dni_user,
-                                    "NOMBRE_EVALUADOR": st.session_state.nombre_real, # <--- NUEVO CAMPO
+                                    "NOMBRE_EVALUADOR": st.session_state.nombre_real,
                                     "DNI_TRABAJADOR": str(p['DNI']),
-                                    "NOMBRE_TRABAJADOR": str(p['NOMBRE_COMPLETO']),   # <--- NUEVO CAMPO
+                                    "NOMBRE_TRABAJADOR": str(p['NOMBRE_COMPLETO']),
                                     "CARGO_MOMENTO": str(p['CARGO_ACTUAL']),
                                     "GRUPO_MOMENTO": str(p['ID_GRUPO']),
                                     "TURNO_MOMENTO": str(p['TURNO']),
@@ -408,9 +425,13 @@ else:
                                     tbl_historial.create(record)
                                     st.balloons()
                                     st.success(f"¡Evaluación Guardada! Nota: {round(score_total, 2)}")
+                                    
+                                    # --- CORRECCIÓN ERROR 2: LIMPIEZA DE CACHÉ ---
                                     time.sleep(2) 
-                                    st.cache_data.clear() 
-                                    st.rerun()
+                                    st.cache_data.clear() # Limpia la memoria vieja
+                                    st.rerun()            # Recarga la página con datos frescos
+                                    # ---------------------------------------------
+                                    
                                 except Exception as e: st.error(f"Error: {e}")
                             else: st.warning("⚠️ La observación es obligatoria.")
 
