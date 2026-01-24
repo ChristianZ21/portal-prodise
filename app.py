@@ -24,8 +24,6 @@ AIRTABLE_BASE_ID = "app2jaysCvPwvrBwI"
 # ==========================================
 
 # A. ROLES RESTRINGIDOS (Solo ven "Evaluar Personal")
-# Según tu solicitud: Lider Mecanico y Operador de Grua.
-# He añadido otros operativos por lógica, pero puedes quitarlos si deseas.
 ROLES_RESTRINGIDOS = [
     'LIDER MECANICO', 
     'OPERADOR DE GRUA', 
@@ -39,12 +37,6 @@ ROLES_RESTRINGIDOS = [
 ]
 
 # B. MATRIZ DE VISIBILIDAD (Quién evalúa a quién)
-# Tipos de Alcance:
-# 'ALL': Ve a todos (Gerentes/Planners)
-# 'SPECIFIC': Solo ve cargos específicos (No ve a su grupo automáticamente)
-# 'HYBRID': Ve a su Grupo + Cargos Específicos (Lider Mecanico/Sup. Operaciones)
-# 'GROUP': Solo ve a su Grupo (Default para el resto)
-
 JERARQUIA = {
     'GERENTE GENERAL': {'scope': 'ALL'},
     'GERENTE MANTENIMIENTO': {'scope': 'ALL'},
@@ -72,8 +64,6 @@ JERARQUIA = {
         'scope': 'HYBRID', # Grupo + Específicos
         'targets': ['SUPERVISOR DE OPERACIONES', 'SUPERVISOR DE SEGURIDAD']
     },
-    
-    # Si el cargo no está aquí, usará la lógica 'GROUP' por defecto
 }
 
 # ==========================================
@@ -91,7 +81,7 @@ def get_default_profile_pic():
 DEFAULT_IMG = get_default_profile_pic()
 
 # ==========================================
-# 4. ESTILOS VISUALES (BLINDADO)
+# 4. ESTILOS VISUALES (BLINDADO - CAJA AZUL)
 # ==========================================
 def add_bg_from_local(image_file):
     if os.path.exists(image_file):
@@ -142,15 +132,23 @@ st.markdown("""
         border-radius: 50px !important; padding: 10px 20px !important;
     }
 
-    /* TEXT AREA - CAJA SOLIDA AZULADA */
+    /* --- TEXT AREA (CAJA DE COMENTARIOS SÓLIDA AZUL) --- */
     div[data-baseweb="textarea"] {
-        background-color: #262730 !important; border: 2px solid #4FC3F7 !important;
-        border-radius: 12px !important; padding: 5px !important;
+        background-color: #262730 !important; /* Fondo SÓLIDO */
+        border: 2px solid #4FC3F7 !important; /* Borde Azul */
+        border-radius: 12px !important;
+        padding: 5px !important;
     }
     .stTextArea textarea {
-        background-color: transparent !important; color: white !important; caret-color: #4FC3F7 !important; border: none !important;
+        background-color: #262730 !important; /* Fondo SÓLIDO */
+        color: white !important;
+        caret-color: #4FC3F7 !important;
+        border: none !important;
     }
-    div[data-baseweb="textarea"]:focus-within { box-shadow: 0 0 15px rgba(79, 195, 247, 0.5) !important; }
+    div[data-baseweb="textarea"]:focus-within {
+        box-shadow: 0 0 15px rgba(79, 195, 247, 0.5) !important;
+    }
+    /* -------------------------------------------------- */
 
     /* AUTOCOMPLETE FIX */
     input:-webkit-autofill, textarea:-webkit-autofill {
@@ -170,7 +168,7 @@ st.markdown("""
     li[data-baseweb="option"]:hover, li[role="option"][aria-selected="true"] { background-color: #0288D1 !important; color: white !important; }
     li[role="option"] * { color: inherit !important; }
 
-    /* RADIO BUTTONS - CARDS AZULES */
+    /* RADIO BUTTONS */
     div[role="radiogroup"] { display: flex; flex-direction: column !important; gap: 10px; }
     div[role="radiogroup"] label {
         background-color: #131720 !important; border: 1px solid #0288D1 !important; color: #E0E0E0 !important;
@@ -315,7 +313,7 @@ else:
     
     if not data_view.empty:
         # 1. Obtener Permisos del Rol Actual
-        permisos = JERARQUIA.get(rol_actual, {'scope': 'GROUP', 'targets': []}) # Si no existe, default GROUP
+        permisos = JERARQUIA.get(rol_actual, {'scope': 'GROUP', 'targets': []}) 
         scope = permisos.get('scope', 'GROUP')
         targets = permisos.get('targets', [])
         
@@ -324,32 +322,24 @@ else:
         grp_supervisor = str(me.iloc[0]['ID_GRUPO']).strip() if not me.empty else ""
         trn = me.iloc[0]['TURNO'] if not me.empty else ""
 
-        # Función auxiliar para chequear si el grupo coincide (Soporta "2, 4, 5")
+        # Función auxiliar para chequear si el grupo coincide (Soporte "2, 4, 5")
         def check_grupo_match(grupos_trabajador, grupo_buscado):
             lista_grupos = [g.strip() for g in str(grupos_trabajador).split(',')]
             return grupo_buscado in lista_grupos
 
         # 3. Aplicar Filtro Según Scope
         if scope == 'ALL':
-            pass # Ve todo
-            
+            pass 
         elif scope == 'SPECIFIC':
-            # Solo ve cargos específicos
             data_view = data_view[data_view['CARGO_ACTUAL'].isin(targets)]
-            
         elif scope == 'GROUP':
-            # Solo ve su grupo y turno
             mask_grupo = data_view['ID_GRUPO'].apply(lambda x: check_grupo_match(x, grp_supervisor))
             mask_turno = data_view['TURNO'] == trn
             data_view = data_view[mask_grupo & mask_turno]
-            
         elif scope == 'HYBRID':
-            # Ve (Grupo + Turno) OR (Cargos Específicos)
             mask_cargos = data_view['CARGO_ACTUAL'].isin(targets)
             mask_grupo = data_view['ID_GRUPO'].apply(lambda x: check_grupo_match(x, grp_supervisor))
             mask_turno = data_view['TURNO'] == trn
-            
-            # Unión lógica
             data_view = data_view[mask_cargos | (mask_grupo & mask_turno)]
 
         # SIEMPRE: Excluirse a uno mismo
@@ -361,7 +351,7 @@ else:
     if seleccion == "📝 Evaluar Personal":
         st.title(f"📝 Evaluación - {parada_actual}")
         
-        # --- FILTRO: EXCLUIR YA EVALUADOS EN ESTA PARADA ---
+        # --- FILTRO: EXCLUIR YA EVALUADOS ---
         dnis_ya_evaluados = []
         if df_historial is not None and not df_historial.empty:
             filtro_historial = df_historial[
@@ -372,20 +362,18 @@ else:
         
         if not data_view.empty:
             data_view = data_view[~data_view['DNI'].isin(dnis_ya_evaluados)]
-        # -----------------------------------------------------
+        # ------------------------------------
 
         if data_view.empty:
             st.balloons()
             st.success("✅ Has completado todas las evaluaciones disponibles.")
         else:
-            # YA NO HAY BARRA DE TEXTO (SEARCH ELIMINADO)
-            
             lista_final = data_view['NOMBRE_COMPLETO'].unique().tolist()
             
             sel_nombre = st.selectbox(
                 f"Seleccionar Colaborador ({len(lista_final)} pendientes):", 
                 lista_final,
-                index=None, # Iniciar vacío para obligar a seleccionar
+                index=None, 
                 placeholder="👇 Haz clic aquí para desplegar la lista...",
                 key="selector_final"
             )
@@ -545,7 +533,7 @@ else:
         else: st.info("No hay datos de ranking disponibles.")
 
     # ----------------------------------------
-    # 3. HISTORIAL (CON NOMBRE COMPLETO)
+    # 3. HISTORIAL (FILTRADO POR ACCESO)
     # ----------------------------------------
     elif seleccion == "📂 Mi Historial" and st.session_state.rol not in ROLES_RESTRINGIDOS:
         st.title("📂 Historial de Registros")
@@ -554,6 +542,13 @@ else:
             df_historial['DNI_TRABAJADOR'] = df_historial['DNI_TRABAJADOR'].astype(str)
             df_personal['DNI'] = df_personal['DNI'].astype(str)
             
+            # --- FILTRO DE SEGURIDAD: SOLO VER LO QUE PUEDES EVALUAR ---
+            # data_view contiene la lista "permitida" calculada arriba en el bloque de filtros
+            if not data_view.empty:
+                dnis_permitidos = data_view['DNI'].unique().tolist()
+                df_historial = df_historial[df_historial['DNI_TRABAJADOR'].isin(dnis_permitidos)]
+            # ------------------------------------------------------------
+
             df_merged = pd.merge(df_historial, df_personal[['DNI', 'NOMBRE_COMPLETO']], left_on='DNI_TRABAJADOR', right_on='DNI', how='left')
             df_merged['NOMBRE_COMPLETO'] = df_merged['NOMBRE_COMPLETO'].fillna(df_merged['DNI_TRABAJADOR'])
             
