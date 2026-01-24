@@ -413,16 +413,12 @@ else:
             st.success("✅ Todo el personal asignado ha sido evaluado.")
         else:
             lista = data_view['NOMBRE_COMPLETO'].unique().tolist()
-            # CONFIGURACIÓN DEL SELECTBOX:
-            # index=None -> Empieza vacío
-            # placeholder -> Texto de ayuda
             sel_nombre = st.selectbox(
                 f"Pendientes ({len(lista)}):", 
                 lista, 
                 index=None, 
                 placeholder="Escribe o selecciona un colaborador..."
             )
-            
             if sel_nombre:
                 p = data_view[data_view['NOMBRE_COMPLETO'] == sel_nombre].iloc[0]
                 foto_p = get_photo_url(p.get('URL_FOTO', ''))
