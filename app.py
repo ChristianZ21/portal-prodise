@@ -18,35 +18,23 @@ st.set_page_config(
 )
 
 # ==========================================
-# 2. ESTILOS VISUALES BLINDADOS (CSS FINAL)
+# 2. ESTILOS VISUALES (CSS BLINDADO)
 # ==========================================
 st.markdown("""
 <style>
-    /* --- 1. AJUSTE DE ESPACIOS (ELIMINAR MARGEN SUPERIOR) --- */
+    /* --- 1. AJUSTES GENERALES --- */
     .block-container {
-        padding-top: 0rem !important;
+        padding-top: 1rem !important;
         padding-bottom: 5rem !important;
-        margin-top: 1rem !important;
     }
+    
+    /* Forzar textos claros globalmente */
+    [data-testid="stAppViewContainer"] { color: #E0E0E0 !important; }
+    h1, h2, h3, h4, h5, h6, p, span, div, label { color: #E0E0E0 !important; }
+    h1, h2, h3 { color: #4FC3F7 !important; text-shadow: 0 0 10px rgba(79,195,247,0.3); }
 
-    /* --- 2. FONDO Y TEXTOS GENERALES --- */
-    [data-testid="stAppViewContainer"] {
-        background-color: transparent !important;
-        color: #E0E0E0 !important;
-    }
-    h1, h2, h3, h4, h5, h6, p, span, div, label {
-        color: #E0E0E0 !important;
-    }
-    h1, h2, h3 { 
-        color: #4FC3F7 !important;
-        text-shadow: 0 0 10px rgba(79,195,247,0.3);
-    }
-
-    /* --- 3. HEADER Y BARRA LATERAL --- */
-    header[data-testid="stHeader"] { 
-        background-color: transparent !important; 
-        visibility: visible !important; 
-    }
+    /* --- 2. HEADER Y SIDEBAR --- */
+    header[data-testid="stHeader"] { background-color: transparent !important; }
     #MainMenu {visibility: hidden;}
     .stDeployButton {display: none;}
     footer {visibility: hidden;}
@@ -54,112 +42,93 @@ st.markdown("""
     [data-testid="stToolbar"] {visibility: hidden;}
 
     /* Flecha del sidebar */
-    [data-testid="collapsedControl"] {
-        visibility: visible !important; display: block !important; color: #FFFFFF !important;
-        top: 2rem !important;
-    }
-    [data-testid="stSidebarCollapsedControl"] {
-        color: #FFFFFF !important;
-        background-color: rgba(255,255,255,0.1) !important;
-        border-radius: 5px;
-    }
-    [data-testid="stSidebar"] {
-        background-color: rgba(5, 5, 5, 0.95) !important;
-        border-right: 1px solid #222;
-    }
+    [data-testid="collapsedControl"] { top: 1rem !important; color: white !important; }
+    [data-testid="stSidebarCollapsedControl"] { color: white !important; background: rgba(0,0,0,0.5); }
+    [data-testid="stSidebar"] { background-color: rgba(5, 5, 5, 0.95) !important; border-right: 1px solid #222; }
 
-    /* --- 4. SOLUCIÓN CRÍTICA: MENÚ DESPLEGABLE (SELECTBOX) --- */
-    /* Aquí forzamos el color OSCURO al fondo de la lista, ignorando el modo claro del navegador */
+    /* --- 3. SOLUCIÓN MENÚ DESPLEGABLE (FONDO AZUL OSCURO) --- */
+    
+    /* El contenedor flotante (la lista que se abre) */
+    div[data-baseweb="popover"] {
+        background-color: #0E1117 !important; /* Azul muy oscuro (Casi negro) */
+        border: 1px solid #4FC3F7 !important; /* Borde azul neón */
+    }
     
     /* El contenedor de la lista */
     ul[data-baseweb="menu"] {
-        background-color: #1E1E2E !important;
-        border: 1px solid #4FC3F7 !important;
+        background-color: #0E1117 !important;
     }
     
     /* Las opciones individuales */
     li[data-baseweb="option"] {
-        background-color: #1E1E2E !important;
+        background-color: #0E1117 !important;
         color: white !important;
     }
     
-    /* El texto dentro de las opciones (asegurar blanco) */
+    /* El texto DENTRO de las opciones */
     div[data-baseweb="option"] {
         color: white !important;
     }
 
-    /* Efecto al pasar el mouse (Hover) */
-    li[data-baseweb="option"]:hover, li[aria-selected="true"] {
-        background-color: #4FC3F7 !important; /* Azul PRODISE */
-        color: white !important;
-    }
-
-    /* La caja del buscador cerrada */
-    div[data-baseweb="select"] > div {
-        background-color: rgba(20, 20, 30, 0.95) !important;
-        border: 1px solid #555 !important;
+    /* Hover: Cuando pasas el mouse por una opción */
+    li[data-baseweb="option"]:hover {
+        background-color: #4FC3F7 !important; /* Azul Prodise brillante */
         color: white !important;
     }
     
-    /* Texto seleccionado */
+    /* Opción seleccionada actualmente */
+    li[aria-selected="true"] {
+        background-color: #1E3A8A !important; /* Azul intermedio */
+        color: white !important;
+    }
+
+    /* --- 4. LA BARRA DE BÚSQUEDA (INPUT CERRADO) --- */
+    div[data-baseweb="select"] > div {
+        background-color: #0E1117 !important;
+        color: white !important;
+        border-color: #555 !important;
+    }
+    
+    /* Texto seleccionado en la barra */
     div[data-baseweb="select"] span {
         color: white !important;
     }
     
-    /* Icono de flecha del buscador */
+    /* Iconos del select (flecha y x) */
     div[data-baseweb="select"] svg {
         fill: white !important;
     }
 
-    /* --- 5. INPUTS DE TEXTO --- */
+    /* --- 5. INPUTS DE TEXTO NORMALES --- */
     .stTextInput input, .stTextArea textarea {
-        background-color: rgba(20, 20, 30, 0.95) !important;
-        border: 1px solid #555 !important;
+        background-color: #0E1117 !important;
         color: white !important;
+        border: 1px solid #555 !important;
     }
 
-    /* --- 6. RADIO BUTTONS COMPACTOS --- */
-    div[role="radiogroup"] { gap: 6px !important; }
+    /* --- 6. RADIO BUTTONS (BOTONES DE NIVEL) --- */
     div[role="radiogroup"] label {
-        background-color: rgba(19, 23, 32, 0.9) !important;
+        background-color: rgba(14, 17, 23, 0.9) !important;
         border: 1px solid #333 !important;
-        padding: 8px 15px !important;
-        border-radius: 10px !important;
-        transition: all 0.2s ease !important;
-        margin-bottom: 0px !important;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.2) !important;
+        color: white !important;
     }
     div[role="radiogroup"] label:hover {
         border-color: #4FC3F7 !important;
-        background-color: rgba(30, 37, 48, 1) !important;
-        transform: scale(1.005) !important;
         cursor: pointer;
     }
-    div[role="radiogroup"] label[data-baseweb="radio"] > div:first-child {
-        background-color: #4FC3F7 !important;
-    }
-    div[role="radiogroup"] p { font-size: 0.90rem !important; }
+    div[role="radiogroup"] p { color: white !important; }
 
     /* --- 7. BOTONES --- */
     div.stButton > button {
         background: linear-gradient(135deg, #0288D1 0%, #01579B 100%) !important;
-        color: white !important; border: none !important;
-        font-weight: bold; border-radius: 8px; padding: 0.7rem 1.5rem;
-        box-shadow: 0 4px 15px rgba(2, 136, 209, 0.4);
-    }
-    div.stButton > button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(2, 136, 209, 0.6);
+        color: white !important; border: none;
     }
 
     /* --- 8. TARJETAS --- */
     .css-card {
-        background: rgba(20, 20, 30, 0.75);
-        backdrop-filter: blur(12px);
-        border-radius: 16px;
+        background: rgba(14, 17, 23, 0.85);
         border: 1px solid rgba(255, 255, 255, 0.1);
-        padding: 24px;
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        padding: 20px; border-radius: 15px;
     }
     .podio-emoji { font-size: 3rem; display: block; margin-bottom: 5px; }
 </style>
@@ -189,7 +158,7 @@ def add_bg_from_local(image_file):
         </style>
         """, unsafe_allow_html=True)
     else:
-        st.warning(f"⚠️ AVISO: No se encontró '{image_file}'.")
+        st.warning(f"⚠️ No se encontró '{image_file}'. Subelo a GitHub.")
 
 add_bg_from_local('fondo.jpg')
 LOGO_FILE = "logo.png"
@@ -394,7 +363,7 @@ else:
         else: st.info("No hay datos históricos cargados.")
 
     # ==============================================================================
-    # 2. EVALUACIÓN (CON BUSCADOR ACTIVO)
+    # 2. EVALUACIÓN (BUSCADOR ESTILO GOOGLE)
     # ==============================================================================
     elif seleccion == "📝 Evaluar Personal":
         st.title(f"📝 Evaluación - {parada_actual}")
@@ -409,11 +378,11 @@ else:
             st.success("✅ Todo el personal asignado ha sido evaluado.")
         else:
             lista = data_view['NOMBRE_COMPLETO'].unique().tolist()
-            # BUSCADOR ESTILO GOOGLE (Empieza vacío)
+            # SELECTBOX GOOGLE STYLE (Empieza vacío, placeholder de búsqueda)
             sel_nombre = st.selectbox(
                 f"Pendientes ({len(lista)}):", 
                 lista, 
-                index=None, 
+                index=None, # IMPORTANTE: Empieza vacío
                 placeholder="🔍 Escribe para buscar colaborador..."
             )
             
