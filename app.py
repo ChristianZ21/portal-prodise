@@ -18,133 +18,117 @@ st.set_page_config(
 )
 
 # ==========================================
-# 2. ESTILOS VISUALES (MEJORAS ESTÉTICAS)
+# 2. ESTILOS VISUALES - SOLUCIÓN TOTAL
 # ==========================================
 st.markdown("""
 <style>
-    /* --- 1. FONDO Y ESPACIADO --- */
+    /* --- 1. CONFIGURACIÓN GLOBAL --- */
+    /* Forzar fondo transparente para ver la imagen y textos blancos */
     [data-testid="stAppViewContainer"] {
         background-color: transparent !important;
         color: white !important;
     }
+    
     .block-container {
-        padding-top: 2rem !important; /* Un poco de aire arriba para el título grande */
+        padding-top: 1rem !important;
         padding-bottom: 5rem !important;
     }
 
-    /* --- 2. TIPOGRAFÍA Y TÍTULOS (MEJORADO) --- */
-    h1 {
+    h1, h2, h3, h4, h5, h6, p, span, div, label {
+        color: #E0E0E0 !important;
+    }
+    h1, h2, h3 { 
         color: #4FC3F7 !important; /* Azul Prodise */
-        text-shadow: 0 0 20px rgba(79, 195, 247, 0.6); /* Efecto Neón más fuerte */
-        font-size: 3rem !important; /* Título MÁS GRANDE */
-        font-weight: 800 !important; /* Letra más gruesa */
-        margin-bottom: 10px !important;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-    h2, h3 { 
-        color: #E0E0E0 !important;
-        font-weight: 600 !important;
-    }
-    p, span, div, label {
-        color: #E0E0E0 !important;
+        text-shadow: 0 0 10px rgba(79,195,247,0.3);
     }
 
-    /* --- 3. HEADER Y SIDEBAR --- */
+    /* --- 2. HEADER Y SIDEBAR --- */
     header[data-testid="stHeader"] { background-color: transparent !important; }
-    #MainMenu, .stDeployButton, footer, [data-testid="stDecoration"] { visibility: hidden; display: none; }
+    #MainMenu, .stDeployButton, footer, [data-testid="stDecoration"] { display: none; }
     
     [data-testid="stSidebar"] {
         background-color: #050505 !important;
-        border-right: 1px solid #333;
+        border-right: 1px solid #222;
     }
     [data-testid="collapsedControl"] { top: 1rem !important; color: white !important; }
 
-    /* --- 4. MENÚ DESPLEGABLE (MEJORADO: NOMBRES RESALTADOS) --- */
+    /* --- 3. SOLUCIÓN NUCLEAR: MENÚ DESPLEGABLE AZUL --- */
+    /* Usamos 'html body' para que tenga más prioridad que el tema claro */
     
-    /* Contenedor Azul Oscuro */
-    div[data-baseweb="popover"], ul[data-baseweb="menu"] {
-        background-color: #0E1117 !important;
+    /* El contenedor flotante (la caja que se abre) */
+    html body div[data-baseweb="popover"], 
+    html body ul[data-baseweb="menu"] {
+        background-color: #0E1117 !important; /* AZUL OSCURO (Casi negro) */
         border: 1px solid #4FC3F7 !important;
     }
     
-    /* Opciones */
-    li[data-baseweb="option"] {
-        background-color: #0E1117 !important;
-        color: white !important;
-        padding-top: 12px !important;
-        padding-bottom: 12px !important;
+    /* Las opciones de la lista */
+    html body li[data-baseweb="option"] {
+        background-color: #0E1117 !important; /* Fondo Azul Oscuro */
+        color: white !important;               /* Texto Blanco */
     }
     
-    /* TEXTO DE LOS NOMBRES (AQUÍ ESTÁ EL CAMBIO) */
-    div[data-baseweb="option"] {
-        color: white !important;
-        font-weight: 700 !important; /* Nombres en Negrita */
-        font-size: 1.1rem !important; /* Letra un poco más grande */
-    }
-
-    /* Hover */
-    li[data-baseweb="option"]:hover, li[aria-selected="true"] {
-        background-color: #0288D1 !important;
+    /* Asegurar que el texto dentro de la opción sea blanco */
+    html body li[data-baseweb="option"] div {
         color: white !important;
     }
 
-    /* Barra de búsqueda cerrada */
-    div[data-baseweb="select"] > div {
+    /* Cuando pasas el mouse por encima (Hover) */
+    html body li[data-baseweb="option"]:hover, 
+    html body li[aria-selected="true"] {
+        background-color: #4FC3F7 !important; /* Azul Brillante */
+        color: white !important;
+    }
+
+    /* La barra de búsqueda cuando está cerrada */
+    html body div[data-baseweb="select"] > div {
         background-color: #0E1117 !important;
         color: white !important;
         border: 1px solid #555 !important;
     }
-    div[data-baseweb="select"] span { 
-        color: white !important; 
-        font-weight: 600 !important;
-    }
-    div[data-baseweb="select"] svg { fill: white !important; }
+    
+    /* Texto seleccionado y flechita */
+    html body div[data-baseweb="select"] span { color: white !important; }
+    html body div[data-baseweb="select"] svg { fill: white !important; }
 
-    /* Inputs de texto */
+    /* Inputs de texto (Observaciones, etc) */
     .stTextInput input, .stTextArea textarea {
         background-color: #0E1117 !important;
         color: white !important;
         border: 1px solid #555 !important;
     }
 
-    /* --- 5. ALTERNATIVAS (MÁS JUNTAS Y BONITAS) --- */
+    /* --- 4. ESTILO DE BOTONES PARA LAS ALTERNATIVAS (RECUPERADO) --- */
     div[role="radiogroup"] {
         display: flex;
         flex-direction: column;
-        gap: 6px !important; /* MÁS JUNTAS (Reducido el espacio) */
+        gap: 10px;
     }
     
     div[role="radiogroup"] label {
-        background-color: rgba(19, 23, 32, 0.95) !important;
-        padding: 10px 15px !important; /* Más compacto verticalmente */
-        border-radius: 8px !important;
-        border: 1px solid #444 !important;
-        transition: all 0.2s ease;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        background-color: rgba(20, 25, 35, 0.9) !important; /* Fondo tarjeta oscura */
+        padding: 15px 20px !important;
+        border-radius: 10px !important;
+        border: 1px solid #333 !important;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        transition: transform 0.2s;
         margin-bottom: 0px !important;
     }
     
     div[role="radiogroup"] label:hover {
         border-color: #4FC3F7 !important;
+        transform: translateX(5px);
         background-color: rgba(30, 40, 50, 1) !important;
-        transform: translateX(3px);
         cursor: pointer;
     }
     
-    /* Círculo del radio button */
+    /* El círculo del radio button */
     div[role="radiogroup"] label > div:first-child {
         border-color: #4FC3F7 !important;
         background-color: #0E1117 !important;
     }
-    
-    /* Texto de la alternativa */
-    div[role="radiogroup"] p {
-        font-size: 0.95rem !important;
-        margin-bottom: 0px !important;
-    }
 
-    /* --- 6. TARJETAS Y BOTONES --- */
+    /* --- 5. TARJETAS DE DATOS --- */
     .css-card {
         background: rgba(14, 17, 23, 0.85);
         backdrop-filter: blur(10px);
@@ -154,15 +138,19 @@ st.markdown("""
         box-shadow: 0 4px 15px rgba(0,0,0,0.5);
     }
 
+    /* --- 6. BOTONES PRINCIPALES --- */
     div.stButton > button {
         background: linear-gradient(135deg, #0288D1 0%, #01579B 100%) !important;
-        color: white !important; border: none; font-weight: bold;
-        padding: 0.7rem 1.5rem; border-radius: 8px; width: 100%;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        color: white !important;
+        border: none !important;
+        font-weight: bold;
+        padding: 0.7rem 1.5rem;
+        border-radius: 8px;
+        width: 100%;
     }
     div.stButton > button:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 15px rgba(2, 136, 209, 0.5);
+        box-shadow: 0 6px 20px rgba(2, 136, 209, 0.4);
     }
     
     .podio-emoji { font-size: 3rem; display: block; margin-bottom: 5px; }
@@ -187,7 +175,7 @@ def add_bg_from_local(image_file):
         }}
         .stApp::before {{
             content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.65); /* Oscuridad de fondo */
+            background-color: rgba(0, 0, 0, 0.6);
             z-index: -1;
         }}
         </style>
@@ -398,7 +386,7 @@ else:
         else: st.info("No hay datos históricos cargados.")
 
     # ==============================================================================
-    # 2. EVALUACIÓN
+    # 2. EVALUACIÓN (CON BUSCADOR Y BOTONES PROFESIONALES)
     # ==============================================================================
     elif seleccion == "📝 Evaluar Personal":
         st.title(f"📝 Evaluación - {parada_actual}")
@@ -447,6 +435,7 @@ else:
                             st.markdown(f"#### {i}. {row['CRITERIO']}")
                             st.caption(f"Peso: {row['PORCENTAJE']*100:.0f}%")
                             
+                            # RADIO BUTTONS ESTILO TARJETA
                             ops = [str(row.get(f'NIVEL_{j}')) for j in range(1, 6)]
                             sel = st.radio(f"Nivel {i}", ops, key=f"r{i}", label_visibility="collapsed")
                             
