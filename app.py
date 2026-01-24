@@ -18,12 +18,11 @@ st.set_page_config(
 )
 
 # ==========================================
-# 2. ESTILOS VISUALES (OPTIMIZADO PARA TU CONFIG.TOML)
+# 2. ESTILOS VISUALES (OPTIMIZADO)
 # ==========================================
 st.markdown("""
 <style>
     /* --- 1. AJUSTES GENERALES --- */
-    /* Quitamos el fondo default para que se vea tu imagen */
     [data-testid="stAppViewContainer"] {
         background-color: transparent !important;
     }
@@ -51,55 +50,48 @@ st.markdown("""
     #MainMenu, .stDeployButton, footer, [data-testid="stDecoration"] { display: none; }
     
     [data-testid="stSidebar"] {
-        background-color: #050505 !important; /* Sidebar negro puro */
+        background-color: #050505 !important;
         border-right: 1px solid #333;
     }
     [data-testid="collapsedControl"] { top: 1rem !important; color: white !important; }
 
     /* --- 3. MENÚ DESPLEGABLE (LISTA AZUL OSCURA) --- */
-    /* Gracias a tu config.toml, esto ya no peleará con el blanco, pero aseguramos el azul */
-    
-    /* La caja flotante */
     div[data-baseweb="popover"], ul[data-baseweb="menu"] {
-        background-color: #0E1117 !important; /* Azul Noche (Tu color de fondo) */
+        background-color: #0E1117 !important;
         border: 1px solid #4FC3F7 !important;
     }
     
-    /* Opciones */
     li[data-baseweb="option"] {
         background-color: #0E1117 !important;
         color: white !important;
     }
     
-    /* Hover y Selección */
     li[data-baseweb="option"]:hover, li[aria-selected="true"] {
-        background-color: #4FC3F7 !important; /* Azul Neón */
-        color: black !important; /* Letra negra para contraste */
+        background-color: #4FC3F7 !important;
+        color: black !important;
         font-weight: bold !important;
     }
     
-    /* Fix para el texto dentro del hover */
     li[data-baseweb="option"]:hover div, li[aria-selected="true"] div {
         color: black !important;
     }
 
-    /* Barra de búsqueda cerrada */
     div[data-baseweb="select"] > div {
         background-color: #0E1117 !important;
         border: 1px solid #555 !important;
         color: white !important;
     }
     
-    /* --- 4. ALTERNATIVAS COMO TARJETAS (ESTILO RECUPERADO) --- */
-    /* Esto hace que los botones de nivel se vean como cajitas separadas */
-    
+    /* --- 4. ALTERNATIVAS COMO TARJETAS (MÁS JUNTAS) --- */
     div[role="radiogroup"] {
-        gap: 12px !important;
+        display: flex;
+        flex-direction: column;
+        gap: 8px !important; /* <-- MÁS JUNTAS (Reducido a 8px) */
     }
     
     div[role="radiogroup"] label {
         background-color: rgba(30, 35, 45, 0.8) !important;
-        padding: 15px 20px !important;
+        padding: 12px 20px !important; /* Un poco menos de relleno vertical */
         border-radius: 12px !important;
         border: 1px solid #444 !important;
         box-shadow: 0 4px 6px rgba(0,0,0,0.2);
@@ -114,9 +106,8 @@ st.markdown("""
         cursor: pointer;
     }
     
-    /* El texto de la opción */
     div[role="radiogroup"] p {
-        font-size: 1.1rem !important;
+        font-size: 1.05rem !important;
         font-weight: 500 !important;
     }
 
@@ -167,7 +158,7 @@ def add_bg_from_local(image_file):
         }}
         .stApp::before {{
             content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.75); /* Un poco más oscuro para mejor lectura */
+            background-color: rgba(0, 0, 0, 0.75);
             z-index: -1;
         }}
         </style>
@@ -441,7 +432,13 @@ else:
                             if obs and tbl_historial:
                                 rec = {"FECHA_HORA": datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "COD_PARADA": parada_actual, "DNI_EVALUADOR": st.session_state.dni_user, "NOMBRE_EVALUADOR": st.session_state.nombre_real, "DNI_TRABAJADOR": str(p['DNI']), "NOMBRE_TRABAJADOR": str(p['NOMBRE_COMPLETO']), "CARGO_MOMENTO": str(p['CARGO_ACTUAL']), "GRUPO_MOMENTO": str(p['ID_GRUPO']), "TURNO_MOMENTO": str(p['TURNO']), "NOTA_FINAL": round(score, 2), "COMENTARIOS": obs}
                                 rec.update(notas_save)
-                                try: tbl_historial.create(rec); st.success(f"Guardado. Nota: {round(score, 2)}"); time.sleep(1.5); st.cache_data.clear(); st.rerun()
+                                try: 
+                                    tbl_historial.create(rec)
+                                    st.balloons() # <-- ¡GLOBOS AQUÍ!
+                                    st.success(f"Guardado. Nota: {round(score, 2)}")
+                                    time.sleep(1.5)
+                                    st.cache_data.clear()
+                                    st.rerun()
                                 except Exception as e: st.error(f"Error: {e}")
                             else: st.warning("⚠️ Falta observación.")
 
