@@ -23,7 +23,7 @@ AIRTABLE_BASE_ID = "app2jaysCvPwvrBwI"
 # 2. DEFINICIÓN DE PERMISOS Y JERARQUÍA
 # ==========================================
 
-# A. ROLES RESTRINGIDOS (Solo ven "Evaluar Personal")
+# A. ROLES RESTRINGIDOS (Menú limitado: Solo Evaluar)
 ROLES_RESTRINGIDOS = [
     'LIDER MECANICO', 
     'OPERADOR DE GRUA', 
@@ -37,11 +37,16 @@ ROLES_RESTRINGIDOS = [
 ]
 
 # B. MATRIZ DE VISIBILIDAD (Quién evalúa a quién)
+# 'ALL': Ve a todos
+# 'HYBRID': Ve a su (Grupo y Turno) + (Cargos Específicos listados en 'targets')
+# 'GROUP': Ve SOLO a su (Grupo y Turno)
+# 'SPECIFIC': Ve SOLO a los cargos listados (sin importar grupo)
+
 JERARQUIA = {
-    # --- NIVEL DIOS (VE TODO) ---
-    'ADMIN': {'scope': 'ALL'}, 
+    # --- NIVEL DIOS ---
+    'ADMIN': {'scope': 'ALL'},
     
-    # --- GERENCIA Y JEFATURA ---
+    # --- NIVEL GERENCIAL (Ven todo) ---
     'GERENTE GENERAL': {'scope': 'ALL'},
     'GERENTE MANTENIMIENTO': {'scope': 'ALL'},
     'RESIDENTE': {'scope': 'ALL'},
@@ -61,16 +66,23 @@ JERARQUIA = {
         'targets': ['ASISTENTE DE PLANIFICACION', 'ASISTENTE ADMINISTRATIVO', 'PROGRAMADOR', 'PLANNER']
     },
     
-    # --- OPERACIONES (HÍBRIDOS) ---
+    # --- OPERACIONES (SEGÚN TU TABLA) ---
     'SUPERVISOR DE OPERACIONES': {
-        'scope': 'HYBRID', # Grupo + Específicos
+        'scope': 'HYBRID', # Grupo/Turno + Planner/Conductor
         'targets': ['PLANNER', 'CONDUCTOR']
     },
     
     'LIDER MECANICO': {
-        'scope': 'HYBRID', # Grupo + Específicos
+        'scope': 'HYBRID', # Grupo/Turno + Supervisores
         'targets': ['SUPERVISOR DE OPERACIONES', 'SUPERVISOR DE SEGURIDAD']
     },
+    
+    'OPERADOR DE GRUA': {
+        'scope': 'GROUP', # SOLO Grupo/Turno (Estricto)
+        'targets': []
+    },
+    
+    # Los demás (Mecánico, Soldador, etc.) caerán en DEFAULT (GROUP)
 }
 
 # ==========================================
@@ -88,7 +100,7 @@ def get_default_profile_pic():
 DEFAULT_IMG = get_default_profile_pic()
 
 # ==========================================
-# 4. ESTILOS VISUALES (BLINDADO - CAJA AZUL SÓLIDA)
+# 4. ESTILOS VISUALES (BLINDADO)
 # ==========================================
 def add_bg_from_local(image_file):
     if os.path.exists(image_file):
@@ -139,23 +151,15 @@ st.markdown("""
         border-radius: 50px !important; padding: 10px 20px !important;
     }
 
-    /* --- TEXT AREA (CAJA DE COMENTARIOS SÓLIDA AZUL) --- */
+    /* TEXT AREA SOLIDO */
     div[data-baseweb="textarea"] {
-        background-color: #262730 !important; /* Fondo SÓLIDO */
-        border: 2px solid #4FC3F7 !important; /* Borde Azul */
-        border-radius: 12px !important;
-        padding: 5px !important;
+        background-color: #262730 !important; border: 2px solid #4FC3F7 !important;
+        border-radius: 12px !important; padding: 5px !important;
     }
     .stTextArea textarea {
-        background-color: #262730 !important; /* Fondo SÓLIDO */
-        color: white !important;
-        caret-color: #4FC3F7 !important;
-        border: none !important;
+        background-color: #262730 !important; color: white !important; caret-color: #4FC3F7 !important; border: none !important;
     }
-    div[data-baseweb="textarea"]:focus-within {
-        box-shadow: 0 0 15px rgba(79, 195, 247, 0.5) !important;
-    }
-    /* -------------------------------------------------- */
+    div[data-baseweb="textarea"]:focus-within { box-shadow: 0 0 15px rgba(79, 195, 247, 0.5) !important; }
 
     /* AUTOCOMPLETE FIX */
     input:-webkit-autofill, textarea:-webkit-autofill {
@@ -175,7 +179,7 @@ st.markdown("""
     li[data-baseweb="option"]:hover, li[role="option"][aria-selected="true"] { background-color: #0288D1 !important; color: white !important; }
     li[role="option"] * { color: inherit !important; }
 
-    /* RADIO BUTTONS */
+    /* RADIO BUTTONS AZULES */
     div[role="radiogroup"] { display: flex; flex-direction: column !important; gap: 10px; }
     div[role="radiogroup"] label {
         background-color: #131720 !important; border: 1px solid #0288D1 !important; color: #E0E0E0 !important;
@@ -207,7 +211,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 5. CONEXIÓN Y CARGA DE DATOS
+# 5. CONEXIÓN Y CARGA DE DATOS (CON LIMPIEZA)
 # ==========================================
 @st.cache_data(ttl=60)
 def load_data():
@@ -219,7 +223,15 @@ def load_data():
                 recs = t.all()
                 if not recs: return pd.DataFrame(), t
                 df = pd.DataFrame([r['fields'] for r in recs])
-                for c in df.columns: df[c] = df[c].astype(str)
+                
+                # --- LIMPIEZA CRÍTICA DE DATOS ---
+                # Esto asegura que "2.0" se lea como "2" y elimina espacios
+                for c in df.columns:
+                    df[c] = df[c].astype(str).str.strip().str.upper()
+                    # Si es columna de grupo, quitamos decimales .0 si existen
+                    if c in ['ID_GRUPO', 'GRUPO']:
+                        df[c] = df[c].str.replace('.0', '', regex=False)
+                
                 return df, t
             except: return pd.DataFrame(), None
             
@@ -278,7 +290,8 @@ if not st.session_state.usuario:
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("INICIAR SESIÓN", use_container_width=True):
             if df_users is not None and not df_users.empty:
-                u = df_users[df_users['USUARIO'] == user]
+                # Búsqueda exacta normalizada
+                u = df_users[df_users['USUARIO'] == user.strip().upper()]
                 if not u.empty and str(u.iloc[0]['PASS']) == pw and u.iloc[0]['ESTADO'] == 'ACTIVO':
                     st.session_state.usuario = user
                     st.session_state.nombre_real = u.iloc[0]['NOMBRE']
@@ -314,7 +327,7 @@ else:
             st.rerun()
 
     # ==============================================================
-    # LÓGICA DE FILTRADO (MATRIZ DE JERARQUÍA + GRUPOS)
+    # LÓGICA DE FILTRADO MAESTRA (JERARQUÍA + GRUPOS NORMALIZADOS)
     # ==============================================================
     data_view = df_personal[df_personal['ESTADO'] == 'ACTIVO'] if df_personal is not None else pd.DataFrame()
     
@@ -326,24 +339,33 @@ else:
         
         # 2. Datos del Usuario Logueado (Para saber su grupo)
         me = data_view[data_view['DNI'] == st.session_state.dni_user]
-        grp_supervisor = str(me.iloc[0]['ID_GRUPO']).strip() if not me.empty else ""
+        # Aseguramos que el grupo del supervisor esté limpio (sin decimales)
+        grp_supervisor = str(me.iloc[0]['ID_GRUPO']).replace('.0','').strip() if not me.empty else ""
         trn = me.iloc[0]['TURNO'] if not me.empty else ""
 
-        # Función auxiliar para chequear si el grupo coincide (Soporte "2, 4, 5")
+        # Función auxiliar robusta para chequear si el grupo coincide
+        # Maneja "2, 4, 5" vs "2" y también "2.0"
         def check_grupo_match(grupos_trabajador, grupo_buscado):
-            lista_grupos = [g.strip() for g in str(grupos_trabajador).split(',')]
-            return grupo_buscado in lista_grupos
+            if not grupo_buscado: return False
+            # Separamos por comas, limpiamos espacios y decimales
+            lista = [g.replace('.0','').strip() for g in str(grupos_trabajador).split(',')]
+            return grupo_buscado in lista
 
         # 3. Aplicar Filtro Según Scope
         if scope == 'ALL':
-            pass 
+            pass # Ve todo
+            
         elif scope == 'SPECIFIC':
             data_view = data_view[data_view['CARGO_ACTUAL'].isin(targets)]
+            
         elif scope == 'GROUP':
+            # Solo su grupo y turno
             mask_grupo = data_view['ID_GRUPO'].apply(lambda x: check_grupo_match(x, grp_supervisor))
             mask_turno = data_view['TURNO'] == trn
             data_view = data_view[mask_grupo & mask_turno]
+            
         elif scope == 'HYBRID':
+            # Cargos Específicos OR (Grupo y Turno)
             mask_cargos = data_view['CARGO_ACTUAL'].isin(targets)
             mask_grupo = data_view['ID_GRUPO'].apply(lambda x: check_grupo_match(x, grp_supervisor))
             mask_turno = data_view['TURNO'] == trn
@@ -353,7 +375,7 @@ else:
         data_view = data_view[data_view['DNI'] != st.session_state.dni_user]
 
     # ----------------------------------------
-    # 1. EVALUACIÓN (SIN BARRA DE BÚSQUEDA)
+    # 1. EVALUACIÓN (SELECTOR ÚNICO)
     # ----------------------------------------
     if seleccion == "📝 Evaluar Personal":
         st.title(f"📝 Evaluación - {parada_actual}")
@@ -549,13 +571,11 @@ else:
             df_historial['DNI_TRABAJADOR'] = df_historial['DNI_TRABAJADOR'].astype(str)
             df_personal['DNI'] = df_personal['DNI'].astype(str)
             
-            # --- FILTRO DE SEGURIDAD: SOLO VER LO QUE PUEDES EVALUAR ---
-            # data_view contiene la lista "permitida" calculada arriba en el bloque de filtros
+            # --- FILTRO: SOLO VER LO QUE PUEDES EVALUAR ---
             if not data_view.empty:
                 dnis_permitidos = data_view['DNI'].unique().tolist()
                 df_historial = df_historial[df_historial['DNI_TRABAJADOR'].isin(dnis_permitidos)]
-            # ------------------------------------------------------------
-
+            
             df_merged = pd.merge(df_historial, df_personal[['DNI', 'NOMBRE_COMPLETO']], left_on='DNI_TRABAJADOR', right_on='DNI', how='left')
             df_merged['NOMBRE_COMPLETO'] = df_merged['NOMBRE_COMPLETO'].fillna(df_merged['DNI_TRABAJADOR'])
             
