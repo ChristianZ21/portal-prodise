@@ -422,7 +422,7 @@ else:
                             notas_save[f"NOTA_{i}"] = nota_numerica
                             st.divider()
                         
-                        obs = st.text_area("Sustento de la Nota Final", height=100)
+                        obs = st.text_area("Comentario relevante", height=100)
                         enviar = st.form_submit_button("✅ GUARDAR EVALUACIÓN", use_container_width=True)
                         
                         if enviar:
