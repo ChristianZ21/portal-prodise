@@ -478,7 +478,7 @@ else:
                             notas_save[f"NOTA_{i}"] = nota
                             st.divider()
                         
-                        obs = st.text_area("Observaciones (Obligatorio)", height=100)
+                        obs = st.text_area("Comentario (Obligatorio)", height=100)
                         if st.form_submit_button("💾 GUARDAR EVALUACIÓN", use_container_width=True):
                             if obs and tbl_historial:
                                 rec = {"FECHA_HORA": datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "COD_PARADA": parada_actual, "DNI_EVALUADOR": st.session_state.dni_user, "NOMBRE_EVALUADOR": st.session_state.nombre_real, "DNI_TRABAJADOR": str(p['DNI']), "NOMBRE_TRABAJADOR": str(p['NOMBRE_COMPLETO']), "CARGO_MOMENTO": str(p['CARGO_ACTUAL']), "GRUPO_MOMENTO": str(p['ID_GRUPO']), "TURNO_MOMENTO": str(p['TURNO']), "NOTA_FINAL": round(score, 2), "COMENTARIOS": obs}
