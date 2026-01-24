@@ -18,7 +18,7 @@ st.set_page_config(
 )
 
 # ==========================================
-# 2. ESTILOS VISUALES (EL QUE FUNCIONÓ PERFECTO)
+# 2. ESTILOS VISUALES (EL DISEÑO QUE FUNCIONÓ)
 # ==========================================
 st.markdown("""
 <style>
@@ -32,16 +32,16 @@ st.markdown("""
         padding-bottom: 5rem !important;
     }
 
-    h1, h2, h3, h4, h5, h6, p, label, span, div {
-        color: #E0E0E0 !important;
-    }
-    
     h1 { 
         color: #4FC3F7 !important; 
         text-shadow: 0 0 20px rgba(79,195,247,0.6);
         font-weight: 800 !important;
         font-size: 3rem !important;
         text-transform: uppercase;
+    }
+    
+    h2, h3, p, label, span, div {
+        color: #E0E0E0 !important;
     }
 
     /* --- 2. HEADER Y SIDEBAR --- */
@@ -221,7 +221,7 @@ def load_data():
 
 df_users, df_personal, df_roles, df_historial, tbl_historial, df_config = load_data()
 
-# Definimos la jerarquía para filtrar a quién puede evaluar cada uno
+# JERARQUIA DE PERMISOS
 JERARQUIA = {
     'ADMIN': {'scope': 'ALL'}, 
     'GERENTE GENERAL': {'scope': 'ALL'}, 
@@ -268,13 +268,12 @@ if not st.session_state.usuario:
 else:
     rol_actual = st.session_state.rol
     
-    # --- LÓGICA DE PERMISOS DE PESTAÑAS ---
+    # 1. PERMISOS DE NAVEGACIÓN (TABS)
     if rol_actual == 'ADMIN':
         opciones = ["📝 Evaluar Personal", "📊 Dashboard Gerencial", "🏆 Ranking Global", "📂 Mi Historial"]
     elif rol_actual == 'SUPERVISOR DE OPERACIONES':
         opciones = ["📝 Evaluar Personal", "📂 Mi Historial"]
     else:
-        # Para todos los demás (Lideres, Operadores, etc.)
         opciones = ["📝 Evaluar Personal"]
 
     with st.sidebar:
@@ -288,11 +287,16 @@ else:
             st.session_state.usuario = None
             st.rerun()
 
+    # 2. FILTRO DE PERSONAL (LÓGICA PRINCIPAL)
     data_view = df_personal[df_personal['ESTADO'] == 'ACTIVO'] if df_personal is not None else pd.DataFrame()
+    
     if not data_view.empty:
+        # Recuperar configuración de Scope
         permisos = JERARQUIA.get(rol_actual, {'scope': 'GROUP', 'targets': []}) 
         scope = permisos.get('scope', 'GROUP')
         targets = permisos.get('targets', [])
+        
+        # Datos del usuario logueado
         me = data_view[data_view['DNI'] == st.session_state.dni_user]
         grp_supervisor = str(me.iloc[0]['ID_GRUPO']).replace('.0','').strip() if not me.empty else ""
         trn = me.iloc[0]['TURNO'] if not me.empty else ""
@@ -301,14 +305,30 @@ else:
             if not buscado: return False
             return buscado in [g.replace('.0','').strip() for g in str(grupos).split(',')]
 
-        if scope == 'ALL': pass 
-        elif scope == 'SPECIFIC': data_view = data_view[data_view['CARGO_ACTUAL'].isin(targets)]
-        elif scope == 'GROUP': data_view = data_view[data_view['ID_GRUPO'].apply(lambda x: check_grupo(x, grp_supervisor)) & (data_view['TURNO'] == trn)]
+        # Aplicar Lógica Base
+        if scope == 'ALL': 
+            pass 
+        elif scope == 'SPECIFIC': 
+            data_view = data_view[data_view['CARGO_ACTUAL'].isin(targets)]
+        elif scope == 'GROUP': 
+            data_view = data_view[data_view['ID_GRUPO'].apply(lambda x: check_grupo(x, grp_supervisor)) & (data_view['TURNO'] == trn)]
         elif scope == 'HYBRID':
             mask_cargos = data_view['CARGO_ACTUAL'].isin(targets)
             mask_grupo = data_view['ID_GRUPO'].apply(lambda x: check_grupo(x, grp_supervisor)) & (data_view['TURNO'] == trn)
             data_view = data_view[mask_cargos | mask_grupo]
+        
+        # Excluirse a sí mismo
         data_view = data_view[data_view['DNI'] != st.session_state.dni_user]
+
+        # -----------------------------------------------------------
+        # 🔥 FILTRO ESPECIAL: SUPERVISOR DE OPERACIONES 🔥
+        # REGLA: Si es Conductor, DEBE coincidir el turno. Si es Planner, pasa normal.
+        # -----------------------------------------------------------
+        if rol_actual == 'SUPERVISOR DE OPERACIONES':
+            data_view = data_view[
+                (data_view['CARGO_ACTUAL'] != 'CONDUCTOR') |  # Muestra todo lo que NO sea conductor (ej. Planner)
+                ((data_view['CARGO_ACTUAL'] == 'CONDUCTOR') & (data_view['TURNO'] == trn)) # Si es conductor, SOLO del mismo turno
+            ]
 
     # ==============================================================================
     # 1. DASHBOARD GERENCIAL (SOLO ADMIN)
@@ -437,7 +457,7 @@ else:
                             notas_save[f"NOTA_{i}"] = nota
                             st.divider()
                         
-                        obs = st.text_area("Comentarios (Obligatorio)", height=100)
+                        obs = st.text_area("Observaciones (Obligatorio)", height=100)
                         if st.form_submit_button("💾 GUARDAR EVALUACIÓN", use_container_width=True):
                             if obs and tbl_historial:
                                 rec = {"FECHA_HORA": datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "COD_PARADA": parada_actual, "DNI_EVALUADOR": st.session_state.dni_user, "NOMBRE_EVALUADOR": st.session_state.nombre_real, "DNI_TRABAJADOR": str(p['DNI']), "NOMBRE_TRABAJADOR": str(p['NOMBRE_COMPLETO']), "CARGO_MOMENTO": str(p['CARGO_ACTUAL']), "GRUPO_MOMENTO": str(p['ID_GRUPO']), "TURNO_MOMENTO": str(p['TURNO']), "NOTA_FINAL": round(score, 2), "COMENTARIOS": obs}
