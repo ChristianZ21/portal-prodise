@@ -18,12 +18,11 @@ st.set_page_config(
 )
 
 # ==========================================
-# 2. ESTILOS VISUALES - SOLUCIÓN "MARTILLO AZUL"
+# 2. ESTILOS VISUALES - "MARTILLO V3" (SOLUCIÓN DEFINITIVA)
 # ==========================================
 st.markdown("""
 <style>
-    /* --- 1. FONDO GLOBAL Y TEXTOS --- */
-    /* Hacemos transparente el contenedor para ver tu imagen de fondo */
+    /* --- 1. FONDO Y CONTENEDOR PRINCIPAL --- */
     [data-testid="stAppViewContainer"] {
         background-color: transparent !important;
         color: white !important;
@@ -34,16 +33,12 @@ st.markdown("""
         padding-bottom: 5rem !important;
     }
 
-    /* Forzar TODOS los textos a blanco/gris claro */
     h1, h2, h3, h4, h5, h6, p, span, div, label {
         color: #E0E0E0 !important;
     }
-    
-    /* Títulos con Neón */
-    h1 { 
-        color: #4FC3F7 !important; 
-        text-shadow: 0 0 15px rgba(79,195,247,0.5);
-        font-weight: 800 !important;
+    h1, h2, h3 { 
+        color: #4FC3F7 !important;
+        text-shadow: 0 0 10px rgba(79,195,247,0.3);
     }
 
     /* --- 2. HEADER Y SIDEBAR --- */
@@ -56,98 +51,91 @@ st.markdown("""
     }
     [data-testid="collapsedControl"] { top: 1rem !important; color: white !important; }
 
-    /* --- 3. SOLUCIÓN MENÚ DESPLEGABLE (FONDO AZUL FORZADO) --- */
-    /* Usamos !important en todo para matar el modo claro del navegador */
+    /* --- 3. SOLUCIÓN CRÍTICA: MENÚ DESPLEGABLE (ELIMINAR EL BLANCO) --- */
     
-    /* El contenedor de la lista (popover) */
-    div[data-baseweb="popover"], 
-    div[data-baseweb="menu"],
-    ul[data-baseweb="menu"] {
-        background-color: #0E1117 !important; /* AZUL OSCURO SIEMPRE */
+    /* 3.A. La caja flotante completa (Popover) */
+    div[data-baseweb="popover"] {
+        background-color: #0E1117 !important; /* FONDO OSCURO OBLIGATORIO */
         border: 1px solid #4FC3F7 !important;
     }
-    
-    /* Las opciones de la lista */
-    li[data-baseweb="option"] {
+
+    /* 3.B. La lista de opciones (ul) */
+    ul[data-baseweb="menu"] {
         background-color: #0E1117 !important;
-        color: white !important;
+    }
+
+    /* 3.C. Cada opción individual (li) */
+    li[data-baseweb="option"] {
+        background-color: #0E1117 !important; /* Fondo Negro */
+        color: white !important;              /* Letra Blanca */
     }
     
-    /* El texto de cada opción */
-    div[data-baseweb="option"] {
+    /* 3.D. Asegurar que el TEXTO dentro de la opción sea blanco */
+    li[data-baseweb="option"] * {
         color: white !important;
-        font-size: 1.05rem !important;
     }
 
-    /* Cuando pasas el mouse (Hover) o seleccionas */
+    /* 3.E. EFECTO HOVER (CUANDO PASAS EL MOUSE) */
     li[data-baseweb="option"]:hover, 
-    li[aria-selected="true"] {
-        background-color: #0288D1 !important; /* Azul más claro */
+    li[data-baseweb="option"][aria-selected="true"] {
+        background-color: #0288D1 !important; /* AZUL AL PASAR EL MOUSE */
         color: white !important;
     }
 
-    /* La cajita del buscador cuando está cerrada */
+    /* 3.F. La caja de búsqueda cerrada */
     div[data-baseweb="select"] > div {
         background-color: #0E1117 !important;
         color: white !important;
         border: 1px solid #555 !important;
     }
     
-    /* Texto seleccionado en la caja */
-    div[data-baseweb="select"] span {
-        color: white !important;
-    }
-    
-    /* La flechita y la X */
-    div[data-baseweb="select"] svg {
-        fill: white !important;
-    }
+    /* Iconos y textos seleccionados */
+    div[data-baseweb="select"] span { color: white !important; }
+    div[data-baseweb="select"] svg { fill: white !important; }
 
-    /* Inputs de texto (Observaciones) */
+    /* Inputs de texto */
     .stTextInput input, .stTextArea textarea {
         background-color: #0E1117 !important;
         color: white !important;
         border: 1px solid #555 !important;
     }
 
-    /* --- 4. ALTERNATIVAS COMO TARJETAS (ESTILO RESTAURADO) --- */
-    /* Convertimos la lista de radio buttons en tarjetas separadas */
+    /* --- 4. BOTONES DE ALTERNATIVAS (ESTILO TARJETA GRANDE) --- */
+    /* Recuperamos el diseño de botones profesionales */
+    
     div[role="radiogroup"] {
-        display: flex;
-        flex-direction: column;
-        gap: 10px !important; /* Separación entre tarjetas */
+        gap: 10px !important;
     }
     
     div[role="radiogroup"] label {
-        background-color: rgba(20, 25, 35, 0.9) !important; /* Fondo oscuro tarjeta */
-        padding: 15px 20px !important; /* Relleno generoso */
-        border-radius: 10px !important;
-        border: 1px solid #333 !important;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        background-color: rgba(25, 30, 40, 0.95) !important; /* Gris azulado oscuro */
+        padding: 16px 20px !important; /* Relleno grande = Botón grande */
+        border-radius: 12px !important;
+        border: 1px solid #444 !important;
         margin-bottom: 0px !important;
-        transition: transform 0.2s;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.3) !important;
+        transition: transform 0.2s ease, border-color 0.2s;
     }
     
-    /* Efecto al pasar el mouse por la respuesta */
+    /* Hover en las tarjetas */
     div[role="radiogroup"] label:hover {
-        border-color: #4FC3F7 !important;
-        background-color: rgba(30, 40, 50, 1) !important;
-        transform: translateX(5px); /* Se mueve un poquito */
+        border-color: #4FC3F7 !important; /* Borde azul neón */
+        background-color: rgba(40, 50, 60, 1) !important;
+        transform: scale(1.01);
         cursor: pointer;
     }
     
-    /* El texto de la respuesta */
-    div[role="radiogroup"] p {
-        font-size: 1rem !important;
-        margin-bottom: 0 !important;
+    /* El texto dentro del botón */
+    div[role="radiogroup"] label p {
+        font-size: 1.05rem !important;
+        font-weight: 500 !important;
     }
     
-    /* El circulito del radio button */
+    /* El círculo del radio button */
     div[role="radiogroup"] label div[data-baseweb="radio"] > div {
         background-color: #0E1117 !important;
         border-color: #4FC3F7 !important;
     }
-    /* El punto seleccionado */
     div[role="radiogroup"] label div[data-baseweb="radio"] > div[aria-checked="true"] {
         background-color: #4FC3F7 !important;
     }
@@ -171,7 +159,6 @@ st.markdown("""
         padding: 0.7rem 1.5rem;
         border-radius: 8px;
         width: 100%;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
     }
     div.stButton > button:hover {
         transform: translateY(-2px);
@@ -200,7 +187,7 @@ def add_bg_from_local(image_file):
         }}
         .stApp::before {{
             content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.6); /* Oscuridad para leer */
+            background-color: rgba(0, 0, 0, 0.7); /* Fondo oscuro al 70% */
             z-index: -1;
         }}
         </style>
