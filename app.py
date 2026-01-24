@@ -15,17 +15,21 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
-# --- OCULTAR MARCAS DE AGUA Y MENÚ ---
+
+# --- CSS PARA OCULTAR MARCAS DE AGUA Y MENÚ ---
+# Esto borra el barco rojo, el "Made with Streamlit" y el menú de opciones
 hide_menu_style = """
         <style>
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
         header {visibility: hidden;}
+        [data-testid="stToolbar"] {visibility: hidden;} 
         </style>
         """
 st.markdown(hide_menu_style, unsafe_allow_html=True)
+# ---------------------------------------------
+
 # --- TUS CLAVES (MODO SEGURO) ---
-# El sistema las buscará en la configuración de la nube, no en el código.
 try:
     AIRTABLE_API_TOKEN = st.secrets["AIRTABLE_API_TOKEN"]
     AIRTABLE_BASE_ID = st.secrets["AIRTABLE_BASE_ID"]
@@ -198,14 +202,12 @@ def load_data():
                 if not recs: return pd.DataFrame(), t
                 df = pd.DataFrame([r['fields'] for r in recs])
                 
-                # --- LIMPIEZA QUIRÚRGICA ---
                 cols_force_upper = [
                     'USUARIO', 'ID_ROL', 'ESTADO', 'TURNO', 'COD_PARADA',
                     'DNI', 'DNI_TRABAJADOR', 'DNI_EVALUADOR',
                     'CARGO', 'CARGO_ACTUAL', 'CARGO_MOMENTO', 'TURNO_MOMENTO',
                     'NOMBRE_COMPLETO', 'APELLIDOS Y NOMBRES', 'NOMBRE_EVALUADOR', 'NOMBRE_TRABAJADOR'
                 ]
-                
                 cols_grupos = ['ID_GRUPO', 'GRUPO', 'GRUPO_MOMENTO']
 
                 for c in df.columns:
