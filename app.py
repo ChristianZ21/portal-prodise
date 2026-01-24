@@ -23,7 +23,7 @@ AIRTABLE_BASE_ID = "app2jaysCvPwvrBwI"
 # 2. DEFINICIÓN DE PERMISOS Y JERARQUÍA
 # ==========================================
 
-# A. ROLES RESTRINGIDOS (Menú limitado: Solo Evaluar)
+# A. ROLES RESTRINGIDOS (Solo ven "Evaluar Personal")
 ROLES_RESTRINGIDOS = [
     'LIDER MECANICO', 
     'OPERADOR DE GRUA', 
@@ -37,16 +37,11 @@ ROLES_RESTRINGIDOS = [
 ]
 
 # B. MATRIZ DE VISIBILIDAD (Quién evalúa a quién)
-# 'ALL': Ve a todos
-# 'HYBRID': Ve a su (Grupo y Turno) + (Cargos Específicos listados en 'targets')
-# 'GROUP': Ve SOLO a su (Grupo y Turno)
-# 'SPECIFIC': Ve SOLO a los cargos listados (sin importar grupo)
-
 JERARQUIA = {
     # --- NIVEL DIOS ---
     'ADMIN': {'scope': 'ALL'},
     
-    # --- NIVEL GERENCIAL (Ven todo) ---
+    # --- NIVEL GERENCIAL ---
     'GERENTE GENERAL': {'scope': 'ALL'},
     'GERENTE MANTENIMIENTO': {'scope': 'ALL'},
     'RESIDENTE': {'scope': 'ALL'},
@@ -66,23 +61,21 @@ JERARQUIA = {
         'targets': ['ASISTENTE DE PLANIFICACION', 'ASISTENTE ADMINISTRATIVO', 'PROGRAMADOR', 'PLANNER']
     },
     
-    # --- OPERACIONES (SEGÚN TU TABLA) ---
+    # --- OPERACIONES ---
     'SUPERVISOR DE OPERACIONES': {
-        'scope': 'HYBRID', # Grupo/Turno + Planner/Conductor
+        'scope': 'HYBRID', 
         'targets': ['PLANNER', 'CONDUCTOR']
     },
     
     'LIDER MECANICO': {
-        'scope': 'HYBRID', # Grupo/Turno + Supervisores
+        'scope': 'HYBRID', 
         'targets': ['SUPERVISOR DE OPERACIONES', 'SUPERVISOR DE SEGURIDAD']
     },
     
     'OPERADOR DE GRUA': {
-        'scope': 'GROUP', # SOLO Grupo/Turno (Estricto)
+        'scope': 'GROUP', # SOLO Grupo/Turno
         'targets': []
     },
-    
-    # Los demás (Mecánico, Soldador, etc.) caerán en DEFAULT (GROUP)
 }
 
 # ==========================================
@@ -211,7 +204,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 5. CONEXIÓN Y CARGA DE DATOS (CON LIMPIEZA)
+# 5. CONEXIÓN Y CARGA DE DATOS (FIX LOGIN)
 # ==========================================
 @st.cache_data(ttl=60)
 def load_data():
@@ -224,11 +217,16 @@ def load_data():
                 if not recs: return pd.DataFrame(), t
                 df = pd.DataFrame([r['fields'] for r in recs])
                 
-                # --- LIMPIEZA CRÍTICA DE DATOS ---
-                # Esto asegura que "2.0" se lea como "2" y elimina espacios
+                # --- LIMPIEZA INTELIGENTE ---
                 for c in df.columns:
-                    df[c] = df[c].astype(str).str.strip().str.upper()
-                    # Si es columna de grupo, quitamos decimales .0 si existen
+                    # 1. Base a string y quitar espacios
+                    df[c] = df[c].astype(str).str.strip()
+                    
+                    # 2. FIX: NO TOCAR MAYÚSCULAS DE CONTRASEÑA
+                    if c != 'PASS':
+                        df[c] = df[c].str.upper()
+                        
+                    # 3. Fix Grupos (2.0 -> 2)
                     if c in ['ID_GRUPO', 'GRUPO']:
                         df[c] = df[c].str.replace('.0', '', regex=False)
                 
@@ -290,7 +288,7 @@ if not st.session_state.usuario:
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("INICIAR SESIÓN", use_container_width=True):
             if df_users is not None and not df_users.empty:
-                # Búsqueda exacta normalizada
+                # Busqueda exacta normalizada (Usuario Uppercase, Pass Original)
                 u = df_users[df_users['USUARIO'] == user.strip().upper()]
                 if not u.empty and str(u.iloc[0]['PASS']) == pw and u.iloc[0]['ESTADO'] == 'ACTIVO':
                     st.session_state.usuario = user
@@ -339,15 +337,12 @@ else:
         
         # 2. Datos del Usuario Logueado (Para saber su grupo)
         me = data_view[data_view['DNI'] == st.session_state.dni_user]
-        # Aseguramos que el grupo del supervisor esté limpio (sin decimales)
         grp_supervisor = str(me.iloc[0]['ID_GRUPO']).replace('.0','').strip() if not me.empty else ""
         trn = me.iloc[0]['TURNO'] if not me.empty else ""
 
-        # Función auxiliar robusta para chequear si el grupo coincide
-        # Maneja "2, 4, 5" vs "2" y también "2.0"
+        # Función auxiliar robusta
         def check_grupo_match(grupos_trabajador, grupo_buscado):
             if not grupo_buscado: return False
-            # Separamos por comas, limpiamos espacios y decimales
             lista = [g.replace('.0','').strip() for g in str(grupos_trabajador).split(',')]
             return grupo_buscado in lista
 
