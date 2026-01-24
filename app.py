@@ -172,7 +172,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 5. CONEXIÓN Y CARGA DE DATOS (CORREGIDO ERROR 2: MAYÚSCULAS)
+# 5. CONEXIÓN Y CARGA DE DATOS
 # ==========================================
 @st.cache_data(ttl=60)
 def load_data():
@@ -185,27 +185,15 @@ def load_data():
                 if not recs: return pd.DataFrame(), t
                 df = pd.DataFrame([r['fields'] for r in recs])
                 
-                # --- LIMPIEZA SELECTIVA (FIX PARA NO ALTERAR TEXTOS) ---
-                
-                # Columnas técnicas que SI deben ser mayúsculas para que la lógica funcione
-                cols_tecnicas = [
-                    'USUARIO', 'ID_ROL', 'ESTADO', 'ID_GRUPO', 'GRUPO', 'TURNO', 
-                    'COD_PARADA', 'DNI', 'DNI_TRABAJADOR', 'DNI_EVALUADOR', 
-                    'CARGO', 'CARGO_ACTUAL'
-                ]
-                
+                # --- LIMPIEZA INTELIGENTE ---
                 for c in df.columns:
-                    # 1. Convertir a string y quitar espacios (básico)
                     df[c] = df[c].astype(str).str.strip()
-                    
-                    # 2. Solo pasar a MAYÚSCULAS si es una columna técnica
-                    if c in cols_tecnicas:
+                    # NO TOCAR MAYÚSCULAS DE CONTRASEÑA
+                    if c != 'PASS':
                         df[c] = df[c].str.upper()
-                        
-                    # 3. Limpieza específica de Grupos (2.0 -> 2)
+                    # FIX GRUPOS (2.0 -> 2)
                     if c in ['ID_GRUPO', 'GRUPO']:
                         df[c] = df[c].str.replace('.0', '', regex=False)
-                        
                 return df, t
             except: return pd.DataFrame(), None
             
@@ -264,7 +252,7 @@ if not st.session_state.usuario:
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("INICIAR SESIÓN", use_container_width=True):
             if df_users is not None and not df_users.empty:
-                # Busqueda exacta (Usuario upper, Pass original)
+                # Busqueda exacta normalizada (Usuario Uppercase, Pass Original)
                 u = df_users[df_users['USUARIO'] == user.strip().upper()]
                 if not u.empty and str(u.iloc[0]['PASS']) == pw and u.iloc[0]['ESTADO'] == 'ACTIVO':
                     st.session_state.usuario = user
@@ -338,7 +326,6 @@ else:
     if seleccion == "📝 Evaluar Personal":
         st.title(f"📝 Evaluación - {parada_actual}")
         
-        # --- FILTRO: EXCLUIR YA EVALUADOS ---
         dnis_ya_evaluados = []
         if df_historial is not None and not df_historial.empty:
             filtro_historial = df_historial[
@@ -391,7 +378,6 @@ else:
                         st.markdown("### Criterios de Desempeño")
                         for i, (idx, row) in enumerate(preguntas.iterrows(), 1):
                             st.markdown(f"**{i}. {row['CRITERIO']}** <span style='font-size:0.85em; color:#888'>({row['PORCENTAJE']*100:.0f}%)</span>", unsafe_allow_html=True)
-                            # NO USAMOS UPPER AQUI PARA RESPETAR EL TEXTO ORIGINAL
                             opciones = [str(row.get(f'NIVEL_{j}')) for j in range(1, 6)]
                             seleccion_texto = st.radio(label=f"r_{i}", options=opciones, key=f"rad_{i}", horizontal=False, label_visibility="collapsed")
                             nota_numerica = opciones.index(seleccion_texto) + 1
@@ -408,7 +394,9 @@ else:
                                     "FECHA_HORA": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                                     "COD_PARADA": parada_actual,
                                     "DNI_EVALUADOR": st.session_state.dni_user,
+                                    "NOMBRE_EVALUADOR": st.session_state.nombre_real, # <--- NUEVO CAMPO
                                     "DNI_TRABAJADOR": str(p['DNI']),
+                                    "NOMBRE_TRABAJADOR": str(p['NOMBRE_COMPLETO']),   # <--- NUEVO CAMPO
                                     "CARGO_MOMENTO": str(p['CARGO_ACTUAL']),
                                     "GRUPO_MOMENTO": str(p['ID_GRUPO']),
                                     "TURNO_MOMENTO": str(p['TURNO']),
@@ -420,12 +408,9 @@ else:
                                     tbl_historial.create(record)
                                     st.balloons()
                                     st.success(f"¡Evaluación Guardada! Nota: {round(score_total, 2)}")
-                                    
-                                    # CORRECCIÓN ERROR 1: PAUSA Y LIMPIEZA DE CACHÉ
                                     time.sleep(2) 
-                                    st.cache_data.clear() # OBLIGA A REFRESCAR LA LISTA DESDE LA BD
+                                    st.cache_data.clear() 
                                     st.rerun()
-                                    
                                 except Exception as e: st.error(f"Error: {e}")
                             else: st.warning("⚠️ La observación es obligatoria.")
 
