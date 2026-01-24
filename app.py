@@ -20,7 +20,64 @@ AIRTABLE_API_TOKEN = "pat3Ig7rAOvq7JdpN.fbef700fa804ae5692e3880899bba070239e9593
 AIRTABLE_BASE_ID = "app2jaysCvPwvrBwI"
 
 # ==========================================
-# 2. GENERADOR DE SILUETA
+# 2. DEFINICIÓN DE PERMISOS Y JERARQUÍA
+# ==========================================
+
+# A. ROLES RESTRINGIDOS (Solo ven "Evaluar Personal")
+# Según tu solicitud: Lider Mecanico y Operador de Grua.
+# He añadido otros operativos por lógica, pero puedes quitarlos si deseas.
+ROLES_RESTRINGIDOS = [
+    'LIDER MECANICO', 
+    'OPERADOR DE GRUA', 
+    'MECANICO', 
+    'SOLDADOR', 
+    'RIGGER', 
+    'VIENTERO', 
+    'ALMACENERO', 
+    'CONDUCTOR',
+    'PSICOLOGA'
+]
+
+# B. MATRIZ DE VISIBILIDAD (Quién evalúa a quién)
+# Tipos de Alcance:
+# 'ALL': Ve a todos (Gerentes/Planners)
+# 'SPECIFIC': Solo ve cargos específicos (No ve a su grupo automáticamente)
+# 'HYBRID': Ve a su Grupo + Cargos Específicos (Lider Mecanico/Sup. Operaciones)
+# 'GROUP': Solo ve a su Grupo (Default para el resto)
+
+JERARQUIA = {
+    'GERENTE GENERAL': {'scope': 'ALL'},
+    'GERENTE MANTENIMIENTO': {'scope': 'ALL'},
+    'RESIDENTE': {'scope': 'ALL'},
+    'COORDINADOR': {'scope': 'ALL'},
+    'PLANNER': {'scope': 'ALL'},
+    'PROGRAMADOR': {'scope': 'ALL'},
+    
+    'COORDINADOR DE SEGURIDAD': {
+        'scope': 'SPECIFIC', 
+        'targets': ['SUPERVISOR DE SEGURIDAD']
+    },
+    
+    'VALORIZADORA': {
+        'scope': 'SPECIFIC', 
+        'targets': ['ASISTENTE DE PLANIFICACION', 'ASISTENTE ADMINISTRATIVO', 'PROGRAMADOR', 'PLANNER']
+    },
+    
+    'SUPERVISOR DE OPERACIONES': {
+        'scope': 'HYBRID', # Grupo + Específicos
+        'targets': ['PLANNER', 'CONDUCTOR']
+    },
+    
+    'LIDER MECANICO': {
+        'scope': 'HYBRID', # Grupo + Específicos
+        'targets': ['SUPERVISOR DE OPERACIONES', 'SUPERVISOR DE SEGURIDAD']
+    },
+    
+    # Si el cargo no está aquí, usará la lógica 'GROUP' por defecto
+}
+
+# ==========================================
+# 3. GENERADOR DE SILUETA
 # ==========================================
 def get_default_profile_pic():
     svg = """
@@ -34,7 +91,7 @@ def get_default_profile_pic():
 DEFAULT_IMG = get_default_profile_pic()
 
 # ==========================================
-# 3. ESTILOS VISUALES (FIX FINAL: ALTERNATIVAS AZULES VISIBLES)
+# 4. ESTILOS VISUALES (BLINDADO)
 # ==========================================
 def add_bg_from_local(image_file):
     if os.path.exists(image_file):
@@ -50,7 +107,6 @@ def add_bg_from_local(image_file):
                 background-attachment: fixed;
                 background-color: #000000;
             }}
-            /* Capa oscura superpuesta */
             .stApp::before {{
                 content: "";
                 position: absolute;
@@ -69,175 +125,84 @@ LOGO_FILE = "logo.png"
 
 st.markdown("""
 <style>
-    /* 1. RESET EXTREMO */
     :root { color-scheme: dark !important; }
-    
-    html, body {
-        margin: 0 !important;
-        padding: 0 !important;
-        background-color: #000000 !important;
-        color: #E0E0E0 !important;
-    }
-    
-    .block-container {
-        padding-top: 1rem !important;
-        padding-bottom: 2rem !important;
-        max-width: 100% !important;
-    }
-
+    html, body { margin: 0 !important; padding: 0 !important; background-color: #000000 !important; color: #E0E0E0 !important; }
+    .block-container { padding-top: 1rem !important; padding-bottom: 2rem !important; max-width: 100% !important; }
     header[data-testid="stHeader"] { display: none !important; }
 
-    /* ============================================================
-       2. FIX: ALTERNATIVAS (RADIO BUTTONS) - ESTILO AZUL SÓLIDO
-       ============================================================ */
-    
-    /* Contenedor Vertical */
-    div[role="radiogroup"] { 
-        display: flex; 
-        flex-direction: column !important; 
-        gap: 10px; 
+    /* INPUTS & CONTENEDORES */
+    div[data-testid="stTextInput"] > div, div[data-testid="stTextArea"] > div,
+    div[data-baseweb="input"] > div, div[data-baseweb="base-input"] {
+        background-color: transparent !important; background: transparent !important; border: none !important; box-shadow: none !important;
     }
 
-    /* La Tarjeta de la Opción */
-    div[role="radiogroup"] label {
-        background-color: #131720 !important; /* FONDO AZUL OSCURO SÓLIDO (Ya no transparente) */
-        border: 1px solid #0288D1 !important; /* BORDE AZUL CORPORATIVO (No blanco) */
-        color: #E0E0E0 !important;            /* Texto claro */
-        width: 100% !important;
-        padding: 12px 15px !important;        /* Más gordito para leer mejor */
-        border-radius: 10px !important;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.3) !important; /* Sombra para que flote */
-        transition: all 0.2s ease !important;
+    /* INPUTS REALES */
+    .stTextInput input, input[type="text"], input[type="password"] {
+        background-color: #1E1E2E !important; color: white !important; border: 1px solid #555 !important;
+        border-radius: 50px !important; padding: 10px 20px !important;
     }
 
-    /* Efecto al pasar el mouse (Hover) */
-    div[role="radiogroup"] label:hover {
-        background-color: #1E2A3A !important; /* Se aclara un poco a azul acero */
-        border-color: #4FC3F7 !important;     /* Borde se pone Cyan brillante */
-        transform: translateX(5px);           /* Se mueve a la derecha un poquito */
-        cursor: pointer;
-    }
-
-    /* ============================================================
-       3. FIX TEXT AREA (COMENTARIOS) - CAJA SÓLIDA
-       ============================================================ */
+    /* TEXT AREA - CAJA SOLIDA AZULADA */
     div[data-baseweb="textarea"] {
-        background-color: #262730 !important; 
-        border: 2px solid #4FC3F7 !important; 
-        border-radius: 12px !important;
-        padding: 5px !important;
-    }
-    div[data-baseweb="textarea"]:focus-within {
-        box-shadow: 0 0 15px rgba(79, 195, 247, 0.5) !important;
+        background-color: #262730 !important; border: 2px solid #4FC3F7 !important;
+        border-radius: 12px !important; padding: 5px !important;
     }
     .stTextArea textarea {
-        background-color: transparent !important;
-        color: white !important;
-        caret-color: #4FC3F7 !important;
-        border: none !important;
+        background-color: transparent !important; color: white !important; caret-color: #4FC3F7 !important; border: none !important;
     }
-    div[data-testid="stTextArea"] > div {
-        background: transparent !important;
-        border: none !important;
+    div[data-baseweb="textarea"]:focus-within { box-shadow: 0 0 15px rgba(79, 195, 247, 0.5) !important; }
+
+    /* AUTOCOMPLETE FIX */
+    input:-webkit-autofill, textarea:-webkit-autofill {
+        -webkit-box-shadow: 0 0 0 30px #1E1E2E inset !important; -webkit-text-fill-color: white !important;
+        transition: background-color 5000s ease-in-out 0s;
     }
 
-    /* ============================================================
-       4. INPUTS SIMPLES (LOGIN/BUSCADOR) - FIX BORDES BLANCOS
-       ============================================================ */
-    div[data-testid="stTextInput"] > div,
-    div[data-baseweb="input"] > div {
-        background-color: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-    }
-
-    .stTextInput input, input[type="text"], input[type="password"] {
-        background-color: #1E1E2E !important; 
-        color: white !important;
-        border: 1px solid #555 !important;
-        border-radius: 50px !important;
-        padding: 10px 20px !important;
-    }
-
-    /* Autocompletado Chrome */
-    input:-webkit-autofill,
-    input:-webkit-autofill:hover, 
-    input:-webkit-autofill:focus, 
-    input:-webkit-autofill:active {
-        -webkit-box-shadow: 0 0 0 30px #1E1E2E inset !important;
-        -webkit-text-fill-color: white !important;
-    }
-
-    /* ============================================================
-       5. LISTAS DESPLEGABLES (DROPDOWN) - FIX BLANCO
-       ============================================================ */
+    /* LISTAS & SELECTORES */
     div[data-baseweb="select"] > div:first-child {
-        background-color: #1E1E2E !important;
-        color: white !important;
-        border: 1px solid #444 !important;
-        border-radius: 8px !important;
+        background-color: #1E1E2E !important; color: white !important; border: 1px solid #444 !important; border-radius: 8px !important;
     }
     div[data-baseweb="select"] span { color: white !important; }
     div[data-baseweb="select"] svg { fill: #B0BEC5 !important; }
-
-    div[data-baseweb="popover"], div[data-baseweb="popover"] > div {
-        background-color: #1E1E2E !important;
-        border: 1px solid #444 !important;
-    }
+    div[data-baseweb="popover"], div[data-baseweb="popover"] > div { background-color: #1E1E2E !important; border: 1px solid #444 !important; }
     ul[data-baseweb="menu"] { background-color: #1E1E2E !important; padding: 0 !important; }
-    li[data-baseweb="option"], li[role="option"] {
-        background-color: #1E1E2E !important;
-        color: #E0E0E0 !important;
-    }
-    li[data-baseweb="option"]:hover, li[role="option"]:hover, li[role="option"][aria-selected="true"] {
-        background-color: #0288D1 !important;
-        color: white !important;
-    }
+    li[data-baseweb="option"], li[role="option"] { background-color: #1E1E2E !important; color: #E0E0E0 !important; }
+    li[data-baseweb="option"]:hover, li[role="option"][aria-selected="true"] { background-color: #0288D1 !important; color: white !important; }
     li[role="option"] * { color: inherit !important; }
 
-    /* ============================================================
-       6. BOTONES Y TARJETAS
-       ============================================================ */
-    button[kind="primaryFormSubmit"],
-    div[data-testid="stFormSubmitButton"] > button,
-    div.stButton > button {
-        background: linear-gradient(135deg, #0288D1 0%, #01579B 100%) !important;
-        color: white !important;
-        border: none !important;
-        font-weight: 600;
-        border-radius: 8px;
-        padding: 0.6rem 1.2rem;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        transition: all 0.3s ease;
+    /* RADIO BUTTONS - CARDS AZULES */
+    div[role="radiogroup"] { display: flex; flex-direction: column !important; gap: 10px; }
+    div[role="radiogroup"] label {
+        background-color: #131720 !important; border: 1px solid #0288D1 !important; color: #E0E0E0 !important;
+        width: 100% !important; padding: 12px 15px !important; border-radius: 10px !important;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3) !important; transition: all 0.2s ease !important;
     }
-    div.stButton > button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 12px rgba(2, 136, 209, 0.5);
+    div[role="radiogroup"] label:hover {
+        background-color: #1E2A3A !important; border-color: #4FC3F7 !important; transform: translateX(5px); cursor: pointer;
     }
 
-    .css-card {
-        background: rgba(20, 20, 30, 0.75);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border-radius: 16px;
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        padding: 24px;
-        margin-bottom: 20px;
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+    /* BOTONES */
+    button[kind="primaryFormSubmit"], div[data-testid="stFormSubmitButton"] > button, div.stButton > button {
+        background: linear-gradient(135deg, #0288D1 0%, #01579B 100%) !important; color: white !important;
+        border: none !important; font-weight: 600; border-radius: 8px; padding: 0.6rem 1.2rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: all 0.3s ease;
     }
-    .css-card h2 { color: white !important; }
+    div.stButton > button:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(2, 136, 209, 0.5); }
     
+    .css-card {
+        background: rgba(20, 20, 30, 0.75); backdrop-filter: blur(12px); border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.08); padding: 24px; margin-bottom: 20px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+    }
     h1, h2 { color: #4FC3F7 !important; text-shadow: 0px 0px 10px rgba(79, 195, 247, 0.4); }
     h3, h4, h5 { color: #FFFFFF !important; }
     p, label, span, li, div { color: #B0BEC5; }
-
     [data-testid="stSidebar"] { background-color: #0a0e14 !important; border-right: 1px solid #222; }
     .podio-emoji { font-size: 3.5rem; display: block; margin-bottom: 10px; }
 </style>
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 4. CONEXIÓN Y CARGA DE DATOS
+# 5. CONEXIÓN Y CARGA DE DATOS
 # ==========================================
 @st.cache_data(ttl=60)
 def load_data():
@@ -287,7 +252,7 @@ if 'usuario' not in st.session_state:
     st.session_state.update({'usuario': None, 'nombre_real': None, 'rol': None, 'dni_user': None})
 
 # ==========================================
-# 5. APLICACIÓN
+# 6. APLICACIÓN
 # ==========================================
 
 # --- LOGIN ---
@@ -319,15 +284,23 @@ if not st.session_state.usuario:
             else: st.error("❌ Error de conexión")
 
 else:
-    # --- SIDEBAR ---
-    opciones = ["📝 Evaluar Personal", "📂 Mi Historial"]
-    if st.session_state.rol == 'ADMIN':
-        opciones.insert(1, "🏆 Ranking Global")
+    # --- SIDEBAR (CON RESTRICCIONES) ---
+    rol_actual = st.session_state.rol
+    
+    # 1. Menú Básico (Para todos)
+    opciones = ["📝 Evaluar Personal"]
+    
+    # 2. Menú Avanzado (Solo si NO es un rol restringido)
+    if rol_actual not in ROLES_RESTRINGIDOS:
+        if rol_actual == 'ADMIN':
+            opciones = ["📝 Evaluar Personal", "🏆 Ranking Global", "📂 Mi Historial"]
+        else:
+            opciones = ["📝 Evaluar Personal", "📂 Mi Historial"]
 
     with st.sidebar:
         if os.path.exists(LOGO_FILE): st.image(LOGO_FILE, use_container_width=True)
         st.markdown(f"### 👤 {st.session_state.nombre_real}")
-        st.caption(f"{st.session_state.rol}")
+        st.caption(f"{rol_actual}")
         st.info(f"⚙️ Parada Activa:\n**{parada_actual}**")
         seleccion = st.radio("Navegación", opciones)
         st.markdown("---")
@@ -335,135 +308,196 @@ else:
             st.session_state.usuario = None
             st.rerun()
 
-    # Filtros Supervisor
+    # ==============================================================
+    # LÓGICA DE FILTRADO (MATRIZ DE JERARQUÍA + GRUPOS)
+    # ==============================================================
     data_view = df_personal[df_personal['ESTADO'] == 'ACTIVO'] if df_personal is not None else pd.DataFrame()
-    if st.session_state.rol == 'SUPERVISOR DE OPERACIONES' and not data_view.empty:
+    
+    if not data_view.empty:
+        # 1. Obtener Permisos del Rol Actual
+        permisos = JERARQUIA.get(rol_actual, {'scope': 'GROUP', 'targets': []}) # Si no existe, default GROUP
+        scope = permisos.get('scope', 'GROUP')
+        targets = permisos.get('targets', [])
+        
+        # 2. Datos del Usuario Logueado (Para saber su grupo)
         me = data_view[data_view['DNI'] == st.session_state.dni_user]
-        if not me.empty:
-            grp, trn = me.iloc[0]['ID_GRUPO'], me.iloc[0]['TURNO']
-            data_view = data_view[(data_view['ID_GRUPO'] == grp) & (data_view['TURNO'] == trn)]
-            data_view = data_view[data_view['DNI'] != st.session_state.dni_user]
+        grp_supervisor = str(me.iloc[0]['ID_GRUPO']).strip() if not me.empty else ""
+        trn = me.iloc[0]['TURNO'] if not me.empty else ""
+
+        # Función auxiliar para chequear si el grupo coincide (Soporta "2, 4, 5")
+        def check_grupo_match(grupos_trabajador, grupo_buscado):
+            lista_grupos = [g.strip() for g in str(grupos_trabajador).split(',')]
+            return grupo_buscado in lista_grupos
+
+        # 3. Aplicar Filtro Según Scope
+        if scope == 'ALL':
+            pass # Ve todo
+            
+        elif scope == 'SPECIFIC':
+            # Solo ve cargos específicos
+            data_view = data_view[data_view['CARGO_ACTUAL'].isin(targets)]
+            
+        elif scope == 'GROUP':
+            # Solo ve su grupo y turno
+            mask_grupo = data_view['ID_GRUPO'].apply(lambda x: check_grupo_match(x, grp_supervisor))
+            mask_turno = data_view['TURNO'] == trn
+            data_view = data_view[mask_grupo & mask_turno]
+            
+        elif scope == 'HYBRID':
+            # Ve (Grupo + Turno) OR (Cargos Específicos)
+            mask_cargos = data_view['CARGO_ACTUAL'].isin(targets)
+            mask_grupo = data_view['ID_GRUPO'].apply(lambda x: check_grupo_match(x, grp_supervisor))
+            mask_turno = data_view['TURNO'] == trn
+            
+            # Unión lógica
+            data_view = data_view[mask_cargos | (mask_grupo & mask_turno)]
+
+        # SIEMPRE: Excluirse a uno mismo
+        data_view = data_view[data_view['DNI'] != st.session_state.dni_user]
 
     # ----------------------------------------
-    # 1. EVALUACIÓN (BÚSQUEDA HÍBRIDA)
+    # 1. EVALUACIÓN (SIN BARRA DE BÚSQUEDA)
     # ----------------------------------------
     if seleccion == "📝 Evaluar Personal":
         st.title(f"📝 Evaluación - {parada_actual}")
         
-        st.markdown("##### 🔍 Buscar (Opcional)")
-        filtro_texto = st.text_input("Filtro Rápido", placeholder="Escribe para filtrar la lista...", label_visibility="collapsed")
-        
-        lista_final = []
-        indice_defecto = None
+        # --- FILTRO: EXCLUIR YA EVALUADOS EN ESTA PARADA ---
+        dnis_ya_evaluados = []
+        if df_historial is not None and not df_historial.empty:
+            filtro_historial = df_historial[
+                (df_historial['DNI_EVALUADOR'] == st.session_state.dni_user) &
+                (df_historial['COD_PARADA'] == parada_actual)
+            ]
+            dnis_ya_evaluados = filtro_historial['DNI_TRABAJADOR'].unique().tolist()
         
         if not data_view.empty:
-            todas_opciones = data_view['NOMBRE_COMPLETO'].unique().tolist()
-            if filtro_texto:
-                lista_final = [x for x in todas_opciones if filtro_texto.upper() in x.upper()]
-                if not lista_final:
-                    st.warning(f"⚠️ No hay coincidencias para: '{filtro_texto}'")
-                elif len(lista_final) == 1:
-                    indice_defecto = 0
-            else:
-                lista_final = todas_opciones
-                indice_defecto = None 
-        
-        sel_nombre = None
-        if lista_final:
+            data_view = data_view[~data_view['DNI'].isin(dnis_ya_evaluados)]
+        # -----------------------------------------------------
+
+        if data_view.empty:
+            st.balloons()
+            st.success("✅ Has completado todas las evaluaciones disponibles.")
+        else:
+            # YA NO HAY BARRA DE TEXTO (SEARCH ELIMINADO)
+            
+            lista_final = data_view['NOMBRE_COMPLETO'].unique().tolist()
+            
             sel_nombre = st.selectbox(
-                "Seleccionar Colaborador:", 
+                f"Seleccionar Colaborador ({len(lista_final)} pendientes):", 
                 lista_final,
-                index=indice_defecto,
-                placeholder="👇 Despliega la lista completa aquí...",
+                index=None, # Iniciar vacío para obligar a seleccionar
+                placeholder="👇 Haz clic aquí para desplegar la lista...",
                 key="selector_final"
             )
-        elif data_view.empty:
-            st.warning("⚠️ No tienes personal asignado a tu grupo/turno.")
-        
-        if sel_nombre:
-            p = data_view[data_view['NOMBRE_COMPLETO'] == sel_nombre].iloc[0]
-            foto_final = get_photo_url(p.get('URL_FOTO', ''))
             
-            st.markdown(f"""
-            <div class="css-card" style="display: flex; align-items: center; gap: 20px; margin-top: 15px;">
-                <img src="{foto_final}" style="width: 100px; height: 100px; border-radius: 50%; border: 3px solid #4FC3F7; object-fit: cover; background-color: #222;">
-                <div>
-                    <h2 style="margin:0; color: white !important;">{p['NOMBRE_COMPLETO']}</h2>
-                    <p style="margin:0; font-size: 1.2em; color: #4FC3F7;">{p['CARGO_ACTUAL']}</p>
-                    <span style="background: rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 6px; font-size: 0.9em; margin-top: 5px; display: inline-block;">
-                        {p['ID_GRUPO']} - {p['TURNO']}
-                    </span>
+            if sel_nombre:
+                p = data_view[data_view['NOMBRE_COMPLETO'] == sel_nombre].iloc[0]
+                foto_final = get_photo_url(p.get('URL_FOTO', ''))
+                
+                st.markdown(f"""
+                <div class="css-card" style="display: flex; align-items: center; gap: 20px; margin-top: 15px;">
+                    <img src="{foto_final}" style="width: 100px; height: 100px; border-radius: 50%; border: 3px solid #4FC3F7; object-fit: cover; background-color: #222;">
+                    <div>
+                        <h2 style="margin:0; color: white !important;">{p['NOMBRE_COMPLETO']}</h2>
+                        <p style="margin:0; font-size: 1.2em; color: #4FC3F7;">{p['CARGO_ACTUAL']}</p>
+                        <span style="background: rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 6px; font-size: 0.9em; margin-top: 5px; display: inline-block;">
+                            {p['ID_GRUPO']} - {p['TURNO']}
+                        </span>
+                    </div>
                 </div>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            preguntas = pd.DataFrame()
-            if df_roles is not None and not df_roles.empty:
-                df_roles['CARGO_NORM'] = df_roles['CARGO'].astype(str).str.upper().str.strip()
-                preguntas = df_roles[df_roles['CARGO_NORM'] == str(p['CARGO_ACTUAL']).upper().strip()]
+                """, unsafe_allow_html=True)
+                
+                preguntas = pd.DataFrame()
+                if df_roles is not None and not df_roles.empty:
+                    df_roles['CARGO_NORM'] = df_roles['CARGO'].astype(str).str.upper().str.strip()
+                    preguntas = df_roles[df_roles['CARGO_NORM'] == str(p['CARGO_ACTUAL']).upper().strip()]
 
-            if preguntas.empty:
-                st.warning("⚠️ No hay criterios configurados para este cargo.")
-            else:
-                with st.form("frm_eval"):
-                    score_total = 0
-                    notas_save = {}
-                    st.markdown("### Criterios de Desempeño")
-                    for i, (idx, row) in enumerate(preguntas.iterrows(), 1):
-                        st.markdown(f"**{i}. {row['CRITERIO']}** <span style='font-size:0.85em; color:#888'>({row['PORCENTAJE']*100:.0f}%)</span>", unsafe_allow_html=True)
-                        opciones = [
-                            str(row.get('NIVEL_1', 'Nivel 1')),
-                            str(row.get('NIVEL_2', 'Nivel 2')),
-                            str(row.get('NIVEL_3', 'Nivel 3')),
-                            str(row.get('NIVEL_4', 'Nivel 4')),
-                            str(row.get('NIVEL_5', 'Nivel 5'))
-                        ]
-                        seleccion_texto = st.radio(label=f"r_{i}", options=opciones, key=f"rad_{i}", horizontal=False, label_visibility="collapsed")
-                        nota_numerica = opciones.index(seleccion_texto) + 1
-                        score_total += nota_numerica * row['PORCENTAJE']
-                        notas_save[f"NOTA_{i}"] = nota_numerica
-                        st.divider()
-                    
-                    obs = st.text_area("Sustento de la Nota Final", height=100)
-                    enviar = st.form_submit_button("✅ GUARDAR EVALUACIÓN", use_container_width=True)
-                    
-                    if enviar:
-                        if obs and tbl_historial:
-                            record = {
-                                "FECHA_HORA": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                                "COD_PARADA": parada_actual,
-                                "DNI_EVALUADOR": st.session_state.dni_user,
-                                "DNI_TRABAJADOR": str(p['DNI']),
-                                "CARGO_MOMENTO": str(p['CARGO_ACTUAL']),
-                                "GRUPO_MOMENTO": str(p['ID_GRUPO']),
-                                "TURNO_MOMENTO": str(p['TURNO']),
-                                "NOTA_FINAL": round(score_total, 2),
-                                "COMENTARIOS": obs
-                            }
-                            record.update(notas_save)
-                            try:
-                                tbl_historial.create(record)
-                                st.balloons()
-                                st.success(f"¡Registrado! Nota Final: {round(score_total, 2)}")
-                            except Exception as e: st.error(f"Error: {e}")
-                        else: st.warning("⚠️ La observación es obligatoria.")
+                if preguntas.empty:
+                    st.warning("⚠️ No hay criterios configurados para este cargo.")
+                else:
+                    with st.form("frm_eval"):
+                        score_total = 0
+                        notas_save = {}
+                        st.markdown("### Criterios de Desempeño")
+                        for i, (idx, row) in enumerate(preguntas.iterrows(), 1):
+                            st.markdown(f"**{i}. {row['CRITERIO']}** <span style='font-size:0.85em; color:#888'>({row['PORCENTAJE']*100:.0f}%)</span>", unsafe_allow_html=True)
+                            opciones = [
+                                str(row.get('NIVEL_1', 'Nivel 1')),
+                                str(row.get('NIVEL_2', 'Nivel 2')),
+                                str(row.get('NIVEL_3', 'Nivel 3')),
+                                str(row.get('NIVEL_4', 'Nivel 4')),
+                                str(row.get('NIVEL_5', 'Nivel 5'))
+                            ]
+                            seleccion_texto = st.radio(label=f"r_{i}", options=opciones, key=f"rad_{i}", horizontal=False, label_visibility="collapsed")
+                            nota_numerica = opciones.index(seleccion_texto) + 1
+                            score_total += nota_numerica * row['PORCENTAJE']
+                            notas_save[f"NOTA_{i}"] = nota_numerica
+                            st.divider()
+                        
+                        obs = st.text_area("Sustento de la Nota Final", height=100)
+                        enviar = st.form_submit_button("✅ GUARDAR EVALUACIÓN", use_container_width=True)
+                        
+                        if enviar:
+                            if obs and tbl_historial:
+                                record = {
+                                    "FECHA_HORA": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                                    "COD_PARADA": parada_actual,
+                                    "DNI_EVALUADOR": st.session_state.dni_user,
+                                    "DNI_TRABAJADOR": str(p['DNI']),
+                                    "CARGO_MOMENTO": str(p['CARGO_ACTUAL']),
+                                    "GRUPO_MOMENTO": str(p['ID_GRUPO']),
+                                    "TURNO_MOMENTO": str(p['TURNO']),
+                                    "NOTA_FINAL": round(score_total, 2),
+                                    "COMENTARIOS": obs
+                                }
+                                record.update(notas_save)
+                                try:
+                                    tbl_historial.create(record)
+                                    st.balloons()
+                                    st.success(f"¡Evaluación Guardada! Nota: {round(score_total, 2)}")
+                                    st.rerun()
+                                except Exception as e: st.error(f"Error: {e}")
+                            else: st.warning("⚠️ La observación es obligatoria.")
 
     # ----------------------------------------
-    # 2. RANKING GLOBAL
+    # 2. RANKING GLOBAL (PONDERADO 70/30)
     # ----------------------------------------
-    elif seleccion == "🏆 Ranking Global" and st.session_state.rol == 'ADMIN':
+    elif seleccion == "🏆 Ranking Global" and st.session_state.rol not in ROLES_RESTRINGIDOS:
         st.title("🏆 Tabla de Posiciones")
         if df_historial is not None and not df_historial.empty:
             df_historial['DNI_TRABAJADOR'] = df_historial['DNI_TRABAJADOR'].astype(str)
             df_personal['DNI'] = df_personal['DNI'].astype(str)
-            resumen = df_historial.groupby('DNI_TRABAJADOR')['NOTA_FINAL'].mean().reset_index()
-            resumen.columns = ['DNI', 'PROMEDIO']
-            ranking = pd.merge(resumen, df_personal, on='DNI', how='left')
-            ranking['PROMEDIO'] = ranking['PROMEDIO'].round(2)
+            
+            # --- CÁLCULO PONDERADO ---
+            datos_actuales = df_historial[df_historial['COD_PARADA'] == parada_actual]
+            datos_historicos = df_historial[df_historial['COD_PARADA'] != parada_actual]
+            
+            prom_actual = datos_actuales.groupby('DNI_TRABAJADOR')['NOTA_FINAL'].mean().reset_index()
+            prom_actual.columns = ['DNI', 'MEDIA_ACTUAL']
+            
+            prom_historico = datos_historicos.groupby('DNI_TRABAJADOR')['NOTA_FINAL'].mean().reset_index()
+            prom_historico.columns = ['DNI', 'MEDIA_HISTORICA']
+            
+            score_df = pd.merge(prom_actual, prom_historico, on='DNI', how='outer')
+            
+            def calcular_ponderado(row):
+                actual = row['MEDIA_ACTUAL']
+                hist = row['MEDIA_HISTORICA']
+                if pd.notna(actual) and pd.notna(hist): return (actual * 0.70) + (hist * 0.30)
+                elif pd.notna(actual): return actual
+                elif pd.notna(hist): return hist
+                else: return 0.0
+
+            score_df['PROMEDIO_FINAL'] = score_df.apply(calcular_ponderado, axis=1)
+            score_df['PROMEDIO_FINAL'] = score_df['PROMEDIO_FINAL'].round(2)
+            
+            ranking = pd.merge(score_df, df_personal, on='DNI', how='left')
+            
             cargos_disp = ["TODOS"] + sorted(ranking['CARGO_ACTUAL'].dropna().unique().tolist())
             filtro_cargo = st.selectbox("Filtrar por Cargo:", cargos_disp)
             if filtro_cargo != "TODOS": ranking = ranking[ranking['CARGO_ACTUAL'] == filtro_cargo]
-            ranking = ranking.sort_values('PROMEDIO', ascending=False).reset_index(drop=True)
+            
+            ranking = ranking.sort_values('PROMEDIO_FINAL', ascending=False).reset_index(drop=True)
             
             if len(ranking) >= 3:
                 c2, c1, c3 = st.columns([1, 1.2, 1])
@@ -475,7 +509,7 @@ else:
                         <span class="podio-emoji">🥈</span>
                         <img src="{f2}" style="width:90px; height:90px; border-radius:50%; object-fit:cover; background:#222; margin: 10px 0;">
                         <h4 style="margin:5px 0;">{p2['NOMBRE_COMPLETO']}</h4>
-                        <h2 style="color:#C0C0C0;">{p2['PROMEDIO']}</h2>
+                        <h2 style="color:#C0C0C0;">{p2['PROMEDIO_FINAL']}</h2>
                     </div>""", unsafe_allow_html=True)
                 with c1:
                     p1 = ranking.iloc[0]
@@ -485,7 +519,7 @@ else:
                         <span class="podio-emoji">🥇</span>
                         <img src="{f1}" style="width:120px; height:120px; border-radius:50%; object-fit:cover; border: 4px solid #FFD700; background:#222; margin: 10px 0;">
                         <h3 style="margin:5px 0; color:#FFD700;">{p1['NOMBRE_COMPLETO']}</h3>
-                        <h1 style="color:#FFD700; font-size:3rem;">{p1['PROMEDIO']}</h1>
+                        <h1 style="color:#FFD700; font-size:3rem;">{p1['PROMEDIO_FINAL']}</h1>
                     </div>""", unsafe_allow_html=True)
                 with c3:
                     p3 = ranking.iloc[2]
@@ -495,13 +529,17 @@ else:
                         <span class="podio-emoji">🥉</span>
                         <img src="{f3}" style="width:90px; height:90px; border-radius:50%; object-fit:cover; background:#222; margin: 10px 0;">
                         <h4 style="margin:5px 0;">{p3['NOMBRE_COMPLETO']}</h4>
-                        <h2 style="color:#CD7F32;">{p3['PROMEDIO']}</h2>
+                        <h2 style="color:#CD7F32;">{p3['PROMEDIO_FINAL']}</h2>
                     </div>""", unsafe_allow_html=True)
 
             st.markdown("### 📊 Listado Completo")
             st.data_editor(
-                ranking[['NOMBRE_COMPLETO', 'CARGO_ACTUAL', 'PROMEDIO']],
-                column_config={"PROMEDIO": st.column_config.ProgressColumn("Nota Global", min_value=0, max_value=5, format="%.2f"), "NOMBRE_COMPLETO": "Colaborador", "CARGO_ACTUAL": "Cargo"},
+                ranking[['NOMBRE_COMPLETO', 'CARGO_ACTUAL', 'PROMEDIO_FINAL']],
+                column_config={
+                    "PROMEDIO_FINAL": st.column_config.ProgressColumn("Nota Global (Ponderada)", min_value=0, max_value=5, format="%.2f"), 
+                    "NOMBRE_COMPLETO": "Colaborador", 
+                    "CARGO_ACTUAL": "Cargo"
+                },
                 hide_index=True, use_container_width=True, disabled=True
             )
         else: st.info("No hay datos de ranking disponibles.")
@@ -509,29 +547,19 @@ else:
     # ----------------------------------------
     # 3. HISTORIAL (CON NOMBRE COMPLETO)
     # ----------------------------------------
-    elif seleccion == "📂 Mi Historial":
+    elif seleccion == "📂 Mi Historial" and st.session_state.rol not in ROLES_RESTRINGIDOS:
         st.title("📂 Historial de Registros")
         
         if df_historial is not None and not df_historial.empty:
             df_historial['DNI_TRABAJADOR'] = df_historial['DNI_TRABAJADOR'].astype(str)
             df_personal['DNI'] = df_personal['DNI'].astype(str)
             
-            df_merged = pd.merge(
-                df_historial, 
-                df_personal[['DNI', 'NOMBRE_COMPLETO']], 
-                left_on='DNI_TRABAJADOR', 
-                right_on='DNI', 
-                how='left'
-            )
+            df_merged = pd.merge(df_historial, df_personal[['DNI', 'NOMBRE_COMPLETO']], left_on='DNI_TRABAJADOR', right_on='DNI', how='left')
             df_merged['NOMBRE_COMPLETO'] = df_merged['NOMBRE_COMPLETO'].fillna(df_merged['DNI_TRABAJADOR'])
             
             cols_mostrar = ['COD_PARADA', 'NOMBRE_COMPLETO', 'NOTA_FINAL', 'COMENTARIOS']
             cols_existentes = [c for c in cols_mostrar if c in df_merged.columns]
             
-            st.dataframe(
-                df_merged[cols_existentes], 
-                use_container_width=True, 
-                hide_index=True
-            )
+            st.dataframe(df_merged[cols_existentes], use_container_width=True, hide_index=True)
         else:
             st.info("No se encontraron registros.")
