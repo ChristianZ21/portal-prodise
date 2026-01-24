@@ -18,28 +18,33 @@ st.set_page_config(
 )
 
 # ==========================================
-# 2. ESTILOS VISUALES - SOLUCIÓN TOTAL
+# 2. CSS "NUCLEAR" (SOLUCIÓN DEFINITIVA DE COLORES)
 # ==========================================
 st.markdown("""
 <style>
-    /* --- 1. CONFIGURACIÓN GLOBAL --- */
-    /* Forzar fondo transparente para ver la imagen y textos blancos */
+    /* --- 1. FONDO Y TEXTOS --- */
     [data-testid="stAppViewContainer"] {
         background-color: transparent !important;
         color: white !important;
     }
     
+    /* Eliminar espacios innecesarios arriba */
     .block-container {
         padding-top: 1rem !important;
         padding-bottom: 5rem !important;
     }
 
+    /* Forzar color de textos */
     h1, h2, h3, h4, h5, h6, p, span, div, label {
         color: #E0E0E0 !important;
     }
-    h1, h2, h3 { 
-        color: #4FC3F7 !important; /* Azul Prodise */
-        text-shadow: 0 0 10px rgba(79,195,247,0.3);
+    
+    /* TITULOS GRANDES Y CON NEÓN */
+    h1 { 
+        color: #4FC3F7 !important; 
+        text-shadow: 0 0 15px rgba(79,195,247,0.5);
+        font-size: 2.8rem !important;
+        font-weight: 800 !important;
     }
 
     /* --- 2. HEADER Y SIDEBAR --- */
@@ -48,89 +53,107 @@ st.markdown("""
     
     [data-testid="stSidebar"] {
         background-color: #050505 !important;
-        border-right: 1px solid #222;
+        border-right: 1px solid #333;
     }
+    /* Flecha del sidebar */
     [data-testid="collapsedControl"] { top: 1rem !important; color: white !important; }
 
-    /* --- 3. SOLUCIÓN NUCLEAR: MENÚ DESPLEGABLE AZUL --- */
-    /* Usamos 'html body' para que tenga más prioridad que el tema claro */
+    /* --- 3. SOLUCIÓN FINAL AL MENÚ DESPLEGABLE (ELIMINAR FONDO BLANCO) --- */
     
-    /* El contenedor flotante (la caja que se abre) */
-    html body div[data-baseweb="popover"], 
-    html body ul[data-baseweb="menu"] {
-        background-color: #0E1117 !important; /* AZUL OSCURO (Casi negro) */
-        border: 1px solid #4FC3F7 !important;
+    /* 3.1. La caja donde escribes (Selectbox cerrado) */
+    div[data-baseweb="select"] > div {
+        background-color: #0E1117 !important; /* Fondo Oscuro */
+        color: white !important;
+        border: 1px solid #4FC3F7 !important; /* Borde Azul */
     }
     
-    /* Las opciones de la lista */
-    html body li[data-baseweb="option"] {
-        background-color: #0E1117 !important; /* Fondo Azul Oscuro */
-        color: white !important;               /* Texto Blanco */
+    /* 3.2. El contenedor de la lista desplegable (Pop-up) */
+    div[data-baseweb="popover"], div[data-baseweb="menu"], ul[data-baseweb="menu"] {
+        background-color: #000000 !important; /* NEGRO PURO para evitar gris claro */
+        border: 1px solid #444 !important;
     }
     
-    /* Asegurar que el texto dentro de la opción sea blanco */
-    html body li[data-baseweb="option"] div {
+    /* 3.3. Las opciones de la lista */
+    li[data-baseweb="option"] {
+        background-color: #000000 !important; /* Fondo Negro */
+        color: white !important;              /* Letra Blanca */
+    }
+    
+    /* 3.4. Texto dentro de las opciones */
+    div[data-baseweb="option"] {
+        color: white !important; 
+        font-size: 1.1rem !important; /* Nombres más grandes */
+    }
+
+    /* 3.5. EFECTO HOVER Y SELECCIÓN (AZUL) */
+    /* Esto arregla que no sepas cuál estás eligiendo */
+    li[data-baseweb="option"]:hover, 
+    li[data-baseweb="option"][aria-selected="true"] {
+        background-color: #0288D1 !important; /* Azul intenso */
+        color: white !important;
+    }
+    
+    /* Asegurar que el texto se mantenga blanco al pasar el mouse */
+    li[data-baseweb="option"]:hover div,
+    li[data-baseweb="option"][aria-selected="true"] div {
         color: white !important;
     }
 
-    /* Cuando pasas el mouse por encima (Hover) */
-    html body li[data-baseweb="option"]:hover, 
-    html body li[aria-selected="true"] {
-        background-color: #4FC3F7 !important; /* Azul Brillante */
-        color: white !important;
-    }
-
-    /* La barra de búsqueda cuando está cerrada */
-    html body div[data-baseweb="select"] > div {
-        background-color: #0E1117 !important;
-        color: white !important;
-        border: 1px solid #555 !important;
-    }
-    
-    /* Texto seleccionado y flechita */
-    html body div[data-baseweb="select"] span { color: white !important; }
-    html body div[data-baseweb="select"] svg { fill: white !important; }
-
-    /* Inputs de texto (Observaciones, etc) */
+    /* --- 4. INPUTS DE TEXTO --- */
     .stTextInput input, .stTextArea textarea {
         background-color: #0E1117 !important;
         color: white !important;
         border: 1px solid #555 !important;
     }
 
-    /* --- 4. ESTILO DE BOTONES PARA LAS ALTERNATIVAS (RECUPERADO) --- */
+    /* --- 5. RECUPERAR ESTILO DE TARJETAS (RADIO BUTTONS) --- */
+    /* Contenedor de opciones */
     div[role="radiogroup"] {
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 8px !important; /* Espacio entre tarjetas */
     }
     
+    /* La tarjeta en sí */
     div[role="radiogroup"] label {
-        background-color: rgba(20, 25, 35, 0.9) !important; /* Fondo tarjeta oscura */
+        background-color: rgba(20, 25, 35, 0.95) !important;
         padding: 15px 20px !important;
         border-radius: 10px !important;
         border: 1px solid #333 !important;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-        transition: transform 0.2s;
-        margin-bottom: 0px !important;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        margin: 0 !important;
+        display: flex;
+        align-items: center;
     }
     
+    /* Efecto al pasar el mouse por la tarjeta */
     div[role="radiogroup"] label:hover {
         border-color: #4FC3F7 !important;
-        transform: translateX(5px);
         background-color: rgba(30, 40, 50, 1) !important;
+        transform: translateX(5px);
         cursor: pointer;
     }
     
-    /* El círculo del radio button */
-    div[role="radiogroup"] label > div:first-child {
-        border-color: #4FC3F7 !important;
+    /* El texto de la opción */
+    div[role="radiogroup"] label p {
+        font-size: 1rem !important;
+        font-weight: 500 !important;
+        color: #FFFFFF !important;
+    }
+    
+    /* El circulito del radio button */
+    div[role="radiogroup"] label div[data-baseweb="radio"] > div {
         background-color: #0E1117 !important;
+        border-color: #4FC3F7 !important;
+    }
+    /* El punto dentro del circulito cuando está marcado */
+    div[role="radiogroup"] label div[data-baseweb="radio"] > div[aria-checked="true"] {
+        background-color: #4FC3F7 !important;
     }
 
-    /* --- 5. TARJETAS DE DATOS --- */
+    /* --- 6. TARJETAS DE DATOS --- */
     .css-card {
-        background: rgba(14, 17, 23, 0.85);
+        background: rgba(14, 17, 23, 0.9);
         backdrop-filter: blur(10px);
         border: 1px solid rgba(255, 255, 255, 0.1);
         padding: 20px;
@@ -138,7 +161,7 @@ st.markdown("""
         box-shadow: 0 4px 15px rgba(0,0,0,0.5);
     }
 
-    /* --- 6. BOTONES PRINCIPALES --- */
+    /* --- 7. BOTONES PRINCIPALES --- */
     div.stButton > button {
         background: linear-gradient(135deg, #0288D1 0%, #01579B 100%) !important;
         color: white !important;
@@ -147,10 +170,11 @@ st.markdown("""
         padding: 0.7rem 1.5rem;
         border-radius: 8px;
         width: 100%;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
     }
     div.stButton > button:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(2, 136, 209, 0.4);
+        box-shadow: 0 6px 20px rgba(2, 136, 209, 0.5);
     }
     
     .podio-emoji { font-size: 3rem; display: block; margin-bottom: 5px; }
@@ -175,7 +199,7 @@ def add_bg_from_local(image_file):
         }}
         .stApp::before {{
             content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.6);
+            background-color: rgba(0, 0, 0, 0.7); /* Fondo un poco más oscuro para resaltar letras */
             z-index: -1;
         }}
         </style>
@@ -386,7 +410,7 @@ else:
         else: st.info("No hay datos históricos cargados.")
 
     # ==============================================================================
-    # 2. EVALUACIÓN (CON BUSCADOR Y BOTONES PROFESIONALES)
+    # 2. EVALUACIÓN (CON BUSCADOR Y BOTONES RESTAURADOS)
     # ==============================================================================
     elif seleccion == "📝 Evaluar Personal":
         st.title(f"📝 Evaluación - {parada_actual}")
@@ -435,7 +459,7 @@ else:
                             st.markdown(f"#### {i}. {row['CRITERIO']}")
                             st.caption(f"Peso: {row['PORCENTAJE']*100:.0f}%")
                             
-                            # RADIO BUTTONS ESTILO TARJETA
+                            # BOTONES DE NIVEL (Estilo Tarjeta)
                             ops = [str(row.get(f'NIVEL_{j}')) for j in range(1, 6)]
                             sel = st.radio(f"Nivel {i}", ops, key=f"r{i}", label_visibility="collapsed")
                             
