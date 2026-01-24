@@ -16,17 +16,42 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- CSS PARA OCULTAR MARCAS DE AGUA Y MENÚ ---
-# Esto borra el barco rojo, el "Made with Streamlit" y el menú de opciones
-hide_menu_style = """
-        <style>
-        #MainMenu {visibility: hidden;}
-        footer {visibility: hidden;}
-        header {visibility: hidden;}
-        [data-testid="stToolbar"] {visibility: hidden;} 
-        </style>
-        """
-st.markdown(hide_menu_style, unsafe_allow_html=True)
+# --- CSS "NUCLEAR" PARA LIMPIEZA TOTAL ---
+hide_ui_style = """
+<style>
+    /* Ocultar el menú principal (Hamburguesa) y la cabecera completa */
+    #MainMenu {visibility: hidden;}
+    header {visibility: hidden;}
+    
+    /* Ocultar el pie de página estándar */
+    footer {visibility: hidden;}
+    
+    /* Ocultar específicamente la barra de herramientas superior (donde sale GitHub) */
+    [data-testid="stToolbar"] {
+        visibility: hidden !important;
+        display: none !important;
+    }
+    
+    /* Ocultar la decoración de colores superior */
+    [data-testid="stDecoration"] {
+        visibility: hidden !important;
+        display: none !important;
+    }
+    
+    /* Ocultar el botón de 'Deploy' si apareciera */
+    .stDeployButton {
+        visibility: hidden !important;
+        display: none !important;
+    }
+    
+    /* Eliminar el espacio en blanco que deja la cabecera oculta */
+    .block-container {
+        padding-top: 1rem !important;
+    }
+</style>
+"""
+st.markdown(hide_ui_style, unsafe_allow_html=True)
+
 # ---------------------------------------------
 
 # --- TUS CLAVES (MODO SEGURO) ---
