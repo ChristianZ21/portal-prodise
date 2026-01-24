@@ -18,7 +18,7 @@ st.set_page_config(
 )
 
 # ==========================================
-# 2. ESTILOS VISUALES (SOLUCIÓN FINAL - MARTILLO V3)
+# 2. ESTILOS VISUALES (CSS BLINDADO)
 # ==========================================
 st.markdown("""
 <style>
@@ -54,7 +54,7 @@ st.markdown("""
     }
     [data-testid="collapsedControl"] { top: 1rem !important; color: white !important; }
 
-    /* --- 3. MENÚ DESPLEGABLE (FONDO AZUL OSCURO FORZADO) --- */
+    /* --- 3. MENÚ DESPLEGABLE (FONDO AZUL OSCURO) --- */
     div[data-baseweb="popover"], ul[data-baseweb="menu"] {
         background-color: #0E1117 !important;
         border: 1px solid #4FC3F7 !important;
@@ -65,7 +65,6 @@ st.markdown("""
         color: white !important;
     }
     
-    /* Hover y Selección */
     li[data-baseweb="option"]:hover, li[aria-selected="true"] {
         background-color: #4FC3F7 !important;
         color: black !important;
@@ -76,14 +75,13 @@ st.markdown("""
         color: black !important;
     }
 
-    /* Caja del buscador */
     div[data-baseweb="select"] > div {
         background-color: #0E1117 !important;
         border: 1px solid #555 !important;
         color: white !important;
     }
     
-    /* --- 4. ALTERNATIVAS COMO TARJETAS (MÁS JUNTAS) --- */
+    /* --- 4. ALTERNATIVAS COMO TARJETAS --- */
     div[role="radiogroup"] {
         display: flex;
         flex-direction: column;
@@ -202,19 +200,15 @@ def load_data():
                 if not recs: return pd.DataFrame(), t
                 df = pd.DataFrame([r['fields'] for r in recs])
                 
-                # Columnas críticas para mayúsculas
                 cols_upper = ['USUARIO', 'ID_ROL', 'ESTADO', 'TURNO', 'COD_PARADA', 'DNI', 
                               'DNI_TRABAJADOR', 'DNI_EVALUADOR', 'CARGO', 'CARGO_ACTUAL', 
                               'CARGO_MOMENTO', 'TURNO_MOMENTO', 'NOMBRE_COMPLETO']
-                
                 cols_grupo = ['ID_GRUPO', 'GRUPO', 'GRUPO_MOMENTO']
                 
                 for c in df.columns:
-                    df[c] = df[c].astype(str).str.strip() # Limpieza base
-                    if c in cols_upper: 
-                        df[c] = df[c].str.upper() # Todo a mayúsculas para comparar
-                    if c in cols_grupo: 
-                        df[c] = df[c].str.upper().str.replace('.0', '', regex=False)
+                    df[c] = df[c].astype(str).str.strip()
+                    if c in cols_upper: df[c] = df[c].str.upper()
+                    if c in cols_grupo: df[c] = df[c].str.upper().str.replace('.0', '', regex=False)
                 return df, t
             except: return pd.DataFrame(), None
             
@@ -224,17 +218,16 @@ def load_data():
         df_h, tbl_h = get_df("DB_HISTORIAL")
         df_c, _ = get_df("CONFIG")
         
-        if not df_r.empty and 'PORCENTAJE' in df_r.columns: 
-            df_r['PORCENTAJE'] = pd.to_numeric(df_r['PORCENTAJE'], errors='coerce').fillna(0)
-        if not df_h.empty and 'NOTA_FINAL' in df_h.columns: 
-            df_h['NOTA_FINAL'] = pd.to_numeric(df_h['NOTA_FINAL'], errors='coerce').fillna(0)
-            
+        if not df_r.empty and 'PORCENTAJE' in df_r.columns: df_r['PORCENTAJE'] = pd.to_numeric(df_r['PORCENTAJE'], errors='coerce').fillna(0)
+        if not df_h.empty and 'NOTA_FINAL' in df_h.columns: df_h['NOTA_FINAL'] = pd.to_numeric(df_h['NOTA_FINAL'], errors='coerce').fillna(0)
         return df_u, df_p, df_r, df_h, tbl_h, df_c
     except: return None, None, None, None, None, None
 
 df_users, df_personal, df_roles, df_historial, tbl_historial, df_config = load_data()
 
-# JERARQUÍA DE ACCESO
+# ==========================================
+# JERARQUÍA DE PERMISOS (ACTUALIZADA)
+# ==========================================
 JERARQUIA = {
     'ADMIN': {'scope': 'ALL'}, 
     'GERENTE GENERAL': {'scope': 'ALL'}, 
@@ -243,18 +236,21 @@ JERARQUIA = {
     'COORDINADOR': {'scope': 'ALL'}, 
     'PLANNER': {'scope': 'ALL'}, 
     'PROGRAMADOR': {'scope': 'ALL'},
+    
     'COORDINADOR DE SEGURIDAD': {'scope': 'SPECIFIC', 'targets': ['SUPERVISOR DE SEGURIDAD']},
     'VALORIZADORA': {'scope': 'SPECIFIC', 'targets': ['ASISTENTE DE PLANIFICACION', 'ASISTENTE ADMINISTRATIVO', 'PROGRAMADOR', 'PLANNER']},
-    'SUPERVISOR DE OPERACIONES': {'scope': 'HYBRID', 'targets': ['PLANNER', 'CONDUCTOR']},
+    
+    # IMPORTANTE: Añadimos 'SUPERVISOR DE SEGURIDAD' a la lista base para que pase el primer filtro
+    'SUPERVISOR DE OPERACIONES': {'scope': 'HYBRID', 'targets': ['PLANNER', 'CONDUCTOR', 'SUPERVISOR DE SEGURIDAD']},
+    
     'LIDER MECANICO': {'scope': 'GROUP', 'targets': []}, 
     'OPERADOR DE GRUA': {'scope': 'GROUP', 'targets': []}, 
 }
 
-# --- OBTENCIÓN Y LIMPIEZA DE PARADA ACTUAL ---
 parada_actual = "GENERAL"
 if df_config is not None and not df_config.empty:
     raw_parada = df_config.iloc[0].get('COD_PARADA', df_config.iloc[0].values[0])
-    parada_actual = str(raw_parada).strip().upper() # Asegurar mayúsculas
+    parada_actual = str(raw_parada).strip().upper()
 
 if 'usuario' not in st.session_state: 
     st.session_state.update({'usuario': None, 'nombre_real': None, 'rol': None, 'dni_user': None})
@@ -284,7 +280,7 @@ if not st.session_state.usuario:
 else:
     rol_actual = st.session_state.rol
     
-    # 1. CONTROL DE PESTAÑAS SEGÚN ROL
+    # 1. PERMISOS DE PESTAÑAS
     if rol_actual == 'ADMIN':
         opciones = ["📝 Evaluar Personal", "📊 Dashboard Gerencial", "🏆 Ranking Global", "📂 Mi Historial"]
     elif rol_actual == 'SUPERVISOR DE OPERACIONES':
@@ -332,25 +328,39 @@ else:
         
         data_view = data_view[data_view['DNI'] != st.session_state.dni_user]
 
-        # 🔥 FILTRO SUPERVISOR DE OPERACIONES (RESTRICCIÓN DE TURNO PARA CONDUCTORES) 🔥
+        # --------------------------------------------------------------------------------
+        # 🔥 FILTRO ESPECIAL: SUPERVISOR DE OPERACIONES 🔥
+        # 1. PLANNER: Todos
+        # 2. CONDUCTOR: Solo mismo turno
+        # 3. SUPERVISOR DE SEGURIDAD: Solo mismo turno Y mismo grupo
+        # --------------------------------------------------------------------------------
         if rol_actual == 'SUPERVISOR DE OPERACIONES':
-            data_view = data_view[
-                (data_view['CARGO_ACTUAL'] != 'CONDUCTOR') |  
-                ((data_view['CARGO_ACTUAL'] == 'CONDUCTOR') & (data_view['TURNO'] == trn)) 
-            ]
+            
+            # Condición 1: PLANNER (Pasan todos)
+            cond_planner = (data_view['CARGO_ACTUAL'] == 'PLANNER')
+            
+            # Condición 2: CONDUCTOR (Solo mismo turno)
+            cond_conductor = (data_view['CARGO_ACTUAL'] == 'CONDUCTOR') & (data_view['TURNO'] == trn)
+            
+            # Condición 3: SUPERVISOR DE SEGURIDAD (Mismo turno y Mismo Grupo)
+            # Usamos la función check_grupo para ver si el ID_GRUPO del evaluado contiene el grupo del supervisor
+            cond_sup_seg = (
+                (data_view['CARGO_ACTUAL'] == 'SUPERVISOR DE SEGURIDAD') & 
+                (data_view['TURNO'] == trn) & 
+                (data_view['ID_GRUPO'].apply(lambda x: check_grupo(x, grp_supervisor)))
+            )
+            
+            # Aplicamos el filtro combinando las 3 condiciones con "O" (cualquiera es válida)
+            data_view = data_view[cond_planner | cond_conductor | cond_sup_seg]
 
     # ==============================================================================
-    # 1. DASHBOARD GERENCIAL (FILTRO POR PARADA ACTUAL)
+    # 1. DASHBOARD GERENCIAL
     # ==============================================================================
     if seleccion == "📊 Dashboard Gerencial":
         st.title(f"📊 Control Tower - {parada_actual}")
         if df_historial is not None and not df_historial.empty:
-            # ---> AQUÍ ESTÁ EL FILTRO CLAVE <---
-            # Solo pasamos al dashboard los datos que coincidan con la parada actual
             df_dash = df_historial[df_historial['COD_PARADA'] == parada_actual].copy()
-            
-            if df_dash.empty: 
-                st.warning(f"⚠️ No hay datos registrados aún para la parada: {parada_actual}")
+            if df_dash.empty: st.warning(f"⚠️ No hay datos para {parada_actual}")
             else:
                 k1, k2, k3, k4 = st.columns(4)
                 k1.metric("Evaluaciones", len(df_dash))
@@ -412,7 +422,7 @@ else:
         else: st.info("No hay datos históricos cargados.")
 
     # ==============================================================================
-    # 2. EVALUACIÓN (CON BUSCADOR Y TARJETAS RECUPERADAS)
+    # 2. EVALUACIÓN
     # ==============================================================================
     elif seleccion == "📝 Evaluar Personal":
         st.title(f"📝 Evaluación - {parada_actual}")
@@ -427,7 +437,6 @@ else:
             st.success("✅ Todo el personal asignado ha sido evaluado.")
         else:
             lista = data_view['NOMBRE_COMPLETO'].unique().tolist()
-            # BUSCADOR GOOGLE STYLE (VACÍO AL INICIO)
             sel_nombre = st.selectbox(
                 f"Pendientes ({len(lista)}):", 
                 lista, 
@@ -461,7 +470,6 @@ else:
                             st.markdown(f"#### {i}. {row['CRITERIO']}")
                             st.caption(f"Peso: {row['PORCENTAJE']*100:.0f}%")
                             
-                            # BOTONES ESTILO TARJETA (RECUPERADOS)
                             ops = [str(row.get(f'NIVEL_{j}')) for j in range(1, 6)]
                             sel = st.radio(f"Nivel {i}", ops, key=f"r{i}", label_visibility="collapsed")
                             
@@ -477,7 +485,7 @@ else:
                                 rec.update(notas_save)
                                 try: 
                                     tbl_historial.create(rec)
-                                    st.balloons() 
+                                    st.balloons()
                                     st.success(f"Guardado. Nota: {round(score, 2)}")
                                     time.sleep(1.5)
                                     st.cache_data.clear()
