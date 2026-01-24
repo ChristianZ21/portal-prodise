@@ -18,11 +18,11 @@ st.set_page_config(
 )
 
 # ==========================================
-# 2. ESTILOS VISUALES - "MARTILLO V3" (SOLUCIÓN DEFINITIVA)
+# 2. ESTILOS VISUALES (CSS SOLUCIÓN DEFINITIVA)
 # ==========================================
 st.markdown("""
 <style>
-    /* --- 1. FONDO Y CONTENEDOR PRINCIPAL --- */
+    /* --- 1. FONDO Y TEXTOS GLOBALES --- */
     [data-testid="stAppViewContainer"] {
         background-color: transparent !important;
         color: white !important;
@@ -36,9 +36,11 @@ st.markdown("""
     h1, h2, h3, h4, h5, h6, p, span, div, label {
         color: #E0E0E0 !important;
     }
-    h1, h2, h3 { 
-        color: #4FC3F7 !important;
-        text-shadow: 0 0 10px rgba(79,195,247,0.3);
+    
+    h1 { 
+        color: #4FC3F7 !important; 
+        text-shadow: 0 0 15px rgba(79,195,247,0.5);
+        font-weight: 800 !important;
     }
 
     /* --- 2. HEADER Y SIDEBAR --- */
@@ -51,91 +53,95 @@ st.markdown("""
     }
     [data-testid="collapsedControl"] { top: 1rem !important; color: white !important; }
 
-    /* --- 3. SOLUCIÓN CRÍTICA: MENÚ DESPLEGABLE (ELIMINAR EL BLANCO) --- */
+    /* --- 3. SOLUCIÓN AL MENÚ DESPLEGABLE (FONDO AZUL FORZADO) --- */
+    /* Esto obliga al navegador a pintar el fondo de la lista de AZUL OSCURO, no blanco */
     
-    /* 3.A. La caja flotante completa (Popover) */
-    div[data-baseweb="popover"] {
-        background-color: #0E1117 !important; /* FONDO OSCURO OBLIGATORIO */
+    div[data-baseweb="popover"], 
+    div[data-baseweb="menu"], 
+    ul[data-baseweb="menu"] {
+        background-color: #0E1117 !important; /* AZUL NOCHE */
         border: 1px solid #4FC3F7 !important;
     }
-
-    /* 3.B. La lista de opciones (ul) */
-    ul[data-baseweb="menu"] {
-        background-color: #0E1117 !important;
-    }
-
-    /* 3.C. Cada opción individual (li) */
+    
+    /* Las opciones de la lista */
     li[data-baseweb="option"] {
-        background-color: #0E1117 !important; /* Fondo Negro */
-        color: white !important;              /* Letra Blanca */
+        background-color: #0E1117 !important; /* Fondo oscuro */
+        color: white !important;              /* Texto blanco */
     }
     
-    /* 3.D. Asegurar que el TEXTO dentro de la opción sea blanco */
-    li[data-baseweb="option"] * {
+    /* El texto dentro de las opciones */
+    div[data-baseweb="option"] {
         color: white !important;
+        font-weight: 500 !important;
     }
 
-    /* 3.E. EFECTO HOVER (CUANDO PASAS EL MOUSE) */
+    /* Cuando pasas el mouse (Hover) */
     li[data-baseweb="option"]:hover, 
-    li[data-baseweb="option"][aria-selected="true"] {
-        background-color: #0288D1 !important; /* AZUL AL PASAR EL MOUSE */
+    li[aria-selected="true"] {
+        background-color: #0288D1 !important; /* Azul más claro */
         color: white !important;
     }
 
-    /* 3.F. La caja de búsqueda cerrada */
+    /* La barra de búsqueda cerrada */
     div[data-baseweb="select"] > div {
         background-color: #0E1117 !important;
         color: white !important;
         border: 1px solid #555 !important;
     }
     
-    /* Iconos y textos seleccionados */
+    /* Texto seleccionado */
     div[data-baseweb="select"] span { color: white !important; }
     div[data-baseweb="select"] svg { fill: white !important; }
 
-    /* Inputs de texto */
+    /* Inputs de texto (Observaciones) */
     .stTextInput input, .stTextArea textarea {
         background-color: #0E1117 !important;
         color: white !important;
         border: 1px solid #555 !important;
     }
 
-    /* --- 4. BOTONES DE ALTERNATIVAS (ESTILO TARJETA GRANDE) --- */
-    /* Recuperamos el diseño de botones profesionales */
+    /* --- 4. BOTONES DE ALTERNATIVAS (TARJETAS GRANDES) --- */
+    /* Restauramos el estilo de "Caja" para facilitar la selección */
     
     div[role="radiogroup"] {
-        gap: 10px !important;
+        display: flex;
+        flex-direction: column;
+        gap: 12px !important;
     }
     
     div[role="radiogroup"] label {
-        background-color: rgba(25, 30, 40, 0.95) !important; /* Gris azulado oscuro */
-        padding: 16px 20px !important; /* Relleno grande = Botón grande */
-        border-radius: 12px !important;
+        background-color: rgba(20, 25, 35, 0.95) !important; /* Fondo Tarjeta */
+        padding: 16px 20px !important;
+        border-radius: 10px !important;
         border: 1px solid #444 !important;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3) !important;
         margin-bottom: 0px !important;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.3) !important;
-        transition: transform 0.2s ease, border-color 0.2s;
+        transition: all 0.2s ease !important;
+        display: flex !important;
+        align-items: center !important;
     }
     
-    /* Hover en las tarjetas */
+    /* Efecto Hover en las tarjetas */
     div[role="radiogroup"] label:hover {
-        border-color: #4FC3F7 !important; /* Borde azul neón */
-        background-color: rgba(40, 50, 60, 1) !important;
-        transform: scale(1.01);
+        border-color: #4FC3F7 !important;
+        background-color: rgba(30, 40, 60, 1) !important;
+        transform: translateX(5px);
         cursor: pointer;
     }
     
-    /* El texto dentro del botón */
-    div[role="radiogroup"] label p {
+    /* El texto de la respuesta */
+    div[role="radiogroup"] p {
         font-size: 1.05rem !important;
-        font-weight: 500 !important;
+        margin-bottom: 0 !important;
+        color: white !important;
     }
     
-    /* El círculo del radio button */
+    /* Círculo del radio button */
     div[role="radiogroup"] label div[data-baseweb="radio"] > div {
         background-color: #0E1117 !important;
         border-color: #4FC3F7 !important;
     }
+    /* Punto seleccionado */
     div[role="radiogroup"] label div[data-baseweb="radio"] > div[aria-checked="true"] {
         background-color: #4FC3F7 !important;
     }
@@ -159,6 +165,7 @@ st.markdown("""
         padding: 0.7rem 1.5rem;
         border-radius: 8px;
         width: 100%;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
     }
     div.stButton > button:hover {
         transform: translateY(-2px);
@@ -187,7 +194,7 @@ def add_bg_from_local(image_file):
         }}
         .stApp::before {{
             content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.7); /* Fondo oscuro al 70% */
+            background-color: rgba(0, 0, 0, 0.7); /* Oscuridad del 70% */
             z-index: -1;
         }}
         </style>
