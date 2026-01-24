@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import altair as alt  # Librería para gráficos profesionales
 from datetime import datetime
 import os
 import base64
@@ -19,47 +20,23 @@ st.set_page_config(
 # --- CSS "NUCLEAR" PARA LIMPIEZA TOTAL ---
 hide_ui_style = """
 <style>
-    /* Ocultar el menú principal (Hamburguesa) y la cabecera completa */
     #MainMenu {visibility: hidden;}
     header {visibility: hidden;}
-    
-    /* Ocultar el pie de página estándar */
     footer {visibility: hidden;}
-    
-    /* Ocultar específicamente la barra de herramientas superior (donde sale GitHub) */
-    [data-testid="stToolbar"] {
-        visibility: hidden !important;
-        display: none !important;
-    }
-    
-    /* Ocultar la decoración de colores superior */
-    [data-testid="stDecoration"] {
-        visibility: hidden !important;
-        display: none !important;
-    }
-    
-    /* Ocultar el botón de 'Deploy' si apareciera */
-    .stDeployButton {
-        visibility: hidden !important;
-        display: none !important;
-    }
-    
-    /* Eliminar el espacio en blanco que deja la cabecera oculta */
-    .block-container {
-        padding-top: 1rem !important;
-    }
+    [data-testid="stToolbar"] {visibility: hidden !important; display: none !important;}
+    [data-testid="stDecoration"] {visibility: hidden !important; display: none !important;}
+    .stDeployButton {visibility: hidden !important; display: none !important;}
+    .block-container {padding-top: 1rem !important;}
 </style>
 """
 st.markdown(hide_ui_style, unsafe_allow_html=True)
-
-# ---------------------------------------------
 
 # --- TUS CLAVES (MODO SEGURO) ---
 try:
     AIRTABLE_API_TOKEN = st.secrets["AIRTABLE_API_TOKEN"]
     AIRTABLE_BASE_ID = st.secrets["AIRTABLE_BASE_ID"]
 except:
-    st.error("⚠️ Error de Seguridad: No se encontraron las claves en los 'Secrets' de Streamlit Cloud.")
+    st.error("⚠️ Error de Seguridad: No se encontraron las claves en los 'Secrets'.")
     st.stop()
 
 # ==========================================
@@ -71,6 +48,9 @@ ROLES_RESTRINGIDOS = [
     'RIGGER', 'VIENTERO', 'ALMACENERO', 'CONDUCTOR', 'PSICOLOGA'
 ]
 
+# Roles que pueden ver el Dashboard Gerencial
+ROLES_GERENCIALES = ['ADMIN', 'GERENTE GENERAL', 'GERENTE MANTENIMIENTO', 'RESIDENTE', 'COORDINADOR', 'PLANNER']
+
 JERARQUIA = {
     'ADMIN': {'scope': 'ALL'},
     'GERENTE GENERAL': {'scope': 'ALL'},
@@ -79,32 +59,23 @@ JERARQUIA = {
     'COORDINADOR': {'scope': 'ALL'},
     'PLANNER': {'scope': 'ALL'},
     'PROGRAMADOR': {'scope': 'ALL'},
-    
     'COORDINADOR DE SEGURIDAD': {'scope': 'SPECIFIC', 'targets': ['SUPERVISOR DE SEGURIDAD']},
     'VALORIZADORA': {'scope': 'SPECIFIC', 'targets': ['ASISTENTE DE PLANIFICACION', 'ASISTENTE ADMINISTRATIVO', 'PROGRAMADOR', 'PLANNER']},
-    
     'SUPERVISOR DE OPERACIONES': {'scope': 'HYBRID', 'targets': ['PLANNER', 'CONDUCTOR']},
     'LIDER MECANICO': {'scope': 'GROUP', 'targets': []}, 
     'OPERADOR DE GRUA': {'scope': 'GROUP', 'targets': []}, 
 }
 
 # ==========================================
-# 3. GENERADOR DE SILUETA
+# 3. UTILIDADES VISUALES
 # ==========================================
 def get_default_profile_pic():
-    svg = """
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#B0BEC5" width="100%" height="100%">
-        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-    </svg>
-    """
+    svg = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#B0BEC5" width="100%" height="100%"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>"""
     b64 = base64.b64encode(svg.encode('utf-8')).decode("utf-8")
     return f"data:image/svg+xml;base64,{b64}"
 
 DEFAULT_IMG = get_default_profile_pic()
 
-# ==========================================
-# 4. ESTILOS VISUALES (BLINDADO)
-# ==========================================
 def add_bg_from_local(image_file):
     if os.path.exists(image_file):
         with open(image_file, "rb") as file:
@@ -120,12 +91,8 @@ def add_bg_from_local(image_file):
                 background-color: #000000;
             }}
             .stApp::before {{
-                content: "";
-                position: absolute;
-                top: 0; left: 0;
-                width: 100%; height: 100%;
-                background-color: rgba(5, 5, 10, 0.92);
-                z-index: -1;
+                content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+                background-color: rgba(5, 5, 10, 0.92); z-index: -1;
             }}
             </style>
             """, unsafe_allow_html=True)
@@ -139,82 +106,25 @@ st.markdown("""
 <style>
     :root { color-scheme: dark !important; }
     html, body { margin: 0 !important; padding: 0 !important; background-color: #000000 !important; color: #E0E0E0 !important; }
-    .block-container { padding-top: 1rem !important; padding-bottom: 2rem !important; max-width: 100% !important; }
-    header[data-testid="stHeader"] { display: none !important; }
-
-    /* INPUTS & CONTENEDORES */
-    div[data-testid="stTextInput"] > div, div[data-testid="stTextArea"] > div,
-    div[data-baseweb="input"] > div, div[data-baseweb="base-input"] {
-        background-color: transparent !important; background: transparent !important; border: none !important; box-shadow: none !important;
-    }
-
-    /* INPUTS REALES */
     .stTextInput input, input[type="text"], input[type="password"] {
         background-color: #1E1E2E !important; color: white !important; border: 1px solid #555 !important;
         border-radius: 50px !important; padding: 10px 20px !important;
     }
-
-    /* TEXT AREA SOLIDO */
-    div[data-baseweb="textarea"] {
-        background-color: #262730 !important; border: 2px solid #4FC3F7 !important;
-        border-radius: 12px !important; padding: 5px !important;
-    }
-    .stTextArea textarea {
-        background-color: #262730 !important; color: white !important; caret-color: #4FC3F7 !important; border: none !important;
-    }
-    div[data-baseweb="textarea"]:focus-within { box-shadow: 0 0 15px rgba(79, 195, 247, 0.5) !important; }
-
-    /* AUTOCOMPLETE FIX */
-    input:-webkit-autofill, textarea:-webkit-autofill {
-        -webkit-box-shadow: 0 0 0 30px #1E1E2E inset !important; -webkit-text-fill-color: white !important;
-        transition: background-color 5000s ease-in-out 0s;
-    }
-
-    /* LISTAS & SELECTORES */
-    div[data-baseweb="select"] > div:first-child {
-        background-color: #1E1E2E !important; color: white !important; border: 1px solid #444 !important; border-radius: 8px !important;
-    }
-    div[data-baseweb="select"] span { color: white !important; }
-    div[data-baseweb="select"] svg { fill: #B0BEC5 !important; }
-    div[data-baseweb="popover"], div[data-baseweb="popover"] > div { background-color: #1E1E2E !important; border: 1px solid #444 !important; }
-    ul[data-baseweb="menu"] { background-color: #1E1E2E !important; padding: 0 !important; }
-    li[data-baseweb="option"], li[role="option"] { background-color: #1E1E2E !important; color: #E0E0E0 !important; }
-    li[data-baseweb="option"]:hover, li[role="option"][aria-selected="true"] { background-color: #0288D1 !important; color: white !important; }
-    li[role="option"] * { color: inherit !important; }
-
-    /* RADIO BUTTONS AZULES */
-    div[role="radiogroup"] { display: flex; flex-direction: column !important; gap: 10px; }
-    div[role="radiogroup"] label {
-        background-color: #131720 !important; border: 1px solid #0288D1 !important; color: #E0E0E0 !important;
-        width: 100% !important; padding: 12px 15px !important; border-radius: 10px !important;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.3) !important; transition: all 0.2s ease !important;
-    }
-    div[role="radiogroup"] label:hover {
-        background-color: #1E2A3A !important; border-color: #4FC3F7 !important; transform: translateX(5px); cursor: pointer;
-    }
-
-    /* BOTONES */
-    button[kind="primaryFormSubmit"], div[data-testid="stFormSubmitButton"] > button, div.stButton > button {
+    div.stButton > button {
         background: linear-gradient(135deg, #0288D1 0%, #01579B 100%) !important; color: white !important;
         border: none !important; font-weight: 600; border-radius: 8px; padding: 0.6rem 1.2rem;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: all 0.3s ease;
     }
-    div.stButton > button:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(2, 136, 209, 0.5); }
-    
     .css-card {
         background: rgba(20, 20, 30, 0.75); backdrop-filter: blur(12px); border-radius: 16px;
         border: 1px solid rgba(255, 255, 255, 0.08); padding: 24px; margin-bottom: 20px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
     }
-    h1, h2 { color: #4FC3F7 !important; text-shadow: 0px 0px 10px rgba(79, 195, 247, 0.4); }
-    h3, h4, h5 { color: #FFFFFF !important; }
-    p, label, span, li, div { color: #B0BEC5; }
     [data-testid="stSidebar"] { background-color: #0a0e14 !important; border-right: 1px solid #222; }
-    .podio-emoji { font-size: 3.5rem; display: block; margin-bottom: 10px; }
+    h1, h2, h3 { color: #4FC3F7 !important; }
 </style>
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 5. CONEXIÓN Y CARGA DE DATOS
+# 4. CARGA DE DATOS
 # ==========================================
 @st.cache_data(ttl=60)
 def load_data():
@@ -226,7 +136,6 @@ def load_data():
                 recs = t.all()
                 if not recs: return pd.DataFrame(), t
                 df = pd.DataFrame([r['fields'] for r in recs])
-                
                 cols_force_upper = [
                     'USUARIO', 'ID_ROL', 'ESTADO', 'TURNO', 'COD_PARADA',
                     'DNI', 'DNI_TRABAJADOR', 'DNI_EVALUADOR',
@@ -234,14 +143,10 @@ def load_data():
                     'NOMBRE_COMPLETO', 'APELLIDOS Y NOMBRES', 'NOMBRE_EVALUADOR', 'NOMBRE_TRABAJADOR'
                 ]
                 cols_grupos = ['ID_GRUPO', 'GRUPO', 'GRUPO_MOMENTO']
-
                 for c in df.columns:
                     df[c] = df[c].astype(str).str.strip()
-                    if c in cols_force_upper:
-                        df[c] = df[c].str.upper()
-                    if c in cols_grupos:
-                        df[c] = df[c].str.upper().str.replace('.0', '', regex=False)
-                        
+                    if c in cols_force_upper: df[c] = df[c].str.upper()
+                    if c in cols_grupos: df[c] = df[c].str.upper().str.replace('.0', '', regex=False)
                 return df, t
             except: return pd.DataFrame(), None
             
@@ -270,19 +175,13 @@ if df_config is not None and not df_config.empty:
     else:
         parada_actual = str(df_config.iloc[0].values[0])
 
-def get_photo_url(url_raw):
-    if not url_raw or str(url_raw).lower() == 'nan' or len(str(url_raw)) < 5:
-        return DEFAULT_IMG
-    return url_raw
-
 if 'usuario' not in st.session_state:
     st.session_state.update({'usuario': None, 'nombre_real': None, 'rol': None, 'dni_user': None})
 
 # ==========================================
-# 6. APLICACIÓN
+# 5. LÓGICA DE APLICACIÓN
 # ==========================================
 
-# --- LOGIN ---
 if not st.session_state.usuario:
     st.markdown("<br><br><br>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns([1,0.8,1])
@@ -293,14 +192,11 @@ if not st.session_state.usuario:
             <p style="margin-top: 10px;">Acceso Corporativo Seguro</p>
         </div>
         """, unsafe_allow_html=True)
-        
         user = st.text_input("ID Usuario", placeholder="Ingrese su usuario")
         pw = st.text_input("Contraseña", type="password", placeholder="••••••")
-        
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("INICIAR SESIÓN", use_container_width=True):
             if df_users is not None and not df_users.empty:
-                # Login normalizado
                 u = df_users[df_users['USUARIO'] == user.strip().upper()]
                 if not u.empty and str(u.iloc[0]['PASS']) == pw and u.iloc[0]['ESTADO'] == 'ACTIVO':
                     st.session_state.usuario = user
@@ -312,14 +208,17 @@ if not st.session_state.usuario:
             else: st.error("❌ Error de conexión")
 
 else:
-    # --- SIDEBAR ---
+    # --- MENU DINÁMICO ---
     rol_actual = st.session_state.rol
+    # Definimos opciones base
     opciones = ["📝 Evaluar Personal"]
-    
+
     if rol_actual not in ROLES_RESTRINGIDOS:
-        if rol_actual == 'ADMIN':
-            opciones = ["📝 Evaluar Personal", "🏆 Ranking Global", "📂 Mi Historial"]
+        if rol_actual in ROLES_GERENCIALES:
+            # Jefes y Planners ven Dashboard y Ranking
+            opciones = ["📝 Evaluar Personal", "📊 Dashboard Gerencial", "🏆 Ranking Global", "📂 Mi Historial"]
         else:
+            # Supervisores normales
             opciones = ["📝 Evaluar Personal", "📂 Mi Historial"]
 
     with st.sidebar:
@@ -333,112 +232,168 @@ else:
             st.session_state.usuario = None
             st.rerun()
 
-    # ==============================================================
-    # LÓGICA DE FILTRADO MAESTRA
-    # ==============================================================
+    # --- FILTRADO MAESTRO ---
     data_view = df_personal[df_personal['ESTADO'] == 'ACTIVO'] if df_personal is not None else pd.DataFrame()
-    
     if not data_view.empty:
         permisos = JERARQUIA.get(rol_actual, {'scope': 'GROUP', 'targets': []}) 
         scope = permisos.get('scope', 'GROUP')
         targets = permisos.get('targets', [])
-        
         me = data_view[data_view['DNI'] == st.session_state.dni_user]
         grp_supervisor = str(me.iloc[0]['ID_GRUPO']).replace('.0','').strip() if not me.empty else ""
         trn = me.iloc[0]['TURNO'] if not me.empty else ""
 
-        def check_grupo_match(grupos_trabajador, grupo_buscado):
-            if not grupo_buscado: return False
-            lista = [g.replace('.0','').strip() for g in str(grupos_trabajador).split(',')]
-            return grupo_buscado in lista
+        def check_grupo(grupos, buscado):
+            if not buscado: return False
+            return buscado in [g.replace('.0','').strip() for g in str(grupos).split(',')]
 
-        if scope == 'ALL':
-            pass 
-        elif scope == 'SPECIFIC':
-            data_view = data_view[data_view['CARGO_ACTUAL'].isin(targets)]
+        if scope == 'ALL': pass 
+        elif scope == 'SPECIFIC': data_view = data_view[data_view['CARGO_ACTUAL'].isin(targets)]
         elif scope == 'GROUP':
-            mask_grupo = data_view['ID_GRUPO'].apply(lambda x: check_grupo_match(x, grp_supervisor))
-            mask_turno = data_view['TURNO'] == trn
-            data_view = data_view[mask_grupo & mask_turno]
+            data_view = data_view[data_view['ID_GRUPO'].apply(lambda x: check_grupo(x, grp_supervisor)) & (data_view['TURNO'] == trn)]
         elif scope == 'HYBRID':
             mask_cargos = data_view['CARGO_ACTUAL'].isin(targets)
-            mask_grupo = data_view['ID_GRUPO'].apply(lambda x: check_grupo_match(x, grp_supervisor))
-            mask_turno = data_view['TURNO'] == trn
-            data_view = data_view[mask_cargos | (mask_grupo & mask_turno)]
+            mask_grupo = data_view['ID_GRUPO'].apply(lambda x: check_grupo(x, grp_supervisor)) & (data_view['TURNO'] == trn)
+            data_view = data_view[mask_cargos | mask_grupo]
 
         data_view = data_view[data_view['DNI'] != st.session_state.dni_user]
 
-    # ----------------------------------------
-    # 1. EVALUACIÓN
-    # ----------------------------------------
-    if seleccion == "📝 Evaluar Personal":
-        st.title(f"📝 Evaluación - {parada_actual}")
+    # ==============================================================================
+    # 1. DASHBOARD GERENCIAL (NUEVO - Gráficos 1, 3, 4)
+    # ==============================================================================
+    if seleccion == "📊 Dashboard Gerencial":
+        st.title(f"📊 Control Tower - {parada_actual}")
         
+        if df_historial is not None and not df_historial.empty:
+            df_dash = df_historial[df_historial['COD_PARADA'] == parada_actual].copy()
+            
+            if df_dash.empty:
+                st.warning("⚠️ Aún no hay datos suficientes en esta parada.")
+            else:
+                # --- KPI CARDS ---
+                k1, k2, k3, k4 = st.columns(4)
+                promedio = df_dash['NOTA_FINAL'].mean()
+                total_evals = len(df_dash)
+                total_personas = df_dash['DNI_TRABAJADOR'].nunique()
+                top_grupo = df_dash.groupby('GRUPO_MOMENTO')['NOTA_FINAL'].mean().idxmax()
+                
+                k1.metric("Evaluaciones", total_evals)
+                k2.metric("Personas Evaluadas", total_personas)
+                k3.metric("Promedio Planta", f"{promedio:.2f}")
+                k4.metric("Grupo Líder", top_grupo)
+                st.divider()
+
+                # --- FILA SUPERIOR: GRÁFICOS 3 y 4 ---
+                c_izq, c_der = st.columns([2, 1])
+                
+                with c_izq:
+                    st.subheader("📊 (3) Rendimiento por Cargo")
+                    # Gráfico 3: Comparativa de Cargos (Barras Horizontales)
+                    chart_cargo = df_dash.groupby('CARGO_MOMENTO')['NOTA_FINAL'].mean().reset_index()
+                    chart_cargo = chart_cargo.sort_values('NOTA_FINAL', ascending=True)
+                    
+                    st.bar_chart(
+                        chart_cargo.set_index('CARGO_MOMENTO'),
+                        color="#4FC3F7",
+                        horizontal=True
+                    )
+
+                with c_der:
+                    st.subheader("🍩 (4) Distribución")
+                    # Gráfico 4: Donut Chart con Altair
+                    # Clasificar notas
+                    def clasificar(n):
+                        if n >= 4.5: return "Excelente (5)"
+                        elif n >= 3.5: return "Bueno (4)"
+                        elif n >= 2.5: return "Regular (3)"
+                        else: return "Bajo (1-2)"
+                    
+                    df_dash['Categoria'] = df_dash['NOTA_FINAL'].apply(clasificar)
+                    donut_data = df_dash['Categoria'].value_counts().reset_index()
+                    donut_data.columns = ['Categoria', 'Cantidad']
+                    
+                    # Crear Donut Chart
+                    base = alt.Chart(donut_data).encode(theta=alt.Theta("Cantidad", stack=True))
+                    pie = base.mark_arc(outerRadius=100, innerRadius=60).encode(
+                        color=alt.Color("Categoria", scale=alt.Scale(scheme='spectral')),
+                        order=alt.Order("Cantidad", sort="descending"),
+                        tooltip=["Categoria", "Cantidad"]
+                    )
+                    text = base.mark_text(radius=120).encode(
+                        text=alt.Text("Cantidad"), 
+                        order=alt.Order("Cantidad", sort="descending"),
+                        color=alt.value("white") 
+                    )
+                    st.altair_chart(pie + text, use_container_width=True)
+
+                # --- FILA INFERIOR: GRÁFICO 1 ---
+                st.divider()
+                st.subheader("🔥 (1) Mapa de Calor: Grupos vs. Turnos")
+                # Gráfico 1: Heatmap
+                pivot = df_dash.pivot_table(
+                    index='GRUPO_MOMENTO', 
+                    columns='TURNO_MOMENTO', 
+                    values='NOTA_FINAL', 
+                    aggfunc='mean'
+                ).fillna(0)
+                
+                st.dataframe(
+                    pivot.style.background_gradient(cmap='RdYlGn', vmin=1, vmax=5).format("{:.2f}"),
+                    use_container_width=True
+                )
+                st.caption("Verde: Alto Desempeño | Rojo: Bajo Desempeño")
+
+        else: st.info("No hay datos históricos cargados.")
+
+    # ==============================================================================
+    # 2. EVALUACIÓN (Lógica Original)
+    # ==============================================================================
+    elif seleccion == "📝 Evaluar Personal":
+        st.title(f"📝 Evaluación - {parada_actual}")
         dnis_ya_evaluados = []
         if df_historial is not None and not df_historial.empty:
-            filtro_historial = df_historial[
-                (df_historial['DNI_EVALUADOR'] == st.session_state.dni_user) &
-                (df_historial['COD_PARADA'] == parada_actual)
-            ]
-            dnis_ya_evaluados = filtro_historial['DNI_TRABAJADOR'].unique().tolist()
+            filtro = df_historial[(df_historial['DNI_EVALUADOR'] == st.session_state.dni_user) & (df_historial['COD_PARADA'] == parada_actual)]
+            dnis_ya_evaluados = filtro['DNI_TRABAJADOR'].unique().tolist()
         
-        if not data_view.empty:
-            data_view = data_view[~data_view['DNI'].isin(dnis_ya_evaluados)]
+        if not data_view.empty: data_view = data_view[~data_view['DNI'].isin(dnis_ya_evaluados)]
 
         if data_view.empty:
             st.balloons()
-            st.success("✅ Has completado todas las evaluaciones disponibles.")
+            st.success("✅ Todo el personal asignado ha sido evaluado.")
         else:
-            lista_final = data_view['NOMBRE_COMPLETO'].unique().tolist()
-            sel_nombre = st.selectbox(
-                f"Seleccionar Colaborador ({len(lista_final)} pendientes):", 
-                lista_final, index=None, placeholder="👇 Haz clic aquí para desplegar la lista...", key="selector_final"
-            )
+            lista = data_view['NOMBRE_COMPLETO'].unique().tolist()
+            sel_nombre = st.selectbox(f"Pendientes ({len(lista)}):", lista, index=None, placeholder="Seleccione colaborador...")
             
             if sel_nombre:
                 p = data_view[data_view['NOMBRE_COMPLETO'] == sel_nombre].iloc[0]
-                foto_final = get_photo_url(p.get('URL_FOTO', ''))
-                
                 st.markdown(f"""
-                <div class="css-card" style="display: flex; align-items: center; gap: 20px; margin-top: 15px;">
-                    <img src="{foto_final}" style="width: 100px; height: 100px; border-radius: 50%; border: 3px solid #4FC3F7; object-fit: cover; background-color: #222;">
-                    <div>
-                        <h2 style="margin:0; color: white !important;">{p['NOMBRE_COMPLETO']}</h2>
-                        <p style="margin:0; font-size: 1.2em; color: #4FC3F7;">{p['CARGO_ACTUAL']}</p>
-                        <span style="background: rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 6px; font-size: 0.9em; margin-top: 5px; display: inline-block;">
-                            {p['ID_GRUPO']} - {p['TURNO']}
-                        </span>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
+                <div class="css-card" style="display: flex; align-items: center; gap: 20px;">
+                    <img src="{p.get('URL_FOTO', DEFAULT_IMG)}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover;">
+                    <div><h3 style="margin:0;">{p['NOMBRE_COMPLETO']}</h3><p style="margin:0; color:#4FC3F7;">{p['CARGO_ACTUAL']}</p></div>
+                </div>""", unsafe_allow_html=True)
                 
                 preguntas = pd.DataFrame()
                 if df_roles is not None and not df_roles.empty:
                     df_roles['CARGO_NORM'] = df_roles['CARGO'].astype(str).str.upper().str.strip()
                     preguntas = df_roles[df_roles['CARGO_NORM'] == str(p['CARGO_ACTUAL']).upper().strip()]
 
-                if preguntas.empty:
-                    st.warning("⚠️ No hay criterios configurados para este cargo.")
+                if preguntas.empty: st.warning("⚠️ Sin criterios configurados.")
                 else:
                     with st.form("frm_eval"):
-                        score_total = 0
+                        score = 0
                         notas_save = {}
-                        st.markdown("### Criterios de Desempeño")
                         for i, (idx, row) in enumerate(preguntas.iterrows(), 1):
-                            st.markdown(f"**{i}. {row['CRITERIO']}** <span style='font-size:0.85em; color:#888'>({row['PORCENTAJE']*100:.0f}%)</span>", unsafe_allow_html=True)
-                            opciones = [str(row.get(f'NIVEL_{j}')) for j in range(1, 6)]
-                            seleccion_texto = st.radio(label=f"r_{i}", options=opciones, key=f"rad_{i}", horizontal=False, label_visibility="collapsed")
-                            nota_numerica = opciones.index(seleccion_texto) + 1
-                            score_total += nota_numerica * row['PORCENTAJE']
-                            notas_save[f"NOTA_{i}"] = nota_numerica
+                            st.markdown(f"**{row['CRITERIO']}**")
+                            ops = [str(row.get(f'NIVEL_{j}')) for j in range(1, 6)]
+                            sel = st.radio(f"Nivel {i}", ops, key=f"r{i}", label_visibility="collapsed")
+                            nota = ops.index(sel) + 1
+                            score += nota * row['PORCENTAJE']
+                            notas_save[f"NOTA_{i}"] = nota
                             st.divider()
                         
-                        obs = st.text_area("Sustento de la Nota Final", height=100)
-                        enviar = st.form_submit_button("✅ GUARDAR EVALUACIÓN", use_container_width=True)
-                        
-                        if enviar:
+                        obs = st.text_area("Observaciones (Obligatorio)")
+                        if st.form_submit_button("GUARDAR", use_container_width=True):
                             if obs and tbl_historial:
-                                record = {
+                                rec = {
                                     "FECHA_HORA": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                                     "COD_PARADA": parada_actual,
                                     "DNI_EVALUADOR": st.session_state.dni_user,
@@ -448,126 +403,61 @@ else:
                                     "CARGO_MOMENTO": str(p['CARGO_ACTUAL']),
                                     "GRUPO_MOMENTO": str(p['ID_GRUPO']),
                                     "TURNO_MOMENTO": str(p['TURNO']),
-                                    "NOTA_FINAL": round(score_total, 2),
+                                    "NOTA_FINAL": round(score, 2),
                                     "COMENTARIOS": obs
                                 }
-                                record.update(notas_save)
+                                rec.update(notas_save)
                                 try:
-                                    tbl_historial.create(record)
-                                    st.balloons()
-                                    st.success(f"¡Evaluación Guardada! Nota: {round(score_total, 2)}")
-                                    
-                                    # --- AUTO-REFRESCO AL GUARDAR ---
-                                    time.sleep(2)
+                                    tbl_historial.create(rec)
+                                    st.success(f"Guardado. Nota: {round(score, 2)}")
+                                    time.sleep(1.5)
                                     st.cache_data.clear()
                                     st.rerun()
-                                    # --------------------------------
-                                    
                                 except Exception as e: st.error(f"Error: {e}")
-                            else: st.warning("⚠️ La observación es obligatoria.")
+                            else: st.warning("⚠️ Falta observación.")
 
-    # ----------------------------------------
-    # 2. RANKING GLOBAL
-    # ----------------------------------------
-    elif seleccion == "🏆 Ranking Global" and st.session_state.rol not in ROLES_RESTRINGIDOS:
-        st.title("🏆 Tabla de Posiciones")
+    # ==============================================================================
+    # 3. RANKING (Lógica Original)
+    # ==============================================================================
+    elif seleccion == "🏆 Ranking Global":
+        st.title("🏆 Ranking Global")
         if df_historial is not None and not df_historial.empty:
             df_historial['DNI_TRABAJADOR'] = df_historial['DNI_TRABAJADOR'].astype(str)
-            df_personal['DNI'] = df_personal['DNI'].astype(str)
+            actual = df_historial[df_historial['COD_PARADA'] == parada_actual].groupby('DNI_TRABAJADOR')['NOTA_FINAL'].mean().reset_index(name='MEDIA_ACTUAL')
+            hist = df_historial[df_historial['COD_PARADA'] != parada_actual].groupby('DNI_TRABAJADOR')['NOTA_FINAL'].mean().reset_index(name='MEDIA_HIST')
             
-            datos_actuales = df_historial[df_historial['COD_PARADA'] == parada_actual]
-            datos_historicos = df_historial[df_historial['COD_PARADA'] != parada_actual]
+            score_df = pd.merge(actual, hist, left_on='DNI_TRABAJADOR', right_on='DNI_TRABAJADOR', how='outer')
+            def calc(row):
+                a, h = row['MEDIA_ACTUAL'], row['MEDIA_HIST']
+                if pd.notna(a) and pd.notna(h): return a*0.7 + h*0.3
+                return a if pd.notna(a) else h if pd.notna(h) else 0
             
-            prom_actual = datos_actuales.groupby('DNI_TRABAJADOR')['NOTA_FINAL'].mean().reset_index()
-            prom_actual.columns = ['DNI', 'MEDIA_ACTUAL']
+            score_df['FINAL'] = score_df.apply(calc, axis=1).round(2)
+            ranking = pd.merge(score_df, df_personal, left_on='DNI_TRABAJADOR', right_on='DNI', how='left').sort_values('FINAL', ascending=False)
             
-            prom_historico = datos_historicos.groupby('DNI_TRABAJADOR')['NOTA_FINAL'].mean().reset_index()
-            prom_historico.columns = ['DNI', 'MEDIA_HISTORICA']
-            
-            score_df = pd.merge(prom_actual, prom_historico, on='DNI', how='outer')
-            
-            def calcular_ponderado(row):
-                actual = row['MEDIA_ACTUAL']
-                hist = row['MEDIA_HISTORICA']
-                if pd.notna(actual) and pd.notna(hist): return (actual * 0.70) + (hist * 0.30)
-                elif pd.notna(actual): return actual
-                elif pd.notna(hist): return hist
-                else: return 0.0
-
-            score_df['PROMEDIO_FINAL'] = score_df.apply(calcular_ponderado, axis=1)
-            score_df['PROMEDIO_FINAL'] = score_df['PROMEDIO_FINAL'].round(2)
-            
-            ranking = pd.merge(score_df, df_personal, on='DNI', how='left')
-            cargos_disp = ["TODOS"] + sorted(ranking['CARGO_ACTUAL'].dropna().unique().tolist())
-            filtro_cargo = st.selectbox("Filtrar por Cargo:", cargos_disp)
-            if filtro_cargo != "TODOS": ranking = ranking[ranking['CARGO_ACTUAL'] == filtro_cargo]
-            
-            ranking = ranking.sort_values('PROMEDIO_FINAL', ascending=False).reset_index(drop=True)
-            
-            if len(ranking) >= 3:
-                c2, c1, c3 = st.columns([1, 1.2, 1])
-                with c2:
-                    p2 = ranking.iloc[1]
-                    f2 = get_photo_url(p2.get('URL_FOTO', ''))
-                    st.markdown(f"""
-                    <div class="css-card" style="text-align:center; border-top: 5px solid #C0C0C0;">
-                        <span class="podio-emoji">🥈</span>
-                        <img src="{f2}" style="width:90px; height:90px; border-radius:50%; object-fit:cover; background:#222; margin: 10px 0;">
-                        <h4 style="margin:5px 0;">{p2['NOMBRE_COMPLETO']}</h4>
-                        <h2 style="color:#C0C0C0;">{p2['PROMEDIO_FINAL']}</h2>
-                    </div>""", unsafe_allow_html=True)
-                with c1:
-                    p1 = ranking.iloc[0]
-                    f1 = get_photo_url(p1.get('URL_FOTO', ''))
-                    st.markdown(f"""
-                    <div class="css-card" style="text-align:center; border-top: 5px solid #FFD700; transform: scale(1.05);">
-                        <span class="podio-emoji">🥇</span>
-                        <img src="{f1}" style="width:120px; height:120px; border-radius:50%; object-fit:cover; border: 4px solid #FFD700; background:#222; margin: 10px 0;">
-                        <h3 style="margin:5px 0; color:#FFD700;">{p1['NOMBRE_COMPLETO']}</h3>
-                        <h1 style="color:#FFD700; font-size:3rem;">{p1['PROMEDIO_FINAL']}</h1>
-                    </div>""", unsafe_allow_html=True)
-                with c3:
-                    p3 = ranking.iloc[2]
-                    f3 = get_photo_url(p3.get('URL_FOTO', ''))
-                    st.markdown(f"""
-                    <div class="css-card" style="text-align:center; border-top: 5px solid #CD7F32;">
-                        <span class="podio-emoji">🥉</span>
-                        <img src="{f3}" style="width:90px; height:90px; border-radius:50%; object-fit:cover; background:#222; margin: 10px 0;">
-                        <h4 style="margin:5px 0;">{p3['NOMBRE_COMPLETO']}</h4>
-                        <h2 style="color:#CD7F32;">{p3['PROMEDIO_FINAL']}</h2>
-                    </div>""", unsafe_allow_html=True)
-
-            st.markdown("### 📊 Listado Completo")
             st.data_editor(
-                ranking[['NOMBRE_COMPLETO', 'CARGO_ACTUAL', 'PROMEDIO_FINAL']],
-                column_config={
-                    "PROMEDIO_FINAL": st.column_config.ProgressColumn("Nota Global (Ponderada)", min_value=0, max_value=5, format="%.2f"), 
-                    "NOMBRE_COMPLETO": "Colaborador", 
-                    "CARGO_ACTUAL": "Cargo"
-                }, hide_index=True, use_container_width=True, disabled=True
+                ranking[['NOMBRE_COMPLETO', 'CARGO_ACTUAL', 'FINAL']],
+                column_config={"FINAL": st.column_config.ProgressColumn("Nota", min_value=0, max_value=5, format="%.2f")},
+                hide_index=True, use_container_width=True
             )
-        else: st.info("No hay datos de ranking disponibles.")
+        else: st.info("Sin datos.")
 
-    # ----------------------------------------
-    # 3. HISTORIAL
-    # ----------------------------------------
-    elif seleccion == "📂 Mi Historial" and st.session_state.rol not in ROLES_RESTRINGIDOS:
-        st.title("📂 Historial de Registros")
-        
+    # ==============================================================================
+    # 4. HISTORIAL (Lógica Original + Descarga Excel)
+    # ==============================================================================
+    elif seleccion == "📂 Mi Historial":
+        st.title("📂 Historial")
         if df_historial is not None and not df_historial.empty:
             df_historial['DNI_TRABAJADOR'] = df_historial['DNI_TRABAJADOR'].astype(str)
-            df_personal['DNI'] = df_personal['DNI'].astype(str)
-            
             if not data_view.empty:
-                dnis_permitidos = data_view['DNI'].unique().tolist()
-                df_historial = df_historial[df_historial['DNI_TRABAJADOR'].isin(dnis_permitidos)]
+                df_historial = df_historial[df_historial['DNI_TRABAJADOR'].isin(data_view['DNI'].unique())]
             
-            df_merged = pd.merge(df_historial, df_personal[['DNI', 'NOMBRE_COMPLETO']], left_on='DNI_TRABAJADOR', right_on='DNI', how='left')
-            df_merged['NOMBRE_COMPLETO'] = df_merged['NOMBRE_COMPLETO'].fillna(df_merged['DNI_TRABAJADOR'])
+            merged = pd.merge(df_historial, df_personal[['DNI', 'NOMBRE_COMPLETO']], left_on='DNI_TRABAJADOR', right_on='DNI', how='left')
+            merged['NOMBRE_COMPLETO'] = merged['NOMBRE_COMPLETO'].fillna(merged['DNI_TRABAJADOR'])
+            cols = ['FECHA_HORA', 'NOMBRE_COMPLETO', 'NOTA_FINAL', 'COMENTARIOS']
+            st.dataframe(merged[[c for c in cols if c in merged.columns]], use_container_width=True, hide_index=True)
             
-            cols_mostrar = ['COD_PARADA', 'NOMBRE_COMPLETO', 'NOTA_FINAL', 'COMENTARIOS']
-            cols_existentes = [c for c in cols_mostrar if c in df_merged.columns]
-            
-            st.dataframe(df_merged[cols_existentes], use_container_width=True, hide_index=True)
-        else:
-            st.info("No se encontraron registros.")
+            # Botón de Descarga Excel (CSV)
+            csv = merged.to_csv(index=False).encode('utf-8')
+            st.download_button("📥 Descargar Excel", csv, "Reporte.csv", "text/csv")
+        else: st.info("Sin registros.")
