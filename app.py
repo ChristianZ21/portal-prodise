@@ -18,31 +18,34 @@ st.set_page_config(
 )
 
 # ==========================================
-# 2. ESTILOS VISUALES PREMIUM (Corrección de Barra y Fondo)
+# 2. ESTILOS VISUALES Y CSS CORREGIDO
 # ==========================================
 st.markdown("""
 <style>
     /* --- MODO OSCURO GLOBAL --- */
     :root { color-scheme: dark !important; }
     html, body, [data-testid="stAppViewContainer"] {
-        background-color: #000000 !important; color: #E0E0E0 !important;
+        background-color: transparent !important; /* Importante para ver el fondo */
+        color: #E0E0E0 !important;
     }
     
-    /* --- LIMPIEZA VISUAL (SOLO LO NECESARIO) --- */
-    /* Ocultamos el menú de 3 puntos y el pie de página */
+    /* --- ARREGLO DEL MENÚ LATERAL (SIDEBAR) --- */
+    /* NO ocultamos el header completo para no perder la flecha '>' */
+    header[data-testid="stHeader"] {
+        background-color: transparent !important;
+    }
+    
+    /* Ocultamos solo el menú de 3 puntos (Hamburguesa) y el botón Deploy */
     #MainMenu {visibility: hidden;}
+    .stDeployButton {display: none;}
     footer {visibility: hidden;}
-    
-    /* IMPORTANTE: NO ocultamos el header completo para que la flecha de la barra lateral funcione */
-    /* Solo ocultamos la decoración de colores de arriba si molesta */
-    [data-testid="stDecoration"] {visibility: hidden;}
-    
-    .block-container {padding-top: 1rem !important;}
+    [data-testid="stDecoration"] {display: none;}
+    [data-testid="stToolbar"] {visibility: hidden;} /* Oculta barra de herramientas superior */
 
-    /* --- ESTILO DE TARJETAS PARA RADIO BUTTONS (INTERACTIVO) --- */
+    /* --- ESTILO DE TARJETAS PARA RADIO BUTTONS --- */
     div[role="radiogroup"] { gap: 12px; }
     div[role="radiogroup"] label {
-        background-color: #131720 !important;
+        background-color: rgba(19, 23, 32, 0.9) !important; /* Fondo semi-opaco */
         border: 1px solid #333 !important;
         padding: 15px 20px !important;
         border-radius: 12px !important;
@@ -52,19 +55,17 @@ st.markdown("""
     }
     div[role="radiogroup"] label:hover {
         border-color: #4FC3F7 !important;
-        background-color: #1E2530 !important;
+        background-color: rgba(30, 37, 48, 1) !important;
         transform: scale(1.01) !important;
-        box-shadow: 0 4px 10px rgba(79, 195, 247, 0.2) !important;
         cursor: pointer;
     }
-    /* Bolita seleccionada azul */
     div[role="radiogroup"] label[data-baseweb="radio"] > div:first-child {
         background-color: #4FC3F7 !important;
     }
 
     /* --- INPUTS --- */
     .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"] > div {
-        background-color: #1E1E2E !important;
+        background-color: rgba(30, 30, 46, 0.9) !important;
         color: white !important;
         border: 1px solid #444 !important;
         border-radius: 8px !important;
@@ -82,10 +83,10 @@ st.markdown("""
         box-shadow: 0 6px 20px rgba(2, 136, 209, 0.6);
     }
 
-    /* --- TARJETAS DE CONTENIDO --- */
+    /* --- TARJETAS DE CONTENIDO (GLASSMORPHISM) --- */
     .css-card {
-        background: rgba(20, 20, 30, 0.85);
-        backdrop-filter: blur(10px);
+        background: rgba(20, 20, 30, 0.75); /* Transparencia elegante */
+        backdrop-filter: blur(12px);
         border-radius: 16px;
         border: 1px solid rgba(255, 255, 255, 0.1);
         padding: 24px;
@@ -94,7 +95,7 @@ st.markdown("""
     
     /* --- SIDEBAR --- */
     [data-testid="stSidebar"] {
-        background-color: #050505 !important;
+        background-color: rgba(5, 5, 5, 0.95) !important;
         border-right: 1px solid #222;
     }
     h1, h2, h3 { color: #4FC3F7 !important; text-shadow: 0 0 10px rgba(79,195,247,0.3); }
@@ -102,33 +103,45 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 3. CARGA DE FONDO (SIN FILTROS NI OPACIDAD)
+# 3. CARGA DE FONDO (CON CAPA SEMI-TRANSPARENTE RESTAURADA)
 # ==========================================
 def add_bg_from_local(image_file):
     if os.path.exists(image_file):
         with open(image_file, "rb") as file:
             enc = base64.b64encode(file.read())
-        # Aquí insertamos la imagen DIRECTAMENTE, sin capas oscuras extra
+        
+        # Aquí está la magia: CSS que pone la imagen de fondo + una capa negra al 60%
         st.markdown(f"""
         <style>
         .stApp {{
             background-image: url(data:image/jpg;base64,{enc.decode()});
-            background-size: cover;          /* Cubre toda la pantalla */
-            background-position: center top; /* Alineado al centro-arriba */
+            background-size: cover;
+            background-position: center top; /* Enfoca arriba */
             background-repeat: no-repeat;
-            background-attachment: fixed;    /* Fijo al hacer scroll */
+            background-attachment: fixed;
+        }}
+        /* Capa oscura "fantasma" para que el texto se lea */
+        .stApp::before {{
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.60); /* 60% de oscuridad - AJUSTABLE */
+            z-index: -1;
         }}
         </style>
         """, unsafe_allow_html=True)
     else:
-        # Si falla, fondo negro limpio
-        st.markdown("<style>.stApp { background-color: #000000; }</style>", unsafe_allow_html=True)
+        # AVISO VISUAL SI NO ENCUENTRA LA IMAGEN
+        st.warning(f"⚠️ AVISO: No se encontró el archivo '{image_file}' en GitHub. El fondo se verá negro.")
 
-add_bg_from_local('fondo.jpg')
+add_bg_from_local('fondo.jpg') # Asegúrate que en GitHub se llame EXACTAMENTE así (minúsculas)
 LOGO_FILE = "logo.png"
 
 # ==========================================
-# 4. CONEXIÓN AIRTABLE Y CARGA DE DATOS
+# 4. CONEXIÓN AIRTABLE
 # ==========================================
 try:
     AIRTABLE_API_TOKEN = st.secrets["AIRTABLE_API_TOKEN"]
@@ -176,7 +189,6 @@ def load_data():
 df_users, df_personal, df_roles, df_historial, tbl_historial, df_config = load_data()
 
 ROLES_RESTRINGIDOS = ['LIDER MECANICO', 'OPERADOR DE GRUA', 'MECANICO', 'SOLDADOR', 'RIGGER', 'VIENTERO', 'ALMACENERO', 'CONDUCTOR', 'PSICOLOGA']
-ROLES_GERENCIALES = ['ADMIN', 'GERENTE GENERAL', 'GERENTE MANTENIMIENTO', 'RESIDENTE', 'COORDINADOR', 'PLANNER']
 JERARQUIA = {
     'ADMIN': {'scope': 'ALL'}, 'GERENTE GENERAL': {'scope': 'ALL'}, 'GERENTE MANTENIMIENTO': {'scope': 'ALL'},
     'RESIDENTE': {'scope': 'ALL'}, 'COORDINADOR': {'scope': 'ALL'}, 'PLANNER': {'scope': 'ALL'}, 'PROGRAMADOR': {'scope': 'ALL'},
@@ -216,10 +228,17 @@ if not st.session_state.usuario:
             else: st.error("❌ Error de conexión")
 else:
     rol_actual = st.session_state.rol
+    # MENU BASE
     opciones = ["📝 Evaluar Personal"]
-    if rol_actual not in ROLES_RESTRINGIDOS:
-        if rol_actual in ROLES_GERENCIALES: opciones = ["📝 Evaluar Personal", "📊 Dashboard Gerencial", "🏆 Ranking Global", "📂 Mi Historial"]
-        else: opciones = ["📝 Evaluar Personal", "📂 Mi Historial"]
+    
+    # PERMISOS PARA DASHBOARD (SOLO ADMIN)
+    if rol_actual == 'ADMIN':
+        opciones = ["📝 Evaluar Personal", "📊 Dashboard Gerencial", "🏆 Ranking Global", "📂 Mi Historial"]
+    elif rol_actual not in ROLES_RESTRINGIDOS:
+        # Otros jefes ven Ranking pero NO Dashboard
+        opciones = ["📝 Evaluar Personal", "🏆 Ranking Global", "📂 Mi Historial"]
+    else:
+        opciones = ["📝 Evaluar Personal", "📂 Mi Historial"]
 
     with st.sidebar:
         if os.path.exists(LOGO_FILE): st.image(LOGO_FILE, use_container_width=True)
@@ -255,7 +274,7 @@ else:
         data_view = data_view[data_view['DNI'] != st.session_state.dni_user]
 
     # ==============================================================================
-    # 1. DASHBOARD GERENCIAL
+    # 1. DASHBOARD GERENCIAL (SOLO ADMIN)
     # ==============================================================================
     if seleccion == "📊 Dashboard Gerencial":
         st.title(f"📊 Control Tower - {parada_actual}")
@@ -275,7 +294,6 @@ else:
                 st.subheader("🔥 (1) Mapa de Riesgo: Grupos vs. Turnos")
                 try:
                     heatmap_data = df_dash.groupby(['GRUPO_MOMENTO', 'TURNO_MOMENTO'])['NOTA_FINAL'].mean().reset_index()
-                    # Heatmap
                     hm = alt.Chart(heatmap_data).mark_rect().encode(
                         x=alt.X('TURNO_MOMENTO:N', title='Turno'),
                         y=alt.Y('GRUPO_MOMENTO:N', title='Grupo'),
