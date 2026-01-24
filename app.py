@@ -18,17 +18,22 @@ st.set_page_config(
 )
 
 # ==========================================
-# 2. ESTILOS VISUALES Y CSS (CORRECCIÓN FINAL LISTAS)
+# 2. ESTILOS VISUALES Y CSS (CORRECCIÓN TOTAL)
 # ==========================================
 st.markdown("""
 <style>
-    /* --- 1. MODO OSCURO GLOBAL Y TRANSPARENCIAS --- */
+    /* --- 1. FONDO Y TEXTOS --- */
     [data-testid="stAppViewContainer"] {
         background-color: transparent !important;
         color: #E0E0E0 !important;
     }
     
-    /* Textos generales */
+    /* Reducir el espacio de arriba (Padding superior) */
+    .block-container {
+        padding-top: 1rem !important; /* Mucho menos espacio arriba */
+        padding-bottom: 5rem !important;
+    }
+
     h1, h2, h3, h4, h5, h6, p, span, div, label {
         color: #E0E0E0 !important;
     }
@@ -40,7 +45,7 @@ st.markdown("""
     /* --- 2. HEADER Y SIDEBAR --- */
     header[data-testid="stHeader"] { 
         background-color: transparent !important; 
-        visibility: visible !important; 
+        visibility: visible !important; /* Para ver la flecha */
     }
     #MainMenu {visibility: hidden;}
     .stDeployButton {display: none;}
@@ -48,8 +53,10 @@ st.markdown("""
     [data-testid="stDecoration"] {display: none;}
     [data-testid="stToolbar"] {visibility: hidden;}
 
+    /* Flecha del sidebar */
     [data-testid="collapsedControl"] {
         visibility: visible !important; display: block !important; color: #FFFFFF !important;
+        top: 1rem !important; /* Ajuste de posición */
     }
     [data-testid="stSidebarCollapsedControl"] {
         color: #FFFFFF !important;
@@ -61,56 +68,66 @@ st.markdown("""
         border-right: 1px solid #222;
     }
 
-    /* --- 3. LA SOLUCIÓN DEFINITIVA PARA EL MENÚ DESPLEGABLE --- */
+    /* --- 3. CORRECCIÓN DEL MENÚ DESPLEGABLE (POPOVER) --- */
     
-    /* El contenedor de la lista desplegable (SIEMPRE OSCURO) */
-    ul[data-baseweb="menu"] {
-        background-color: #131720 !important;
+    /* El contenedor principal de la lista desplegable */
+    div[data-baseweb="popover"] {
+        background-color: #131720 !important; /* Fondo Oscuro FUERTE */
         border: 1px solid #444 !important;
     }
     
-    /* Cada opción individual de la lista */
-    li[data-baseweb="option"] {
-        color: white !important;      /* Texto blanco */
-        background-color: #131720 !important; /* Fondo oscuro */
+    /* La lista de opciones (ul) */
+    ul[data-baseweb="menu"] {
+        background-color: #131720 !important;
     }
     
-    /* El texto dentro de la opción */
-    div[data-baseweb="option"] {
-        color: white !important; 
+    /* Las opciones individuales (li) */
+    li[data-baseweb="option"] {
+        color: white !important; /* Texto Blanco */
+        background-color: #131720 !important;
     }
-
-    /* Cuando pasas el mouse por encima (Hover) */
-    li[data-baseweb="option"]:hover, li[aria-selected="true"] {
-        background-color: #4FC3F7 !important; /* Azul Prodise */
+    
+    /* Texto dentro de las opciones */
+    div[data-baseweb="option"] {
         color: white !important;
     }
 
-    /* La caja cerrada del selectbox */
-    div[data-baseweb="select"] > div {
+    /* Hover (cuando pasas el mouse por una opción) */
+    li[data-baseweb="option"]:hover, li[aria-selected="true"] {
+        background-color: #4FC3F7 !important; /* Azul al seleccionar */
+        color: white !important;
+    }
+
+    /* La caja del input cerrada */
+    .stSelectbox div[data-baseweb="select"] > div {
         background-color: rgba(20, 20, 30, 0.9) !important; 
         color: white !important;
         border: 1px solid #555 !important;
     }
     
-    /* El texto seleccionado en la caja cerrada */
+    /* Texto seleccionado visible */
     div[data-baseweb="select"] span {
         color: white !important;
     }
     
-    /* Input de texto normal */
+    /* Placeholder (texto gris "Seleccione...") */
+    div[data-baseweb="select"] span[aria-selected="false"] {
+        color: #aaa !important;
+    }
+
+    /* Inputs normales */
     .stTextInput input, .stTextArea textarea {
         background-color: rgba(20, 20, 30, 0.9) !important; 
         color: white !important;
         border: 1px solid #555 !important;
     }
 
-    /* --- 4. RADIO BUTTONS --- */
+    /* --- 4. RADIO BUTTONS COMPACTOS --- */
     div[role="radiogroup"] { gap: 6px !important; }
     div[role="radiogroup"] label {
         background-color: rgba(19, 23, 32, 0.9) !important;
         border: 1px solid #333 !important;
-        padding: 10px 20px !important;
+        padding: 8px 15px !important; /* Más compacto */
         border-radius: 10px !important;
         transition: all 0.2s ease !important;
         margin-bottom: 0px !important;
@@ -125,7 +142,7 @@ st.markdown("""
     div[role="radiogroup"] label[data-baseweb="radio"] > div:first-child {
         background-color: #4FC3F7 !important;
     }
-    div[role="radiogroup"] p { font-size: 0.95rem !important; }
+    div[role="radiogroup"] p { font-size: 0.90rem !important; }
 
     /* --- 5. BOTONES AZULES --- */
     div.stButton > button {
@@ -170,7 +187,7 @@ def add_bg_from_local(image_file):
         }}
         .stApp::before {{
             content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.5); /* Capa oscura media para leer */
+            background-color: rgba(0, 0, 0, 0.5); /* Oscurecimiento ligero */
             z-index: -1;
         }}
         </style>
@@ -396,7 +413,16 @@ else:
             st.success("✅ Todo el personal asignado ha sido evaluado.")
         else:
             lista = data_view['NOMBRE_COMPLETO'].unique().tolist()
-            sel_nombre = st.selectbox(f"Pendientes ({len(lista)}):", lista, index=None, placeholder="Seleccione colaborador...")
+            # CONFIGURACIÓN DEL SELECTBOX:
+            # index=None -> Empieza vacío
+            # placeholder -> Texto de ayuda
+            sel_nombre = st.selectbox(
+                f"Pendientes ({len(lista)}):", 
+                lista, 
+                index=None, 
+                placeholder="Escribe o selecciona un colaborador..."
+            )
+            
             if sel_nombre:
                 p = data_view[data_view['NOMBRE_COMPLETO'] == sel_nombre].iloc[0]
                 foto_p = get_photo_url(p.get('URL_FOTO', ''))
