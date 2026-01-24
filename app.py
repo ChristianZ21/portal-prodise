@@ -18,40 +18,37 @@ st.set_page_config(
 )
 
 # ==========================================
-# 2. ESTILOS VISUALES Y CSS (CORREGIDO PARA FONDO + TEXTO)
+# 2. ESTILOS VISUALES Y CSS (CORRECCIÓN LISTAS DESPLEGABLES)
 # ==========================================
 st.markdown("""
 <style>
-    /* --- 1. FORZADO DE TEXTO LEGIBLE (MODO OSCURO VISUAL) --- */
-    /* Forzamos que el contenedor principal sea transparente para ver la foto */
+    /* --- 1. MODO OSCURO GLOBAL Y TRANSPARENCIAS --- */
     [data-testid="stAppViewContainer"] {
         background-color: transparent !important;
         color: #E0E0E0 !important;
     }
     
-    /* Forzamos que TODOS los textos sean claros (Blanco/Gris) para contrastar con el fondo oscuro */
+    /* Textos generales a blanco/gris */
     h1, h2, h3, h4, h5, h6, p, li, span, div, label {
         color: #E0E0E0 !important;
     }
     h1, h2, h3 { 
-        color: #4FC3F7 !important; /* Títulos en Azul Prodise */
+        color: #4FC3F7 !important;
         text-shadow: 0 0 10px rgba(79,195,247,0.3);
     }
-    
-    /* --- 2. HEADER Y BARRA LATERAL --- */
-    /* Header transparente pero visible para que funcione la flecha */
+
+    /* --- 2. HEADER Y SIDEBAR --- */
     header[data-testid="stHeader"] { 
         background-color: transparent !important; 
         visibility: visible !important; 
     }
-    /* Ocultamos menú hamburguesa y deploy */
     #MainMenu {visibility: hidden;}
     .stDeployButton {display: none;}
     footer {visibility: hidden;}
     [data-testid="stDecoration"] {display: none;}
     [data-testid="stToolbar"] {visibility: hidden;}
 
-    /* Flecha del sidebar siempre blanca y visible */
+    /* Flecha del sidebar blanca */
     [data-testid="collapsedControl"] {
         visibility: visible !important;
         display: block !important;
@@ -62,20 +59,43 @@ st.markdown("""
         background-color: rgba(255,255,255,0.1) !important;
         border-radius: 5px;
     }
+    [data-testid="stSidebar"] {
+        background-color: rgba(5, 5, 5, 0.95) !important;
+        border-right: 1px solid #222;
+    }
 
-    /* --- 3. CONTROLES (INPUTS) --- */
-    /* Fondo oscuro semitransparente para que el texto blanco se lea bien */
+    /* --- 3. INPUTS Y LISTAS DESPLEGABLES (SOLUCIÓN AQUÍ) --- */
+    
+    /* La caja del input cerrada */
     .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"] > div {
         background-color: rgba(20, 20, 30, 0.9) !important; 
         color: white !important;
         border: 1px solid #555 !important;
         border-radius: 8px !important;
     }
-    /* Menú desplegable (Selectbox) */
-    ul[data-baseweb="menu"] {
-        background-color: #1E1E2E !important;
+
+    /* EL MENÚ DESPLEGABLE QUE SE ABRE (POPOVER) */
+    div[data-baseweb="popover"], div[data-baseweb="popover"] > div {
+        background-color: #131720 !important; /* Fondo Oscuro para la lista */
     }
     
+    /* LAS OPCIONES DENTRO DE LA LISTA */
+    li[role="option"], div[role="option"] {
+        color: white !important; /* Texto Blanco */
+        background-color: transparent !important;
+    }
+    
+    /* AL PASAR EL MOUSE POR UNA OPCIÓN */
+    li[role="option"]:hover, div[role="option"]:hover, li[aria-selected="true"] {
+        background-color: #4FC3F7 !important; /* Azul PRODISE */
+        color: white !important;
+    }
+    
+    /* Texto seleccionado dentro de la lista */
+    div[data-baseweb="select"] span {
+        color: white !important;
+    }
+
     /* --- 4. RADIO BUTTONS COMPACTOS --- */
     div[role="radiogroup"] { gap: 6px !important; }
     div[role="radiogroup"] label {
@@ -110,7 +130,7 @@ st.markdown("""
         box-shadow: 0 6px 20px rgba(2, 136, 209, 0.6);
     }
 
-    /* --- 6. TARJETAS (Glassmorphism) --- */
+    /* --- 6. TARJETAS --- */
     .css-card {
         background: rgba(20, 20, 30, 0.75);
         backdrop-filter: blur(12px);
@@ -119,13 +139,6 @@ st.markdown("""
         padding: 24px;
         box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
     }
-    
-    /* --- 7. SIDEBAR --- */
-    [data-testid="stSidebar"] {
-        background-color: rgba(5, 5, 5, 0.95) !important;
-        border-right: 1px solid #222;
-    }
-    
     .podio-emoji { font-size: 3rem; display: block; margin-bottom: 5px; }
 </style>
 """, unsafe_allow_html=True)
@@ -137,8 +150,6 @@ def add_bg_from_local(image_file):
     if os.path.exists(image_file):
         with open(image_file, "rb") as file:
             enc = base64.b64encode(file.read())
-        # Nota: Usamos .stApp para poner la imagen, y ::before para oscurecerla un poco
-        # para que las letras blancas se lean bien.
         st.markdown(f"""
         <style>
         .stApp {{
@@ -149,13 +160,8 @@ def add_bg_from_local(image_file):
             background-attachment: fixed;
         }}
         .stApp::before {{
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5); /* Capa oscura al 50% para leer texto */
+            content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); /* Capa oscura media para leer */
             z-index: -1;
         }}
         </style>
@@ -440,7 +446,7 @@ else:
             score_df['FINAL'] = score_df.apply(calc, axis=1).round(2)
             ranking = pd.merge(score_df, df_personal, left_on='DNI_TRABAJADOR', right_on='DNI', how='left')
             
-            # --- FILTRO POR CARGO (RESTAURADO) ---
+            # FILTRO
             cargos_disp = ["TODOS"] + sorted(ranking['CARGO_ACTUAL'].unique().tolist())
             filtro_cargo = st.selectbox("🔍 Filtrar por Cargo:", cargos_disp)
             if filtro_cargo != "TODOS":
@@ -448,7 +454,7 @@ else:
             
             ranking = ranking.sort_values('FINAL', ascending=False).reset_index(drop=True)
             
-            # --- PODIO ---
+            # PODIO
             if len(ranking) >= 3:
                 c_2, c_1, c_3 = st.columns([1, 1.2, 1])
                 with c_2:
