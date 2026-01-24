@@ -18,7 +18,7 @@ st.set_page_config(
 )
 
 # ==========================================
-# 2. ESTILOS VISUALES (OPTIMIZADO)
+# 2. ESTILOS VISUALES (EL QUE FUNCIONÓ PERFECTO)
 # ==========================================
 st.markdown("""
 <style>
@@ -32,17 +32,16 @@ st.markdown("""
         padding-bottom: 5rem !important;
     }
 
-    /* Títulos Grandes y Brillantes */
+    h1, h2, h3, h4, h5, h6, p, label, span, div {
+        color: #E0E0E0 !important;
+    }
+    
     h1 { 
         color: #4FC3F7 !important; 
         text-shadow: 0 0 20px rgba(79,195,247,0.6);
         font-weight: 800 !important;
         font-size: 3rem !important;
         text-transform: uppercase;
-    }
-    
-    h2, h3, p, label, span, div {
-        color: #E0E0E0 !important;
     }
 
     /* --- 2. HEADER Y SIDEBAR --- */
@@ -86,12 +85,12 @@ st.markdown("""
     div[role="radiogroup"] {
         display: flex;
         flex-direction: column;
-        gap: 8px !important; /* <-- MÁS JUNTAS (Reducido a 8px) */
+        gap: 8px !important;
     }
     
     div[role="radiogroup"] label {
         background-color: rgba(30, 35, 45, 0.8) !important;
-        padding: 12px 20px !important; /* Un poco menos de relleno vertical */
+        padding: 12px 20px !important;
         border-radius: 12px !important;
         border: 1px solid #444 !important;
         box-shadow: 0 4px 6px rgba(0,0,0,0.2);
@@ -222,14 +221,20 @@ def load_data():
 
 df_users, df_personal, df_roles, df_historial, tbl_historial, df_config = load_data()
 
-ROLES_RESTRINGIDOS = ['LIDER MECANICO', 'OPERADOR DE GRUA', 'MECANICO', 'SOLDADOR', 'RIGGER', 'VIENTERO', 'ALMACENERO', 'CONDUCTOR', 'PSICOLOGA']
+# Definimos la jerarquía para filtrar a quién puede evaluar cada uno
 JERARQUIA = {
-    'ADMIN': {'scope': 'ALL'}, 'GERENTE GENERAL': {'scope': 'ALL'}, 'GERENTE MANTENIMIENTO': {'scope': 'ALL'},
-    'RESIDENTE': {'scope': 'ALL'}, 'COORDINADOR': {'scope': 'ALL'}, 'PLANNER': {'scope': 'ALL'}, 'PROGRAMADOR': {'scope': 'ALL'},
+    'ADMIN': {'scope': 'ALL'}, 
+    'GERENTE GENERAL': {'scope': 'ALL'}, 
+    'GERENTE MANTENIMIENTO': {'scope': 'ALL'},
+    'RESIDENTE': {'scope': 'ALL'}, 
+    'COORDINADOR': {'scope': 'ALL'}, 
+    'PLANNER': {'scope': 'ALL'}, 
+    'PROGRAMADOR': {'scope': 'ALL'},
     'COORDINADOR DE SEGURIDAD': {'scope': 'SPECIFIC', 'targets': ['SUPERVISOR DE SEGURIDAD']},
     'VALORIZADORA': {'scope': 'SPECIFIC', 'targets': ['ASISTENTE DE PLANIFICACION', 'ASISTENTE ADMINISTRATIVO', 'PROGRAMADOR', 'PLANNER']},
     'SUPERVISOR DE OPERACIONES': {'scope': 'HYBRID', 'targets': ['PLANNER', 'CONDUCTOR']},
-    'LIDER MECANICO': {'scope': 'GROUP', 'targets': []}, 'OPERADOR DE GRUA': {'scope': 'GROUP', 'targets': []}, 
+    'LIDER MECANICO': {'scope': 'GROUP', 'targets': []}, 
+    'OPERADOR DE GRUA': {'scope': 'GROUP', 'targets': []}, 
 }
 
 parada_actual = "GENERAL"
@@ -262,10 +267,15 @@ if not st.session_state.usuario:
             else: st.error("❌ Error de conexión")
 else:
     rol_actual = st.session_state.rol
-    opciones = ["📝 Evaluar Personal"]
-    if rol_actual == 'ADMIN': opciones = ["📝 Evaluar Personal", "📊 Dashboard Gerencial", "🏆 Ranking Global", "📂 Mi Historial"]
-    elif rol_actual not in ROLES_RESTRINGIDOS: opciones = ["📝 Evaluar Personal", "🏆 Ranking Global", "📂 Mi Historial"]
-    else: opciones = ["📝 Evaluar Personal", "📂 Mi Historial"]
+    
+    # --- LÓGICA DE PERMISOS DE PESTAÑAS ---
+    if rol_actual == 'ADMIN':
+        opciones = ["📝 Evaluar Personal", "📊 Dashboard Gerencial", "🏆 Ranking Global", "📂 Mi Historial"]
+    elif rol_actual == 'SUPERVISOR DE OPERACIONES':
+        opciones = ["📝 Evaluar Personal", "📂 Mi Historial"]
+    else:
+        # Para todos los demás (Lideres, Operadores, etc.)
+        opciones = ["📝 Evaluar Personal"]
 
     with st.sidebar:
         if os.path.exists(LOGO_FILE): st.image(LOGO_FILE, use_container_width=True)
@@ -434,7 +444,7 @@ else:
                                 rec.update(notas_save)
                                 try: 
                                     tbl_historial.create(rec)
-                                    st.balloons() # <-- ¡GLOBOS AQUÍ!
+                                    st.balloons() # <-- ¡GLOBOS!
                                     st.success(f"Guardado. Nota: {round(score, 2)}")
                                     time.sleep(1.5)
                                     st.cache_data.clear()
