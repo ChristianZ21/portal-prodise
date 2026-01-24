@@ -18,7 +18,7 @@ st.set_page_config(
 )
 
 # ==========================================
-# 2. ESTILOS VISUALES "PREMIUM" (EL CÓDIGO PERDIDO RECUPERADO)
+# 2. ESTILOS VISUALES PREMIUM (Corrección de Barra y Fondo)
 # ==========================================
 st.markdown("""
 <style>
@@ -28,17 +28,19 @@ st.markdown("""
         background-color: #000000 !important; color: #E0E0E0 !important;
     }
     
-    /* --- OCULTAR ELEMENTOS INNECESARIOS --- */
-    #MainMenu, header, footer {visibility: hidden;}
-    [data-testid="stToolbar"], [data-testid="stDecoration"], .stDeployButton {
-        visibility: hidden !important; display: none !important;
-    }
+    /* --- LIMPIEZA VISUAL (SOLO LO NECESARIO) --- */
+    /* Ocultamos el menú de 3 puntos y el pie de página */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    
+    /* IMPORTANTE: NO ocultamos el header completo para que la flecha de la barra lateral funcione */
+    /* Solo ocultamos la decoración de colores de arriba si molesta */
+    [data-testid="stDecoration"] {visibility: hidden;}
+    
     .block-container {padding-top: 1rem !important;}
 
-    /* --- ESTILO DE TARJETAS PARA RADIO BUTTONS (EL EFECTO QUE QUERÍAS) --- */
-    div[role="radiogroup"] {
-        gap: 12px;
-    }
+    /* --- ESTILO DE TARJETAS PARA RADIO BUTTONS (INTERACTIVO) --- */
+    div[role="radiogroup"] { gap: 12px; }
     div[role="radiogroup"] label {
         background-color: #131720 !important;
         border: 1px solid #333 !important;
@@ -48,7 +50,6 @@ st.markdown("""
         margin-bottom: 5px !important;
         box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;
     }
-    /* Efecto Hover (Animación al pasar el mouse) */
     div[role="radiogroup"] label:hover {
         border-color: #4FC3F7 !important;
         background-color: #1E2530 !important;
@@ -56,12 +57,12 @@ st.markdown("""
         box-shadow: 0 4px 10px rgba(79, 195, 247, 0.2) !important;
         cursor: pointer;
     }
-    /* Elemento seleccionado */
+    /* Bolita seleccionada azul */
     div[role="radiogroup"] label[data-baseweb="radio"] > div:first-child {
-        background-color: #4FC3F7 !important; /* Bolita azul */
+        background-color: #4FC3F7 !important;
     }
 
-    /* --- INPUTS Y TEXT AREAS --- */
+    /* --- INPUTS --- */
     .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"] > div {
         background-color: #1E1E2E !important;
         color: white !important;
@@ -69,13 +70,12 @@ st.markdown("""
         border-radius: 8px !important;
     }
     
-    /* --- BOTONES DE ACCIÓN (GUARDAR/LOGIN) --- */
+    /* --- BOTONES AZULES --- */
     div.stButton > button {
         background: linear-gradient(135deg, #0288D1 0%, #01579B 100%) !important;
         color: white !important; border: none !important;
         font-weight: bold; border-radius: 8px; padding: 0.7rem 1.5rem;
         box-shadow: 0 4px 15px rgba(2, 136, 209, 0.4);
-        transition: transform 0.2s;
     }
     div.stButton > button:hover {
         transform: translateY(-2px);
@@ -97,56 +97,52 @@ st.markdown("""
         background-color: #050505 !important;
         border-right: 1px solid #222;
     }
-    
-    /* --- TEXTOS --- */
     h1, h2, h3 { color: #4FC3F7 !important; text-shadow: 0 0 10px rgba(79,195,247,0.3); }
 </style>
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 3. CARGA DE RECURSOS
+# 3. CARGA DE FONDO (SIN FILTROS NI OPACIDAD)
+# ==========================================
+def add_bg_from_local(image_file):
+    if os.path.exists(image_file):
+        with open(image_file, "rb") as file:
+            enc = base64.b64encode(file.read())
+        # Aquí insertamos la imagen DIRECTAMENTE, sin capas oscuras extra
+        st.markdown(f"""
+        <style>
+        .stApp {{
+            background-image: url(data:image/jpg;base64,{enc.decode()});
+            background-size: cover;          /* Cubre toda la pantalla */
+            background-position: center top; /* Alineado al centro-arriba */
+            background-repeat: no-repeat;
+            background-attachment: fixed;    /* Fijo al hacer scroll */
+        }}
+        </style>
+        """, unsafe_allow_html=True)
+    else:
+        # Si falla, fondo negro limpio
+        st.markdown("<style>.stApp { background-color: #000000; }</style>", unsafe_allow_html=True)
+
+add_bg_from_local('fondo.jpg')
+LOGO_FILE = "logo.png"
+
+# ==========================================
+# 4. CONEXIÓN AIRTABLE Y CARGA DE DATOS
 # ==========================================
 try:
     AIRTABLE_API_TOKEN = st.secrets["AIRTABLE_API_TOKEN"]
     AIRTABLE_BASE_ID = st.secrets["AIRTABLE_BASE_ID"]
 except:
-    st.error("⚠️ Error de Seguridad: No se encontraron las claves en los 'Secrets'.")
+    st.error("⚠️ Error: Configura las claves en Secrets.")
     st.stop()
 
-# Funciones de Imagen
 def get_default_profile_pic():
     svg = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#B0BEC5" width="100%" height="100%"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>"""
     b64 = base64.b64encode(svg.encode('utf-8')).decode("utf-8")
     return f"data:image/svg+xml;base64,{b64}"
 DEFAULT_IMG = get_default_profile_pic()
 
-def add_bg_from_local(image_file):
-    if os.path.exists(image_file):
-        with open(image_file, "rb") as file: enc = base64.b64encode(file.read())
-        # Aquí aseguramos que el fondo se centre arriba (top center)
-        st.markdown(f"""
-        <style>
-        .stApp {{
-            background-image: url(data:image/jpg;base64,{enc.decode()});
-            background-size: cover;
-            background-position: top center; 
-            background-repeat: no-repeat;
-            background-attachment: fixed;
-        }}
-        .stApp::before {{
-            content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.85); /* Oscurecimiento para legibilidad */
-            z-index: -1;
-        }}
-        </style>
-        """, unsafe_allow_html=True)
-
-add_bg_from_local('fondo.jpg')
-LOGO_FILE = "logo.png"
-
-# ==========================================
-# 4. CARGA DE DATOS (Optimizado)
-# ==========================================
 @st.cache_data(ttl=60)
 def load_data():
     try:
@@ -179,7 +175,6 @@ def load_data():
 
 df_users, df_personal, df_roles, df_historial, tbl_historial, df_config = load_data()
 
-# Definición de Jerarquías
 ROLES_RESTRINGIDOS = ['LIDER MECANICO', 'OPERADOR DE GRUA', 'MECANICO', 'SOLDADOR', 'RIGGER', 'VIENTERO', 'ALMACENERO', 'CONDUCTOR', 'PSICOLOGA']
 ROLES_GERENCIALES = ['ADMIN', 'GERENTE GENERAL', 'GERENTE MANTENIMIENTO', 'RESIDENTE', 'COORDINADOR', 'PLANNER']
 JERARQUIA = {
@@ -198,7 +193,7 @@ if df_config is not None and not df_config.empty:
 if 'usuario' not in st.session_state: st.session_state.update({'usuario': None, 'nombre_real': None, 'rol': None, 'dni_user': None})
 
 # ==========================================
-# 5. LÓGICA DE NAVEGACIÓN
+# 5. LÓGICA DE APLICACIÓN
 # ==========================================
 if not st.session_state.usuario:
     st.markdown("<br><br><br>", unsafe_allow_html=True)
@@ -231,14 +226,12 @@ else:
         st.markdown(f"### 👤 {st.session_state.nombre_real}")
         st.caption(f"{rol_actual}")
         st.info(f"⚙️ Parada Activa:\n**{parada_actual}**")
-        # El CSS global ya aplicará el estilo de botones a este radio
         seleccion = st.radio("Navegación", opciones)
         st.markdown("---")
         if st.button("Cerrar Sesión"):
             st.session_state.usuario = None
             st.rerun()
 
-    # FILTRO DE PERSONAL
     data_view = df_personal[df_personal['ESTADO'] == 'ACTIVO'] if df_personal is not None else pd.DataFrame()
     if not data_view.empty:
         permisos = JERARQUIA.get(rol_actual, {'scope': 'GROUP', 'targets': []}) 
@@ -262,7 +255,7 @@ else:
         data_view = data_view[data_view['DNI'] != st.session_state.dni_user]
 
     # ==============================================================================
-    # 1. DASHBOARD GERENCIAL (CORREGIDO PARA EVITAR ERROR)
+    # 1. DASHBOARD GERENCIAL
     # ==============================================================================
     if seleccion == "📊 Dashboard Gerencial":
         st.title(f"📊 Control Tower - {parada_actual}")
@@ -274,34 +267,26 @@ else:
                 k1.metric("Evaluaciones", len(df_dash))
                 k2.metric("Personas", df_dash['DNI_TRABAJADOR'].nunique())
                 k3.metric("Promedio Planta", f"{df_dash['NOTA_FINAL'].mean():.2f}")
-                
-                try: top_grupo = df_dash.groupby('GRUPO_MOMENTO')['NOTA_FINAL'].mean().idxmax()
-                except: top_grupo = "N/A"
-                k4.metric("Grupo Líder", top_grupo)
+                try: top_grp = df_dash.groupby('GRUPO_MOMENTO')['NOTA_FINAL'].mean().idxmax()
+                except: top_grp = "N/A"
+                k4.metric("Grupo Líder", top_grp)
                 st.divider()
 
-                # --- MAPA DE CALOR (Heatmap) ---
                 st.subheader("🔥 (1) Mapa de Riesgo: Grupos vs. Turnos")
                 try:
                     heatmap_data = df_dash.groupby(['GRUPO_MOMENTO', 'TURNO_MOMENTO'])['NOTA_FINAL'].mean().reset_index()
-                    # Usamos un esquema de color seguro (YellowGreenBlue) para evitar el error
+                    # Heatmap
                     hm = alt.Chart(heatmap_data).mark_rect().encode(
                         x=alt.X('TURNO_MOMENTO:N', title='Turno'),
                         y=alt.Y('GRUPO_MOMENTO:N', title='Grupo'),
                         color=alt.Color('NOTA_FINAL', scale=alt.Scale(domain=[1, 5], scheme='yellowgreenblue'), title='Promedio'),
                         tooltip=['GRUPO_MOMENTO', 'TURNO_MOMENTO', 'NOTA_FINAL']
                     ).properties(height=300)
-                    
-                    text_hm = hm.mark_text().encode(
-                        text=alt.Text('NOTA_FINAL', format='.2f'),
-                        color=alt.value('black')
-                    )
+                    text_hm = hm.mark_text().encode(text=alt.Text('NOTA_FINAL', format='.2f'), color=alt.value('black'))
                     st.altair_chart(hm + text_hm, use_container_width=True)
-                except Exception as e:
-                    st.error(f"Error cargando mapa de calor: {e}")
+                except Exception as e: st.error(f"Error cargando mapa de calor: {e}")
 
                 st.divider()
-
                 c_izq, c_der = st.columns([2, 1])
                 with c_izq:
                     st.subheader("📊 (3) Rendimiento por Cargo")
@@ -314,7 +299,7 @@ else:
                             tooltip=['CARGO_MOMENTO', 'NOTA_FINAL']
                         ).properties(height=300)
                         st.altair_chart(bar, use_container_width=True)
-                    except: st.warning("Datos insuficientes para gráfico de barras.")
+                    except: st.warning("Datos insuficientes.")
 
                 with c_der:
                     st.subheader("🍩 (4) Distribución")
@@ -324,26 +309,22 @@ else:
                             elif n >= 3.5: return "Bueno"
                             elif n >= 2.5: return "Regular"
                             else: return "Bajo"
-                        
                         df_dash['Cat'] = df_dash['NOTA_FINAL'].apply(clasificar)
                         donut = df_dash['Cat'].value_counts().reset_index()
                         donut.columns = ['Categoria', 'Cantidad']
-                        
                         base = alt.Chart(donut).encode(theta=alt.Theta("Cantidad", stack=True))
                         pie = base.mark_arc(outerRadius=100, innerRadius=60).encode(
                             color=alt.Color("Categoria", scale=alt.Scale(scheme='category20b')),
                             order=alt.Order("Cantidad", sort="descending"),
                             tooltip=["Categoria", "Cantidad"]
                         )
-                        txt = base.mark_text(radius=120).encode(
-                            text=alt.Text("Cantidad"), order=alt.Order("Cantidad", sort="descending"), color=alt.value("white")
-                        )
+                        txt = base.mark_text(radius=120).encode(text=alt.Text("Cantidad"), order=alt.Order("Cantidad", sort="descending"), color=alt.value("white"))
                         st.altair_chart(pie + txt, use_container_width=True)
-                    except: st.warning("Datos insuficientes para dona.")
+                    except: st.warning("Datos insuficientes.")
         else: st.info("No hay datos históricos cargados.")
 
     # ==============================================================================
-    # 2. EVALUACIÓN (Interfaz Restaurada)
+    # 2. EVALUACIÓN
     # ==============================================================================
     elif seleccion == "📝 Evaluar Personal":
         st.title(f"📝 Evaluación - {parada_actual}")
@@ -361,7 +342,6 @@ else:
             sel_nombre = st.selectbox(f"Pendientes ({len(lista)}):", lista, index=None, placeholder="Seleccione colaborador...")
             if sel_nombre:
                 p = data_view[data_view['NOMBRE_COMPLETO'] == sel_nombre].iloc[0]
-                # Tarjeta de perfil
                 st.markdown(f"""
                 <div class="css-card" style="display: flex; align-items: center; gap: 20px;">
                     <img src="{p.get('URL_FOTO', DEFAULT_IMG)}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid #4FC3F7;">
@@ -384,18 +364,14 @@ else:
                         for i, (idx, row) in enumerate(preguntas.iterrows(), 1):
                             st.markdown(f"#### {i}. {row['CRITERIO']}")
                             st.caption(f"Peso: {row['PORCENTAJE']*100:.0f}%")
-                            
-                            # Opciones para el radio button (que se verán como tarjetas gracias al CSS)
                             ops = [str(row.get(f'NIVEL_{j}')) for j in range(1, 6)]
                             sel = st.radio(f"Nivel {i}", ops, key=f"r{i}", label_visibility="collapsed")
-                            
                             nota = ops.index(sel) + 1
                             score += nota * row['PORCENTAJE']
                             notas_save[f"NOTA_{i}"] = nota
                             st.divider()
                         
-                        obs = st.text_area("Observaciones (Obligatorio)", height=100, placeholder="Escriba un sustento breve...")
-                        
+                        obs = st.text_area("Observaciones (Obligatorio)", height=100)
                         if st.form_submit_button("💾 GUARDAR EVALUACIÓN", use_container_width=True):
                             if obs and tbl_historial:
                                 rec = {"FECHA_HORA": datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "COD_PARADA": parada_actual, "DNI_EVALUADOR": st.session_state.dni_user, "NOMBRE_EVALUADOR": st.session_state.nombre_real, "DNI_TRABAJADOR": str(p['DNI']), "NOMBRE_TRABAJADOR": str(p['NOMBRE_COMPLETO']), "CARGO_MOMENTO": str(p['CARGO_ACTUAL']), "GRUPO_MOMENTO": str(p['ID_GRUPO']), "TURNO_MOMENTO": str(p['TURNO']), "NOTA_FINAL": round(score, 2), "COMENTARIOS": obs}
@@ -405,7 +381,7 @@ else:
                             else: st.warning("⚠️ Falta observación.")
 
     # ==============================================================================
-    # 3. RANKING Y HISTORIAL (Sin Cambios)
+    # 3. RANKING Y HISTORIAL
     # ==============================================================================
     elif seleccion == "🏆 Ranking Global":
         st.title("🏆 Ranking Global")
