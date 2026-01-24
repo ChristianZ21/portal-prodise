@@ -16,9 +16,14 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- TUS CLAVES ---
-AIRTABLE_API_TOKEN = "pat3Ig7rAOvq7JdpN.fbef700fa804ae5692e3880899bba070239e9593f8d6fde958d9bd3d615aca14"
-AIRTABLE_BASE_ID = "app2jaysCvPwvrBwI"
+# --- TUS CLAVES (MODO SEGURO) ---
+# El sistema las buscará en la configuración de la nube, no en el código.
+try:
+    AIRTABLE_API_TOKEN = st.secrets["AIRTABLE_API_TOKEN"]
+    AIRTABLE_BASE_ID = st.secrets["AIRTABLE_BASE_ID"]
+except:
+    st.error("⚠️ Error de Seguridad: No se encontraron las claves en los 'Secrets' de Streamlit Cloud.")
+    st.stop()
 
 # ==========================================
 # 2. DEFINICIÓN DE PERMISOS Y JERARQUÍA
@@ -172,7 +177,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 5. CONEXIÓN Y CARGA DE DATOS (CORREGIDO ERROR 2: TEXTO ORIGINAL)
+# 5. CONEXIÓN Y CARGA DE DATOS
 # ==========================================
 @st.cache_data(ttl=60)
 def load_data():
@@ -186,9 +191,6 @@ def load_data():
                 df = pd.DataFrame([r['fields'] for r in recs])
                 
                 # --- LIMPIEZA QUIRÚRGICA ---
-                # Solo convertimos a Mayúsculas las columnas TÉCNICAS para que el código cruce bien.
-                # Dejamos intactas: Contraseñas, Criterios, Niveles, Comentarios.
-                
                 cols_force_upper = [
                     'USUARIO', 'ID_ROL', 'ESTADO', 'TURNO', 'COD_PARADA',
                     'DNI', 'DNI_TRABAJADOR', 'DNI_EVALUADOR',
@@ -199,14 +201,9 @@ def load_data():
                 cols_grupos = ['ID_GRUPO', 'GRUPO', 'GRUPO_MOMENTO']
 
                 for c in df.columns:
-                    # 1. Asegurar string y quitar espacios borde
                     df[c] = df[c].astype(str).str.strip()
-                    
-                    # 2. Mayúsculas solo si es columna técnica
                     if c in cols_force_upper:
                         df[c] = df[c].str.upper()
-                    
-                    # 3. Grupos: Mayúsculas y quitar decimales
                     if c in cols_grupos:
                         df[c] = df[c].str.upper().str.replace('.0', '', regex=False)
                         
@@ -268,7 +265,7 @@ if not st.session_state.usuario:
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("INICIAR SESIÓN", use_container_width=True):
             if df_users is not None and not df_users.empty:
-                # Busqueda exacta normalizada (Usuario Uppercase, Pass Original)
+                # Login normalizado
                 u = df_users[df_users['USUARIO'] == user.strip().upper()]
                 if not u.empty and str(u.iloc[0]['PASS']) == pw and u.iloc[0]['ESTADO'] == 'ACTIVO':
                     st.session_state.usuario = user
@@ -280,7 +277,7 @@ if not st.session_state.usuario:
             else: st.error("❌ Error de conexión")
 
 else:
-    # --- SIDEBAR (CON RESTRICCIONES) ---
+    # --- SIDEBAR ---
     rol_actual = st.session_state.rol
     opciones = ["📝 Evaluar Personal"]
     
@@ -342,7 +339,6 @@ else:
     if seleccion == "📝 Evaluar Personal":
         st.title(f"📝 Evaluación - {parada_actual}")
         
-        # --- FILTRO: EXCLUIR YA EVALUADOS ---
         dnis_ya_evaluados = []
         if df_historial is not None and not df_historial.empty:
             filtro_historial = df_historial[
@@ -426,11 +422,11 @@ else:
                                     st.balloons()
                                     st.success(f"¡Evaluación Guardada! Nota: {round(score_total, 2)}")
                                     
-                                    # --- CORRECCIÓN ERROR 2: LIMPIEZA DE CACHÉ ---
-                                    time.sleep(2) 
-                                    st.cache_data.clear() # Limpia la memoria vieja
-                                    st.rerun()            # Recarga la página con datos frescos
-                                    # ---------------------------------------------
+                                    # --- AUTO-REFRESCO AL GUARDAR ---
+                                    time.sleep(2)
+                                    st.cache_data.clear()
+                                    st.rerun()
+                                    # --------------------------------
                                     
                                 except Exception as e: st.error(f"Error: {e}")
                             else: st.warning("⚠️ La observación es obligatoria.")
