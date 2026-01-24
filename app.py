@@ -18,7 +18,7 @@ st.set_page_config(
 )
 
 # ==========================================
-# 2. ESTILOS VISUALES Y CSS (CORRECCIÓN LISTAS DESPLEGABLES)
+# 2. ESTILOS VISUALES Y CSS (CORRECCIÓN FINAL LISTAS)
 # ==========================================
 st.markdown("""
 <style>
@@ -28,8 +28,8 @@ st.markdown("""
         color: #E0E0E0 !important;
     }
     
-    /* Textos generales a blanco/gris */
-    h1, h2, h3, h4, h5, h6, p, li, span, div, label {
+    /* Textos generales */
+    h1, h2, h3, h4, h5, h6, p, span, div, label {
         color: #E0E0E0 !important;
     }
     h1, h2, h3 { 
@@ -48,11 +48,8 @@ st.markdown("""
     [data-testid="stDecoration"] {display: none;}
     [data-testid="stToolbar"] {visibility: hidden;}
 
-    /* Flecha del sidebar blanca */
     [data-testid="collapsedControl"] {
-        visibility: visible !important;
-        display: block !important;
-        color: #FFFFFF !important;
+        visibility: visible !important; display: block !important; color: #FFFFFF !important;
     }
     [data-testid="stSidebarCollapsedControl"] {
         color: #FFFFFF !important;
@@ -64,39 +61,51 @@ st.markdown("""
         border-right: 1px solid #222;
     }
 
-    /* --- 3. INPUTS Y LISTAS DESPLEGABLES (SOLUCIÓN AQUÍ) --- */
+    /* --- 3. LA SOLUCIÓN DEFINITIVA PARA EL MENÚ DESPLEGABLE --- */
     
-    /* La caja del input cerrada */
-    .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"] > div {
+    /* El contenedor de la lista desplegable (SIEMPRE OSCURO) */
+    ul[data-baseweb="menu"] {
+        background-color: #131720 !important;
+        border: 1px solid #444 !important;
+    }
+    
+    /* Cada opción individual de la lista */
+    li[data-baseweb="option"] {
+        color: white !important;      /* Texto blanco */
+        background-color: #131720 !important; /* Fondo oscuro */
+    }
+    
+    /* El texto dentro de la opción */
+    div[data-baseweb="option"] {
+        color: white !important; 
+    }
+
+    /* Cuando pasas el mouse por encima (Hover) */
+    li[data-baseweb="option"]:hover, li[aria-selected="true"] {
+        background-color: #4FC3F7 !important; /* Azul Prodise */
+        color: white !important;
+    }
+
+    /* La caja cerrada del selectbox */
+    div[data-baseweb="select"] > div {
         background-color: rgba(20, 20, 30, 0.9) !important; 
         color: white !important;
         border: 1px solid #555 !important;
-        border-radius: 8px !important;
-    }
-
-    /* EL MENÚ DESPLEGABLE QUE SE ABRE (POPOVER) */
-    div[data-baseweb="popover"], div[data-baseweb="popover"] > div {
-        background-color: #131720 !important; /* Fondo Oscuro para la lista */
     }
     
-    /* LAS OPCIONES DENTRO DE LA LISTA */
-    li[role="option"], div[role="option"] {
-        color: white !important; /* Texto Blanco */
-        background-color: transparent !important;
-    }
-    
-    /* AL PASAR EL MOUSE POR UNA OPCIÓN */
-    li[role="option"]:hover, div[role="option"]:hover, li[aria-selected="true"] {
-        background-color: #4FC3F7 !important; /* Azul PRODISE */
-        color: white !important;
-    }
-    
-    /* Texto seleccionado dentro de la lista */
+    /* El texto seleccionado en la caja cerrada */
     div[data-baseweb="select"] span {
         color: white !important;
     }
+    
+    /* Input de texto normal */
+    .stTextInput input, .stTextArea textarea {
+        background-color: rgba(20, 20, 30, 0.9) !important; 
+        color: white !important;
+        border: 1px solid #555 !important;
+    }
 
-    /* --- 4. RADIO BUTTONS COMPACTOS --- */
+    /* --- 4. RADIO BUTTONS --- */
     div[role="radiogroup"] { gap: 6px !important; }
     div[role="radiogroup"] label {
         background-color: rgba(19, 23, 32, 0.9) !important;
@@ -144,7 +153,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 3. CARGA DE FONDO (VISIBLE)
+# 3. CARGA DE FONDO
 # ==========================================
 def add_bg_from_local(image_file):
     if os.path.exists(image_file):
@@ -430,7 +439,7 @@ else:
                             else: st.warning("⚠️ Falta observación.")
 
     # ==============================================================================
-    # 3. RANKING GLOBAL (CON FILTROS Y PODIO)
+    # 3. RANKING GLOBAL
     # ==============================================================================
     elif seleccion == "🏆 Ranking Global":
         st.title("🏆 Ranking Global")
