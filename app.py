@@ -18,50 +18,66 @@ st.set_page_config(
 )
 
 # ==========================================
-# 2. ESTILOS VISUALES Y CSS CORREGIDO
+# 2. ESTILOS VISUALES Y CSS (CORRECCIÓN BARRA LATERAL)
 # ==========================================
 st.markdown("""
 <style>
     /* --- MODO OSCURO GLOBAL --- */
     :root { color-scheme: dark !important; }
     html, body, [data-testid="stAppViewContainer"] {
-        background-color: transparent !important; /* Importante para ver el fondo */
+        background-color: transparent !important;
         color: #E0E0E0 !important;
     }
     
-    /* --- ARREGLO DEL MENÚ LATERAL (SIDEBAR) --- */
-    /* NO ocultamos el header completo para no perder la flecha '>' */
+    /* --- HEADER Y BARRA LATERAL (SOLUCIÓN FINAL) --- */
+    /* 1. Hacemos el header transparente pero VISIBLE (para que la flecha exista) */
     header[data-testid="stHeader"] {
         background-color: transparent !important;
+        visibility: visible !important;
     }
-    
-    /* Ocultamos solo el menú de 3 puntos (Hamburguesa) y el botón Deploy */
-    #MainMenu {visibility: hidden;}
-    .stDeployButton {display: none;}
-    footer {visibility: hidden;}
-    [data-testid="stDecoration"] {display: none;}
-    [data-testid="stToolbar"] {visibility: hidden;} /* Oculta barra de herramientas superior */
 
-    /* --- ESTILO DE TARJETAS PARA RADIO BUTTONS --- */
-    div[role="radiogroup"] { gap: 12px; }
+    /* 2. Ocultamos ESPECÍFICAMENTE lo que no queremos ver */
+    #MainMenu {visibility: hidden;}       /* Los 3 puntos */
+    .stDeployButton {display: none;}      /* Botón Deploy */
+    [data-testid="stDecoration"] {display: none;} /* Línea de colores */
+    footer {visibility: hidden;}          /* Pie de página */
+    
+    /* 3. FORZAMOS que la flecha de abrir/cerrar sidebar sea visible y BLANCA */
+    [data-testid="collapsedControl"] {
+        visibility: visible !important;
+        display: block !important;
+        color: #FFFFFF !important;
+        z-index: 999999 !important; /* Que esté siempre encima */
+    }
+    [data-testid="stSidebarCollapsedControl"] {
+        visibility: visible !important;
+        display: block !important;
+        color: #FFFFFF !important;
+        background-color: rgba(0,0,0,0.5) !important; /* Fondo suave para que resalte */
+        border-radius: 5px;
+    }
+
+    /* --- ESTILO COMPACTO PARA RADIO BUTTONS --- */
+    div[role="radiogroup"] { gap: 6px !important; }
     div[role="radiogroup"] label {
-        background-color: rgba(19, 23, 32, 0.9) !important; /* Fondo semi-opaco */
+        background-color: rgba(19, 23, 32, 0.9) !important;
         border: 1px solid #333 !important;
-        padding: 15px 20px !important;
-        border-radius: 12px !important;
-        transition: all 0.3s ease !important;
-        margin-bottom: 5px !important;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;
+        padding: 10px 20px !important;
+        border-radius: 10px !important;
+        transition: all 0.2s ease !important;
+        margin-bottom: 0px !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2) !important;
     }
     div[role="radiogroup"] label:hover {
         border-color: #4FC3F7 !important;
         background-color: rgba(30, 37, 48, 1) !important;
-        transform: scale(1.01) !important;
+        transform: scale(1.005) !important;
         cursor: pointer;
     }
     div[role="radiogroup"] label[data-baseweb="radio"] > div:first-child {
         background-color: #4FC3F7 !important;
     }
+    div[role="radiogroup"] p { font-size: 0.95rem !important; }
 
     /* --- INPUTS --- */
     .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"] > div {
@@ -83,9 +99,9 @@ st.markdown("""
         box-shadow: 0 6px 20px rgba(2, 136, 209, 0.6);
     }
 
-    /* --- TARJETAS DE CONTENIDO (GLASSMORPHISM) --- */
+    /* --- TARJETAS --- */
     .css-card {
-        background: rgba(20, 20, 30, 0.75); /* Transparencia elegante */
+        background: rgba(20, 20, 30, 0.75);
         backdrop-filter: blur(12px);
         border-radius: 16px;
         border: 1px solid rgba(255, 255, 255, 0.1);
@@ -99,45 +115,36 @@ st.markdown("""
         border-right: 1px solid #222;
     }
     h1, h2, h3 { color: #4FC3F7 !important; text-shadow: 0 0 10px rgba(79,195,247,0.3); }
+    .podio-emoji { font-size: 3rem; display: block; margin-bottom: 5px; }
 </style>
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 3. CARGA DE FONDO (CON CAPA SEMI-TRANSPARENTE RESTAURADA)
+# 3. CARGA DE FONDO
 # ==========================================
 def add_bg_from_local(image_file):
     if os.path.exists(image_file):
         with open(image_file, "rb") as file:
             enc = base64.b64encode(file.read())
-        
-        # Aquí está la magia: CSS que pone la imagen de fondo + una capa negra al 60%
         st.markdown(f"""
         <style>
         .stApp {{
             background-image: url(data:image/jpg;base64,{enc.decode()});
             background-size: cover;
-            background-position: center top; /* Enfoca arriba */
+            background-position: center top;
             background-repeat: no-repeat;
             background-attachment: fixed;
         }}
-        /* Capa oscura "fantasma" para que el texto se lea */
         .stApp::before {{
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.60); /* 60% de oscuridad - AJUSTABLE */
-            z-index: -1;
+            content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.60); z-index: -1;
         }}
         </style>
         """, unsafe_allow_html=True)
     else:
-        # AVISO VISUAL SI NO ENCUENTRA LA IMAGEN
-        st.warning(f"⚠️ AVISO: No se encontró el archivo '{image_file}' en GitHub. El fondo se verá negro.")
+        st.warning(f"⚠️ AVISO: No se encontró el archivo '{image_file}'.")
 
-add_bg_from_local('fondo.jpg') # Asegúrate que en GitHub se llame EXACTAMENTE así (minúsculas)
+add_bg_from_local('fondo.jpg')
 LOGO_FILE = "logo.png"
 
 # ==========================================
@@ -155,6 +162,11 @@ def get_default_profile_pic():
     b64 = base64.b64encode(svg.encode('utf-8')).decode("utf-8")
     return f"data:image/svg+xml;base64,{b64}"
 DEFAULT_IMG = get_default_profile_pic()
+
+def get_photo_url(url_raw):
+    if not url_raw or str(url_raw).lower() == 'nan' or len(str(url_raw)) < 5:
+        return DEFAULT_IMG
+    return str(url_raw).strip()
 
 @st.cache_data(ttl=60)
 def load_data():
@@ -228,17 +240,10 @@ if not st.session_state.usuario:
             else: st.error("❌ Error de conexión")
 else:
     rol_actual = st.session_state.rol
-    # MENU BASE
     opciones = ["📝 Evaluar Personal"]
-    
-    # PERMISOS PARA DASHBOARD (SOLO ADMIN)
-    if rol_actual == 'ADMIN':
-        opciones = ["📝 Evaluar Personal", "📊 Dashboard Gerencial", "🏆 Ranking Global", "📂 Mi Historial"]
-    elif rol_actual not in ROLES_RESTRINGIDOS:
-        # Otros jefes ven Ranking pero NO Dashboard
-        opciones = ["📝 Evaluar Personal", "🏆 Ranking Global", "📂 Mi Historial"]
-    else:
-        opciones = ["📝 Evaluar Personal", "📂 Mi Historial"]
+    if rol_actual == 'ADMIN': opciones = ["📝 Evaluar Personal", "📊 Dashboard Gerencial", "🏆 Ranking Global", "📂 Mi Historial"]
+    elif rol_actual not in ROLES_RESTRINGIDOS: opciones = ["📝 Evaluar Personal", "🏆 Ranking Global", "📂 Mi Historial"]
+    else: opciones = ["📝 Evaluar Personal", "📂 Mi Historial"]
 
     with st.sidebar:
         if os.path.exists(LOGO_FILE): st.image(LOGO_FILE, use_container_width=True)
@@ -302,7 +307,7 @@ else:
                     ).properties(height=300)
                     text_hm = hm.mark_text().encode(text=alt.Text('NOTA_FINAL', format='.2f'), color=alt.value('black'))
                     st.altair_chart(hm + text_hm, use_container_width=True)
-                except Exception as e: st.error(f"Error cargando mapa de calor: {e}")
+                except: st.error("Error en mapa de calor.")
 
                 st.divider()
                 c_izq, c_der = st.columns([2, 1])
@@ -311,7 +316,7 @@ else:
                     try:
                         chart_cargo = df_dash.groupby('CARGO_MOMENTO')['NOTA_FINAL'].mean().reset_index()
                         bar = alt.Chart(chart_cargo).mark_bar().encode(
-                            x=alt.X('NOTA_FINAL', scale=alt.Scale(domain=[0, 5]), title='Nota (0-5)'),
+                            x=alt.X('NOTA_FINAL', scale=alt.Scale(domain=[0, 5]), title='Nota'),
                             y=alt.Y('CARGO_MOMENTO', sort='-x', title='Cargo'),
                             color=alt.value('#4FC3F7'),
                             tooltip=['CARGO_MOMENTO', 'NOTA_FINAL']
@@ -360,9 +365,10 @@ else:
             sel_nombre = st.selectbox(f"Pendientes ({len(lista)}):", lista, index=None, placeholder="Seleccione colaborador...")
             if sel_nombre:
                 p = data_view[data_view['NOMBRE_COMPLETO'] == sel_nombre].iloc[0]
+                foto_p = get_photo_url(p.get('URL_FOTO', ''))
                 st.markdown(f"""
                 <div class="css-card" style="display: flex; align-items: center; gap: 20px;">
-                    <img src="{p.get('URL_FOTO', DEFAULT_IMG)}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid #4FC3F7;">
+                    <img src="{foto_p}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid #4FC3F7;">
                     <div>
                         <h3 style="margin:0; color: white;">{p['NOMBRE_COMPLETO']}</h3>
                         <p style="margin:0; color:#4FC3F7; font-weight:bold;">{p['CARGO_ACTUAL']}</p>
@@ -399,7 +405,7 @@ else:
                             else: st.warning("⚠️ Falta observación.")
 
     # ==============================================================================
-    # 3. RANKING Y HISTORIAL
+    # 3. RANKING GLOBAL
     # ==============================================================================
     elif seleccion == "🏆 Ranking Global":
         st.title("🏆 Ranking Global")
@@ -413,10 +419,50 @@ else:
                 if pd.notna(a) and pd.notna(h): return a*0.7 + h*0.3
                 return a if pd.notna(a) else h if pd.notna(h) else 0
             score_df['FINAL'] = score_df.apply(calc, axis=1).round(2)
-            ranking = pd.merge(score_df, df_personal, left_on='DNI_TRABAJADOR', right_on='DNI', how='left').sort_values('FINAL', ascending=False)
+            ranking = pd.merge(score_df, df_personal, left_on='DNI_TRABAJADOR', right_on='DNI', how='left').sort_values('FINAL', ascending=False).reset_index(drop=True)
+            
+            # --- PODIO ---
+            if len(ranking) >= 3:
+                c_2, c_1, c_3 = st.columns([1, 1.2, 1])
+                with c_2:
+                    p2 = ranking.iloc[1]
+                    f2 = get_photo_url(p2.get('URL_FOTO', ''))
+                    st.markdown(f"""
+                    <div class="css-card" style="text-align:center; border-top: 5px solid #C0C0C0; margin-top: 20px;">
+                        <span class="podio-emoji">🥈</span>
+                        <img src="{f2}" style="width:90px; height:90px; border-radius:50%; object-fit:cover; margin-bottom:10px; border:3px solid #C0C0C0;">
+                        <h4 style="margin:0; font-size:1rem;">{p2['NOMBRE_COMPLETO']}</h4>
+                        <h2 style="color:#C0C0C0;">{p2['FINAL']}</h2>
+                    </div>""", unsafe_allow_html=True)
+                with c_1:
+                    p1 = ranking.iloc[0]
+                    f1 = get_photo_url(p1.get('URL_FOTO', ''))
+                    st.markdown(f"""
+                    <div class="css-card" style="text-align:center; border-top: 5px solid #FFD700; transform: scale(1.05);">
+                        <span class="podio-emoji">🥇</span>
+                        <img src="{f1}" style="width:120px; height:120px; border-radius:50%; object-fit:cover; margin-bottom:10px; border:4px solid #FFD700;">
+                        <h3 style="margin:0; font-size:1.1rem; color:#FFD700;">{p1['NOMBRE_COMPLETO']}</h3>
+                        <h1 style="color:#FFD700; font-size:3rem; margin:0;">{p1['FINAL']}</h1>
+                    </div>""", unsafe_allow_html=True)
+                with c_3:
+                    p3 = ranking.iloc[2]
+                    f3 = get_photo_url(p3.get('URL_FOTO', ''))
+                    st.markdown(f"""
+                    <div class="css-card" style="text-align:center; border-top: 5px solid #CD7F32; margin-top: 20px;">
+                        <span class="podio-emoji">🥉</span>
+                        <img src="{f3}" style="width:90px; height:90px; border-radius:50%; object-fit:cover; margin-bottom:10px; border:3px solid #CD7F32;">
+                        <h4 style="margin:0; font-size:1rem;">{p3['NOMBRE_COMPLETO']}</h4>
+                        <h2 style="color:#CD7F32;">{p3['FINAL']}</h2>
+                    </div>""", unsafe_allow_html=True)
+                st.divider()
+
+            st.markdown("### 📊 Listado Completo")
             st.data_editor(ranking[['NOMBRE_COMPLETO', 'CARGO_ACTUAL', 'FINAL']], column_config={"FINAL": st.column_config.ProgressColumn("Nota", min_value=0, max_value=5, format="%.2f")}, hide_index=True, use_container_width=True)
         else: st.info("Sin datos.")
 
+    # ==============================================================================
+    # 4. HISTORIAL
+    # ==============================================================================
     elif seleccion == "📂 Mi Historial":
         st.title("📂 Historial")
         if df_historial is not None and not df_historial.empty:
@@ -424,7 +470,10 @@ else:
             if not data_view.empty: df_historial = df_historial[df_historial['DNI_TRABAJADOR'].isin(data_view['DNI'].unique())]
             merged = pd.merge(df_historial, df_personal[['DNI', 'NOMBRE_COMPLETO']], left_on='DNI_TRABAJADOR', right_on='DNI', how='left')
             merged['NOMBRE_COMPLETO'] = merged['NOMBRE_COMPLETO'].fillna(merged['DNI_TRABAJADOR'])
-            cols = ['FECHA_HORA', 'NOMBRE_COMPLETO', 'NOTA_FINAL', 'COMENTARIOS']
+            
+            # --- CORRECCIÓN FINAL: COLUMNA COD_PARADA ---
+            cols = ['COD_PARADA', 'NOMBRE_COMPLETO', 'NOTA_FINAL', 'COMENTARIOS']
+            
             st.dataframe(merged[[c for c in cols if c in merged.columns]], use_container_width=True, hide_index=True)
             csv = merged.to_csv(index=False).encode('utf-8')
             st.download_button("📥 Descargar Excel", csv, "Reporte.csv", "text/csv")
