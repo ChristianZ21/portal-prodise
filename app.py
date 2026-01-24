@@ -18,14 +18,14 @@ st.set_page_config(
 )
 
 # ==========================================
-# 2. ESTILOS VISUALES (SOLUCIÓN CONTRASTE)
+# 2. ESTILOS VISUALES (OPTIMIZADO PARA TU CONFIG.TOML)
 # ==========================================
 st.markdown("""
 <style>
     /* --- 1. AJUSTES GENERALES --- */
+    /* Quitamos el fondo default para que se vea tu imagen */
     [data-testid="stAppViewContainer"] {
         background-color: transparent !important;
-        color: white !important;
     }
     
     .block-container {
@@ -33,14 +33,17 @@ st.markdown("""
         padding-bottom: 5rem !important;
     }
 
-    h1, h2, h3, h4, h5, h6, p, span, div, label {
-        color: #E0E0E0 !important;
-    }
-    
+    /* Títulos Grandes y Brillantes */
     h1 { 
         color: #4FC3F7 !important; 
-        text-shadow: 0 0 15px rgba(79,195,247,0.5);
+        text-shadow: 0 0 20px rgba(79,195,247,0.6);
         font-weight: 800 !important;
+        font-size: 3rem !important;
+        text-transform: uppercase;
+    }
+    
+    h2, h3, p, label, span, div {
+        color: #E0E0E0 !important;
     }
 
     /* --- 2. HEADER Y SIDEBAR --- */
@@ -48,107 +51,73 @@ st.markdown("""
     #MainMenu, .stDeployButton, footer, [data-testid="stDecoration"] { display: none; }
     
     [data-testid="stSidebar"] {
-        background-color: #050505 !important;
-        border-right: 1px solid #222;
+        background-color: #050505 !important; /* Sidebar negro puro */
+        border-right: 1px solid #333;
     }
     [data-testid="collapsedControl"] { top: 1rem !important; color: white !important; }
 
-    /* --- 3. SOLUCIÓN MENÚ DESPLEGABLE (CONTRASTE ALTO) --- */
+    /* --- 3. MENÚ DESPLEGABLE (LISTA AZUL OSCURA) --- */
+    /* Gracias a tu config.toml, esto ya no peleará con el blanco, pero aseguramos el azul */
     
-    /* 3.1 Contenedor de la lista (Popover) */
-    div[data-baseweb="popover"], div[data-baseweb="menu"], ul[data-baseweb="menu"] {
-        background-color: #000000 !important; /* NEGRO PURO */
+    /* La caja flotante */
+    div[data-baseweb="popover"], ul[data-baseweb="menu"] {
+        background-color: #0E1117 !important; /* Azul Noche (Tu color de fondo) */
         border: 1px solid #4FC3F7 !important;
     }
     
-    /* 3.2 Opciones de la lista */
+    /* Opciones */
     li[data-baseweb="option"] {
-        background-color: #000000 !important;
-        color: #FFFFFF !important;
-        border-bottom: 1px solid #222 !important; /* Separador sutil */
-    }
-    
-    /* Texto dentro de la opción */
-    li[data-baseweb="option"] div {
-        color: #FFFFFF !important;
-        font-weight: 500 !important;
-    }
-
-    /* 3.3 AL PASAR EL MOUSE (HOVER) - AZUL */
-    li[data-baseweb="option"]:hover {
-        background-color: #0277BD !important; /* Azul Oscuro */
-        color: #FFFFFF !important;
-        cursor: pointer;
-    }
-
-    /* 3.4 ELEMENTO SELECCIONADO (HIGHLIGHT) - AZUL CLARO */
-    li[aria-selected="true"] {
-        background-color: #4FC3F7 !important; /* Azul Neón */
-        color: #000000 !important; /* Letra Negra para contraste */
-    }
-    
-    /* Asegurar que el texto del seleccionado sea negro para leerse sobre el azul */
-    li[aria-selected="true"] div {
-        color: #000000 !important;
-        font-weight: bold !important;
-    }
-
-    /* 3.5 Caja del buscador cerrada */
-    div[data-baseweb="select"] > div {
-        background-color: #000000 !important;
-        color: white !important;
-        border: 1px solid #555 !important;
-    }
-    
-    /* Texto seleccionado en la barra */
-    div[data-baseweb="select"] span { color: white !important; }
-    div[data-baseweb="select"] svg { fill: white !important; }
-
-    /* Inputs de texto */
-    .stTextInput input, .stTextArea textarea {
         background-color: #0E1117 !important;
         color: white !important;
-        border: 1px solid #555 !important;
+    }
+    
+    /* Hover y Selección */
+    li[data-baseweb="option"]:hover, li[aria-selected="true"] {
+        background-color: #4FC3F7 !important; /* Azul Neón */
+        color: black !important; /* Letra negra para contraste */
+        font-weight: bold !important;
+    }
+    
+    /* Fix para el texto dentro del hover */
+    li[data-baseweb="option"]:hover div, li[aria-selected="true"] div {
+        color: black !important;
     }
 
-    /* --- 4. BOTONES DE ALTERNATIVAS (TARJETAS) --- */
+    /* Barra de búsqueda cerrada */
+    div[data-baseweb="select"] > div {
+        background-color: #0E1117 !important;
+        border: 1px solid #555 !important;
+        color: white !important;
+    }
+    
+    /* --- 4. ALTERNATIVAS COMO TARJETAS (ESTILO RECUPERADO) --- */
+    /* Esto hace que los botones de nivel se vean como cajitas separadas */
+    
     div[role="radiogroup"] {
-        display: flex;
-        flex-direction: column;
         gap: 12px !important;
     }
     
     div[role="radiogroup"] label {
-        background-color: rgba(20, 25, 35, 0.95) !important;
-        padding: 16px 20px !important;
+        background-color: rgba(30, 35, 45, 0.8) !important;
+        padding: 15px 20px !important;
         border-radius: 12px !important;
         border: 1px solid #444 !important;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.3) !important;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        transition: all 0.2s ease;
         margin-bottom: 0px !important;
-        transition: transform 0.1s ease;
     }
     
     div[role="radiogroup"] label:hover {
         border-color: #4FC3F7 !important;
-        background-color: rgba(30, 40, 60, 1) !important;
-        transform: scale(1.01);
+        background-color: rgba(40, 50, 60, 1) !important;
+        transform: translateX(5px);
         cursor: pointer;
     }
     
-    /* Texto de respuesta */
+    /* El texto de la opción */
     div[role="radiogroup"] p {
-        font-size: 1.05rem !important;
-        color: white !important;
-    }
-    
-    /* Círculo del radio */
-    div[role="radiogroup"] label div[data-baseweb="radio"] > div {
-        background-color: #000000 !important;
-        border-color: #4FC3F7 !important;
-    }
-    /* Punto seleccionado */
-    div[role="radiogroup"] label div[data-baseweb="radio"] > div[aria-checked="true"] {
-        background-color: #4FC3F7 !important;
+        font-size: 1.1rem !important;
+        font-weight: 500 !important;
     }
 
     /* --- 5. TARJETAS DE DATOS --- */
@@ -156,25 +125,24 @@ st.markdown("""
         background: rgba(14, 17, 23, 0.85);
         backdrop-filter: blur(10px);
         border: 1px solid rgba(255, 255, 255, 0.1);
-        padding: 20px;
-        border-radius: 15px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        padding: 24px;
+        border-radius: 16px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.5);
     }
 
     /* --- 6. BOTONES PRINCIPALES --- */
     div.stButton > button {
-        background: linear-gradient(135deg, #0288D1 0%, #01579B 100%) !important;
+        background: linear-gradient(90deg, #0288D1 0%, #01579B 100%) !important;
         color: white !important;
         border: none !important;
         font-weight: bold;
         padding: 0.8rem 1.5rem;
         border-radius: 8px;
-        width: 100%;
         font-size: 1rem !important;
     }
     div.stButton > button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(2, 136, 209, 0.5);
+        box-shadow: 0 0 15px rgba(2, 136, 209, 0.6);
+        transform: scale(1.02);
     }
     
     .podio-emoji { font-size: 3rem; display: block; margin-bottom: 5px; }
@@ -199,7 +167,7 @@ def add_bg_from_local(image_file):
         }}
         .stApp::before {{
             content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.7); /* Oscuridad del 70% */
+            background-color: rgba(0, 0, 0, 0.75); /* Un poco más oscuro para mejor lectura */
             z-index: -1;
         }}
         </style>
