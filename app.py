@@ -18,11 +18,11 @@ st.set_page_config(
 )
 
 # ==========================================
-# 2. ESTILOS VISUALES - SOLUCIÓN TOTAL
+# 2. ESTILOS VISUALES (CSS DEFINITIVO)
 # ==========================================
 st.markdown("""
 <style>
-    /* --- 1. FONDO GLOBAL --- */
+    /* --- 1. FONDO GLOBAL Y TEXTOS --- */
     [data-testid="stAppViewContainer"] {
         background-color: transparent !important;
         color: white !important;
@@ -33,12 +33,11 @@ st.markdown("""
         padding-bottom: 5rem !important;
     }
 
-    /* Textos Generales a Blanco */
     h1, h2, h3, h4, h5, h6, p, span, div, label {
         color: #E0E0E0 !important;
     }
     h1, h2, h3 { 
-        color: #4FC3F7 !important; /* Azul Prodise */
+        color: #4FC3F7 !important;
         text-shadow: 0 0 10px rgba(79,195,247,0.3);
     }
 
@@ -55,74 +54,90 @@ st.markdown("""
     }
     [data-testid="collapsedControl"] { top: 1rem !important; color: white !important; }
 
-    /* --- 3. SOLUCIÓN CRÍTICA: MENÚ DESPLEGABLE (FONDO AZUL OSCURO) --- */
+    /* --- 3. SOLUCIÓN MENÚ DESPLEGABLE (FONDO AZUL OSCURO FORZADO) --- */
+    /* Usamos 'html body' para aumentar la prioridad sobre el navegador */
     
-    /* El contenedor flotante (la lista blanca que salía antes) -> AHORA AZUL OSCURO */
-    div[data-baseweb="popover"], div[data-baseweb="menu"], ul[data-baseweb="menu"] {
-        background-color: #0E1117 !important; /* Azul muy oscuro */
-        border: 1px solid #4FC3F7 !important; /* Borde Azul */
+    html body div[data-baseweb="popover"] {
+        background-color: #0E1117 !important; /* Azul Noche */
+        border: 1px solid #4FC3F7 !important;
     }
     
-    /* Las opciones individuales */
-    li[data-baseweb="option"] {
+    html body div[data-baseweb="popover"] div {
         background-color: #0E1117 !important;
-        color: white !important; /* Texto Blanco */
+        color: white !important;
+    }
+
+    /* Lista de opciones */
+    html body ul[data-baseweb="menu"] {
+        background-color: #0E1117 !important;
     }
     
-    /* El texto dentro de las opciones */
-    div[data-baseweb="option"] {
+    html body li[data-baseweb="option"] {
+        background-color: #0E1117 !important;
+        color: white !important;
+    }
+    
+    /* Hover (Pasar el mouse) */
+    html body li[data-baseweb="option"]:hover, html body li[aria-selected="true"] {
+        background-color: #4FC3F7 !important;
         color: white !important;
     }
 
-    /* Hover: Azul brillante al pasar el mouse */
-    li[data-baseweb="option"]:hover, li[aria-selected="true"] {
-        background-color: #0288D1 !important;
-        color: white !important;
-    }
-
-    /* La barra de búsqueda cerrada */
-    div[data-baseweb="select"] > div {
+    /* Barra de búsqueda cerrada */
+    html body div[data-baseweb="select"] > div {
         background-color: #0E1117 !important;
         color: white !important;
         border: 1px solid #555 !important;
     }
-    div[data-baseweb="select"] span { color: white !important; }
-    div[data-baseweb="select"] svg { fill: white !important; }
+    
+    html body div[data-baseweb="select"] span {
+        color: white !important;
+    }
+    
+    html body div[data-baseweb="select"] svg {
+        fill: white !important;
+    }
 
-    /* Inputs de texto normales */
+    /* Inputs de texto */
     .stTextInput input, .stTextArea textarea {
         background-color: #0E1117 !important;
         color: white !important;
         border: 1px solid #555 !important;
     }
 
-    /* --- 4. RECUPERANDO LOS BOTONES DE ALTERNATIVAS (ESTILO TARJETA) --- */
+    /* --- 4. BOTONES DE ALTERNATIVAS (ESTILO TARJETA) --- */
     div[role="radiogroup"] {
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 12px; /* Espacio entre botones */
     }
     
     div[role="radiogroup"] label {
-        background-color: rgba(19, 23, 32, 0.8) !important;
-        padding: 12px 20px !important; /* Relleno grande para que parezca botón */
-        border-radius: 8px !important;
+        background-color: rgba(19, 23, 32, 0.95) !important;
+        padding: 16px 20px !important; /* Relleno grande */
+        border-radius: 12px !important;
         border: 1px solid #333 !important;
-        transition: all 0.2s ease;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        transition: transform 0.2s, border-color 0.2s;
+        margin-bottom: 0px !important;
     }
     
     div[role="radiogroup"] label:hover {
-        border-color: #4FC3F7 !important;
-        background-color: rgba(30, 40, 50, 0.9) !important;
-        transform: translateX(5px); /* Efecto de movimiento */
+        border-color: #4FC3F7 !important; /* Borde Azul al pasar mouse */
+        transform: translateX(5px);
+        background-color: rgba(30, 40, 50, 1) !important;
         cursor: pointer;
     }
     
-    /* La bolita del radio button */
+    /* El círculo del radio button */
     div[role="radiogroup"] label > div:first-child {
-        background-color: #4FC3F7 !important;
         border-color: #4FC3F7 !important;
+        background-color: #0E1117 !important;
+    }
+    
+    /* Círculo seleccionado */
+    div[role="radiogroup"] label[data-baseweb="radio"] > div:first-child[aria-checked="true"] {
+        background-color: #4FC3F7 !important;
     }
 
     /* --- 5. TARJETAS DE DATOS --- */
@@ -130,16 +145,26 @@ st.markdown("""
         background: rgba(14, 17, 23, 0.85);
         backdrop-filter: blur(10px);
         border: 1px solid rgba(255, 255, 255, 0.1);
-        padding: 20px;
-        border-radius: 15px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        padding: 24px;
+        border-radius: 16px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.5);
     }
 
     /* --- 6. BOTONES PRINCIPALES --- */
     div.stButton > button {
         background: linear-gradient(135deg, #0288D1 0%, #01579B 100%) !important;
-        color: white !important; border: none; font-weight: bold;
+        color: white !important;
+        border: none !important;
+        font-weight: bold;
+        padding: 0.7rem 1.5rem;
+        border-radius: 8px;
+        width: 100%;
     }
+    div.stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(2, 136, 209, 0.4);
+    }
+    
     .podio-emoji { font-size: 3rem; display: block; margin-bottom: 5px; }
 </style>
 """, unsafe_allow_html=True)
@@ -162,13 +187,13 @@ def add_bg_from_local(image_file):
         }}
         .stApp::before {{
             content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.6); /* Oscuridad para leer mejor */
+            background-color: rgba(0, 0, 0, 0.65); /* Capa oscura */
             z-index: -1;
         }}
         </style>
         """, unsafe_allow_html=True)
     else:
-        st.warning(f"⚠️ No se encontró '{image_file}'.")
+        st.warning(f"⚠️ AVISO: Sube '{image_file}' a GitHub.")
 
 add_bg_from_local('fondo.jpg')
 LOGO_FILE = "logo.png"
@@ -373,7 +398,7 @@ else:
         else: st.info("No hay datos históricos cargados.")
 
     # ==============================================================================
-    # 2. EVALUACIÓN (CON BUSCADOR)
+    # 2. EVALUACIÓN (CON BUSCADOR Y BOTONES PROFESIONALES)
     # ==============================================================================
     elif seleccion == "📝 Evaluar Personal":
         st.title(f"📝 Evaluación - {parada_actual}")
