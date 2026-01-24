@@ -3,6 +3,7 @@ import pandas as pd
 from datetime import datetime
 import os
 import base64
+import time  # <--- NUEVO: Para que los globos duren un momento
 from pyairtable import Api
 
 # ==========================================
@@ -23,60 +24,24 @@ AIRTABLE_BASE_ID = "app2jaysCvPwvrBwI"
 # 2. DEFINICIÓN DE PERMISOS Y JERARQUÍA
 # ==========================================
 
-# A. ROLES RESTRINGIDOS (Solo ven "Evaluar Personal")
 ROLES_RESTRINGIDOS = [
-    'LIDER MECANICO', 
-    'OPERADOR DE GRUA', 
-    'MECANICO', 
-    'SOLDADOR', 
-    'RIGGER', 
-    'VIENTERO', 
-    'ALMACENERO', 
-    'CONDUCTOR',
-    'PSICOLOGA'
+    'LIDER MECANICO', 'OPERADOR DE GRUA', 'MECANICO', 'SOLDADOR', 
+    'RIGGER', 'VIENTERO', 'ALMACENERO', 'CONDUCTOR', 'PSICOLOGA'
 ]
 
-# B. MATRIZ DE VISIBILIDAD (Quién evalúa a quién)
 JERARQUIA = {
-    # --- NIVEL DIOS ---
     'ADMIN': {'scope': 'ALL'},
-    
-    # --- NIVEL GERENCIAL ---
     'GERENTE GENERAL': {'scope': 'ALL'},
     'GERENTE MANTENIMIENTO': {'scope': 'ALL'},
     'RESIDENTE': {'scope': 'ALL'},
     'COORDINADOR': {'scope': 'ALL'},
     'PLANNER': {'scope': 'ALL'},
     'PROGRAMADOR': {'scope': 'ALL'},
-    
-    # --- SEGURIDAD ---
-    'COORDINADOR DE SEGURIDAD': {
-        'scope': 'SPECIFIC', 
-        'targets': ['SUPERVISOR DE SEGURIDAD']
-    },
-    
-    # --- ADMINISTRATIVO ---
-    'VALORIZADORA': {
-        'scope': 'SPECIFIC', 
-        'targets': ['ASISTENTE DE PLANIFICACION', 'ASISTENTE ADMINISTRATIVO', 'PROGRAMADOR', 'PLANNER']
-    },
-    
-    # --- OPERACIONES ---
-    'SUPERVISOR DE OPERACIONES': {
-        'scope': 'HYBRID', 
-        'targets': ['PLANNER', 'CONDUCTOR']
-    },
-    
-    # CORRECCIÓN AQUÍ: LIDER MECANICO AHORA SOLO VE SU GRUPO
-    'LIDER MECANICO': {
-        'scope': 'GROUP', 
-        'targets': []
-    },
-    
-    'OPERADOR DE GRUA': {
-        'scope': 'GROUP', 
-        'targets': []
-    },
+    'COORDINADOR DE SEGURIDAD': {'scope': 'SPECIFIC', 'targets': ['SUPERVISOR DE SEGURIDAD']},
+    'VALORIZADORA': {'scope': 'SPECIFIC', 'targets': ['ASISTENTE DE PLANIFICACION', 'ASISTENTE ADMINISTRATIVO', 'PROGRAMADOR', 'PLANNER']},
+    'SUPERVISOR DE OPERACIONES': {'scope': 'HYBRID', 'targets': ['PLANNER', 'CONDUCTOR']},
+    'LIDER MECANICO': {'scope': 'GROUP', 'targets': []}, # Solo su grupo
+    'OPERADOR DE GRUA': {'scope': 'GROUP', 'targets': []}, # Solo su grupo
 }
 
 # ==========================================
@@ -221,8 +186,10 @@ def load_data():
                 # --- LIMPIEZA INTELIGENTE ---
                 for c in df.columns:
                     df[c] = df[c].astype(str).str.strip()
+                    # NO TOCAR MAYÚSCULAS DE CONTRASEÑA
                     if c != 'PASS':
                         df[c] = df[c].str.upper()
+                    # FIX GRUPOS (2.0 -> 2)
                     if c in ['ID_GRUPO', 'GRUPO']:
                         df[c] = df[c].str.replace('.0', '', regex=False)
                 return df, t
@@ -283,6 +250,7 @@ if not st.session_state.usuario:
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("INICIAR SESIÓN", use_container_width=True):
             if df_users is not None and not df_users.empty:
+                # Busqueda exacta normalizada (Usuario Uppercase, Pass Original)
                 u = df_users[df_users['USUARIO'] == user.strip().upper()]
                 if not u.empty and str(u.iloc[0]['PASS']) == pw and u.iloc[0]['ESTADO'] == 'ACTIVO':
                     st.session_state.usuario = user
@@ -436,12 +404,13 @@ else:
                                     tbl_historial.create(record)
                                     st.balloons()
                                     st.success(f"¡Evaluación Guardada! Nota: {round(score_total, 2)}")
+                                    time.sleep(2) # <--- PAUSA DE 2 SEGUNDOS PARA VER GLOBOS
                                     st.rerun()
                                 except Exception as e: st.error(f"Error: {e}")
                             else: st.warning("⚠️ La observación es obligatoria.")
 
     # ----------------------------------------
-    # 2. RANKING GLOBAL (PONDERADO 70/30)
+    # 2. RANKING GLOBAL
     # ----------------------------------------
     elif seleccion == "🏆 Ranking Global" and st.session_state.rol not in ROLES_RESTRINGIDOS:
         st.title("🏆 Tabla de Posiciones")
@@ -523,7 +492,7 @@ else:
         else: st.info("No hay datos de ranking disponibles.")
 
     # ----------------------------------------
-    # 3. HISTORIAL (FILTRADO POR ACCESO)
+    # 3. HISTORIAL
     # ----------------------------------------
     elif seleccion == "📂 Mi Historial" and st.session_state.rol not in ROLES_RESTRINGIDOS:
         st.title("📂 Historial de Registros")
