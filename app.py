@@ -18,41 +18,40 @@ st.set_page_config(
 )
 
 # ==========================================
-# 2. ESTILOS VISUALES Y CSS (MODO OSCURO FORZADO + FILTROS)
+# 2. ESTILOS VISUALES Y CSS (CORREGIDO PARA FONDO + TEXTO)
 # ==========================================
 st.markdown("""
 <style>
-    /* --- 1. FORZAR MODO OSCURO (OVERRIDE TOTAL) --- */
-    /* Esto obliga al navegador a usar fondo oscuro incluso en modo claro */
+    /* --- 1. FORZADO DE TEXTO LEGIBLE (MODO OSCURO VISUAL) --- */
+    /* Forzamos que el contenedor principal sea transparente para ver la foto */
     [data-testid="stAppViewContainer"] {
-        background-color: #000000 !important;
+        background-color: transparent !important;
         color: #E0E0E0 !important;
     }
-    .stApp {
-        background-color: #000000 !important;
-    }
     
-    /* Forzar textos a blanco/gris claro */
-    h1, h2, h3, h4, h5, h6, p, label, span, div {
+    /* Forzamos que TODOS los textos sean claros (Blanco/Gris) para contrastar con el fondo oscuro */
+    h1, h2, h3, h4, h5, h6, p, li, span, div, label {
         color: #E0E0E0 !important;
     }
     h1, h2, h3 { 
-        color: #4FC3F7 !important; /* Títulos en azul PRODISE */
-        text-shadow: 0 0 10px rgba(79,195,247,0.3); 
+        color: #4FC3F7 !important; /* Títulos en Azul Prodise */
+        text-shadow: 0 0 10px rgba(79,195,247,0.3);
     }
-
+    
     /* --- 2. HEADER Y BARRA LATERAL --- */
+    /* Header transparente pero visible para que funcione la flecha */
     header[data-testid="stHeader"] { 
         background-color: transparent !important; 
-        visibility: visible !important;
+        visibility: visible !important; 
     }
+    /* Ocultamos menú hamburguesa y deploy */
     #MainMenu {visibility: hidden;}
     .stDeployButton {display: none;}
     footer {visibility: hidden;}
     [data-testid="stDecoration"] {display: none;}
     [data-testid="stToolbar"] {visibility: hidden;}
 
-    /* Flecha del sidebar siempre blanca */
+    /* Flecha del sidebar siempre blanca y visible */
     [data-testid="collapsedControl"] {
         visibility: visible !important;
         display: block !important;
@@ -61,24 +60,22 @@ st.markdown("""
     [data-testid="stSidebarCollapsedControl"] {
         color: #FFFFFF !important;
         background-color: rgba(255,255,255,0.1) !important;
+        border-radius: 5px;
     }
 
-    /* --- 3. CONTROLES DE INTERFAZ (INPUTS, SELECTS) --- */
-    /* Fondo oscuro para inputs para que no se vean blancos en modo light */
+    /* --- 3. CONTROLES (INPUTS) --- */
+    /* Fondo oscuro semitransparente para que el texto blanco se lea bien */
     .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"] > div {
-        background-color: rgba(30, 30, 46, 0.9) !important;
+        background-color: rgba(20, 20, 30, 0.9) !important; 
         color: white !important;
-        border: 1px solid #444 !important;
+        border: 1px solid #555 !important;
         border-radius: 8px !important;
     }
-    /* Texto de las opciones de selectbox */
+    /* Menú desplegable (Selectbox) */
     ul[data-baseweb="menu"] {
         background-color: #1E1E2E !important;
     }
-    li[data-baseweb="option"] {
-        color: white !important;
-    }
-
+    
     /* --- 4. RADIO BUTTONS COMPACTOS --- */
     div[role="radiogroup"] { gap: 6px !important; }
     div[role="radiogroup"] label {
@@ -99,7 +96,7 @@ st.markdown("""
     div[role="radiogroup"] label[data-baseweb="radio"] > div:first-child {
         background-color: #4FC3F7 !important;
     }
-    div[role="radiogroup"] p { font-size: 0.95rem !important; color: #E0E0E0 !important; }
+    div[role="radiogroup"] p { font-size: 0.95rem !important; }
 
     /* --- 5. BOTONES AZULES --- */
     div.stButton > button {
@@ -113,7 +110,7 @@ st.markdown("""
         box-shadow: 0 6px 20px rgba(2, 136, 209, 0.6);
     }
 
-    /* --- 6. TARJETAS --- */
+    /* --- 6. TARJETAS (Glassmorphism) --- */
     .css-card {
         background: rgba(20, 20, 30, 0.75);
         backdrop-filter: blur(12px);
@@ -134,12 +131,14 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 3. CARGA DE FONDO
+# 3. CARGA DE FONDO (VISIBLE)
 # ==========================================
 def add_bg_from_local(image_file):
     if os.path.exists(image_file):
         with open(image_file, "rb") as file:
             enc = base64.b64encode(file.read())
+        # Nota: Usamos .stApp para poner la imagen, y ::before para oscurecerla un poco
+        # para que las letras blancas se lean bien.
         st.markdown(f"""
         <style>
         .stApp {{
@@ -150,13 +149,19 @@ def add_bg_from_local(image_file):
             background-attachment: fixed;
         }}
         .stApp::before {{
-            content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.60); z-index: -1;
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); /* Capa oscura al 50% para leer texto */
+            z-index: -1;
         }}
         </style>
         """, unsafe_allow_html=True)
     else:
-        st.warning(f"⚠️ AVISO: No se encontró el archivo '{image_file}'.")
+        st.warning(f"⚠️ AVISO: No se encontró '{image_file}'.")
 
 add_bg_from_local('fondo.jpg')
 LOGO_FILE = "logo.png"
@@ -419,7 +424,7 @@ else:
                             else: st.warning("⚠️ Falta observación.")
 
     # ==============================================================================
-    # 3. RANKING GLOBAL (CON FILTRO Y PODIO)
+    # 3. RANKING GLOBAL (CON FILTROS Y PODIO)
     # ==============================================================================
     elif seleccion == "🏆 Ranking Global":
         st.title("🏆 Ranking Global")
@@ -435,10 +440,9 @@ else:
             score_df['FINAL'] = score_df.apply(calc, axis=1).round(2)
             ranking = pd.merge(score_df, df_personal, left_on='DNI_TRABAJADOR', right_on='DNI', how='left')
             
-            # --- FILTRO POR CARGO RESTAURADO ---
+            # --- FILTRO POR CARGO (RESTAURADO) ---
             cargos_disp = ["TODOS"] + sorted(ranking['CARGO_ACTUAL'].unique().tolist())
             filtro_cargo = st.selectbox("🔍 Filtrar por Cargo:", cargos_disp)
-            
             if filtro_cargo != "TODOS":
                 ranking = ranking[ranking['CARGO_ACTUAL'] == filtro_cargo]
             
@@ -493,9 +497,7 @@ else:
             if not data_view.empty: df_historial = df_historial[df_historial['DNI_TRABAJADOR'].isin(data_view['DNI'].unique())]
             merged = pd.merge(df_historial, df_personal[['DNI', 'NOMBRE_COMPLETO']], left_on='DNI_TRABAJADOR', right_on='DNI', how='left')
             merged['NOMBRE_COMPLETO'] = merged['NOMBRE_COMPLETO'].fillna(merged['DNI_TRABAJADOR'])
-            
             cols = ['COD_PARADA', 'NOMBRE_COMPLETO', 'NOTA_FINAL', 'COMENTARIOS']
-            
             st.dataframe(merged[[c for c in cols if c in merged.columns]], use_container_width=True, hide_index=True)
             csv = merged.to_csv(index=False).encode('utf-8')
             st.download_button("📥 Descargar Excel", csv, "Reporte.csv", "text/csv")
