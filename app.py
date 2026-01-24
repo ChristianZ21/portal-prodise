@@ -18,23 +18,21 @@ st.set_page_config(
 )
 
 # ==========================================
-# 2. ESTILOS VISUALES Y CSS (CORRECCIÓN TOTAL)
+# 2. ESTILOS VISUALES Y CSS (SOLUCIÓN DEFINITIVA)
 # ==========================================
 st.markdown("""
 <style>
-    /* --- 1. FONDO Y TEXTOS --- */
-    [data-testid="stAppViewContainer"] {
-        background-color: transparent !important;
-        color: #E0E0E0 !important;
-    }
-    
-    /* Reducir el espacio de arriba (Padding superior) */
+    /* --- 1. AJUSTES DE ESPACIO (ELIMINAR HUECO ARRIBA) --- */
     .block-container {
-        padding-top: 1rem !important; /* Mucho menos espacio arriba */
+        padding-top: 1rem !important; /* Espacio mínimo arriba */
         padding-bottom: 5rem !important;
     }
 
-    h1, h2, h3, h4, h5, h6, p, span, div, label {
+    /* --- 2. FORZAR MODALIDAD OSCURA EN TEXTOS --- */
+    [data-testid="stAppViewContainer"] {
+        color: #E0E0E0 !important;
+    }
+    h1, h2, h3, h4, h5, h6, p, span, div, label, li {
         color: #E0E0E0 !important;
     }
     h1, h2, h3 { 
@@ -42,10 +40,10 @@ st.markdown("""
         text-shadow: 0 0 10px rgba(79,195,247,0.3);
     }
 
-    /* --- 2. HEADER Y SIDEBAR --- */
+    /* --- 3. HEADER Y SIDEBAR --- */
     header[data-testid="stHeader"] { 
         background-color: transparent !important; 
-        visibility: visible !important; /* Para ver la flecha */
+        visibility: visible !important; 
     }
     #MainMenu {visibility: hidden;}
     .stDeployButton {display: none;}
@@ -56,7 +54,7 @@ st.markdown("""
     /* Flecha del sidebar */
     [data-testid="collapsedControl"] {
         visibility: visible !important; display: block !important; color: #FFFFFF !important;
-        top: 1rem !important; /* Ajuste de posición */
+        top: 1rem !important;
     }
     [data-testid="stSidebarCollapsedControl"] {
         color: #FFFFFF !important;
@@ -68,66 +66,61 @@ st.markdown("""
         border-right: 1px solid #222;
     }
 
-    /* --- 3. CORRECCIÓN DEL MENÚ DESPLEGABLE (POPOVER) --- */
+    /* --- 4. SOLUCIÓN FINAL AL MENÚ DESPLEGABLE (LISTAS BLANCAS) --- */
     
-    /* El contenedor principal de la lista desplegable */
-    div[data-baseweb="popover"] {
-        background-color: #131720 !important; /* Fondo Oscuro FUERTE */
+    /* Forzar fondo oscuro en el menú desplegable (Popover) */
+    div[data-baseweb="popover"], div[data-baseweb="menu"], ul[data-baseweb="menu"] {
+        background-color: #1E1E2E !important; 
         border: 1px solid #444 !important;
     }
-    
-    /* La lista de opciones (ul) */
-    ul[data-baseweb="menu"] {
-        background-color: #131720 !important;
-    }
-    
-    /* Las opciones individuales (li) */
+
+    /* Opciones de la lista */
     li[data-baseweb="option"] {
-        color: white !important; /* Texto Blanco */
-        background-color: #131720 !important;
+        background-color: #1E1E2E !important;
+        color: white !important;
     }
     
-    /* Texto dentro de las opciones */
-    div[data-baseweb="option"] {
+    /* Texto dentro de la opción */
+    li[data-baseweb="option"] * {
         color: white !important;
     }
 
-    /* Hover (cuando pasas el mouse por una opción) */
+    /* Hover (Al pasar el mouse) */
     li[data-baseweb="option"]:hover, li[aria-selected="true"] {
-        background-color: #4FC3F7 !important; /* Azul al seleccionar */
+        background-color: #4FC3F7 !important;
         color: white !important;
     }
 
-    /* La caja del input cerrada */
-    .stSelectbox div[data-baseweb="select"] > div {
-        background-color: rgba(20, 20, 30, 0.9) !important; 
-        color: white !important;
+    /* La caja del buscador (Selectbox) cerrada */
+    div[data-baseweb="select"] > div {
+        background-color: rgba(20, 20, 30, 0.95) !important;
         border: 1px solid #555 !important;
+        color: white !important;
     }
     
-    /* Texto seleccionado visible */
+    /* El texto seleccionado o lo que escribes */
     div[data-baseweb="select"] span {
         color: white !important;
     }
     
-    /* Placeholder (texto gris "Seleccione...") */
-    div[data-baseweb="select"] span[aria-selected="false"] {
-        color: #aaa !important;
+    /* El icono de la flechita del dropdown */
+    div[data-baseweb="select"] svg {
+        fill: white !important;
     }
 
-    /* Inputs normales */
+    /* Inputs de texto normal */
     .stTextInput input, .stTextArea textarea {
-        background-color: rgba(20, 20, 30, 0.9) !important; 
-        color: white !important;
+        background-color: rgba(20, 20, 30, 0.95) !important;
         border: 1px solid #555 !important;
+        color: white !important;
     }
 
-    /* --- 4. RADIO BUTTONS COMPACTOS --- */
+    /* --- 5. RADIO BUTTONS COMPACTOS --- */
     div[role="radiogroup"] { gap: 6px !important; }
     div[role="radiogroup"] label {
         background-color: rgba(19, 23, 32, 0.9) !important;
         border: 1px solid #333 !important;
-        padding: 8px 15px !important; /* Más compacto */
+        padding: 8px 15px !important; 
         border-radius: 10px !important;
         transition: all 0.2s ease !important;
         margin-bottom: 0px !important;
@@ -144,7 +137,7 @@ st.markdown("""
     }
     div[role="radiogroup"] p { font-size: 0.90rem !important; }
 
-    /* --- 5. BOTONES AZULES --- */
+    /* --- 6. BOTONES AZULES --- */
     div.stButton > button {
         background: linear-gradient(135deg, #0288D1 0%, #01579B 100%) !important;
         color: white !important; border: none !important;
@@ -156,7 +149,7 @@ st.markdown("""
         box-shadow: 0 6px 20px rgba(2, 136, 209, 0.6);
     }
 
-    /* --- 6. TARJETAS --- */
+    /* --- 7. TARJETAS --- */
     .css-card {
         background: rgba(20, 20, 30, 0.75);
         backdrop-filter: blur(12px);
@@ -187,7 +180,7 @@ def add_bg_from_local(image_file):
         }}
         .stApp::before {{
             content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.5); /* Oscurecimiento ligero */
+            background-color: rgba(0, 0, 0, 0.5); /* Oscurecimiento 50% */
             z-index: -1;
         }}
         </style>
@@ -398,7 +391,7 @@ else:
         else: st.info("No hay datos históricos cargados.")
 
     # ==============================================================================
-    # 2. EVALUACIÓN
+    # 2. EVALUACIÓN (CON BUSCADOR ACTIVO)
     # ==============================================================================
     elif seleccion == "📝 Evaluar Personal":
         st.title(f"📝 Evaluación - {parada_actual}")
@@ -413,12 +406,14 @@ else:
             st.success("✅ Todo el personal asignado ha sido evaluado.")
         else:
             lista = data_view['NOMBRE_COMPLETO'].unique().tolist()
+            # BUSCADOR ESTILO GOOGLE (Empieza vacío)
             sel_nombre = st.selectbox(
                 f"Pendientes ({len(lista)}):", 
                 lista, 
                 index=None, 
-                placeholder="Escribe o selecciona un colaborador..."
+                placeholder="🔍 Escribe para buscar colaborador..."
             )
+            
             if sel_nombre:
                 p = data_view[data_view['NOMBRE_COMPLETO'] == sel_nombre].iloc[0]
                 foto_p = get_photo_url(p.get('URL_FOTO', ''))
