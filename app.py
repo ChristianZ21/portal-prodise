@@ -38,6 +38,10 @@ ROLES_RESTRINGIDOS = [
 
 # B. MATRIZ DE VISIBILIDAD (Quién evalúa a quién)
 JERARQUIA = {
+    # --- NIVEL DIOS (VE TODO) ---
+    'ADMIN': {'scope': 'ALL'}, 
+    
+    # --- GERENCIA Y JEFATURA ---
     'GERENTE GENERAL': {'scope': 'ALL'},
     'GERENTE MANTENIMIENTO': {'scope': 'ALL'},
     'RESIDENTE': {'scope': 'ALL'},
@@ -45,16 +49,19 @@ JERARQUIA = {
     'PLANNER': {'scope': 'ALL'},
     'PROGRAMADOR': {'scope': 'ALL'},
     
+    # --- SEGURIDAD ---
     'COORDINADOR DE SEGURIDAD': {
         'scope': 'SPECIFIC', 
         'targets': ['SUPERVISOR DE SEGURIDAD']
     },
     
+    # --- ADMINISTRATIVO ---
     'VALORIZADORA': {
         'scope': 'SPECIFIC', 
         'targets': ['ASISTENTE DE PLANIFICACION', 'ASISTENTE ADMINISTRATIVO', 'PROGRAMADOR', 'PLANNER']
     },
     
+    # --- OPERACIONES (HÍBRIDOS) ---
     'SUPERVISOR DE OPERACIONES': {
         'scope': 'HYBRID', # Grupo + Específicos
         'targets': ['PLANNER', 'CONDUCTOR']
@@ -81,7 +88,7 @@ def get_default_profile_pic():
 DEFAULT_IMG = get_default_profile_pic()
 
 # ==========================================
-# 4. ESTILOS VISUALES (BLINDADO - CAJA AZUL)
+# 4. ESTILOS VISUALES (BLINDADO - CAJA AZUL SÓLIDA)
 # ==========================================
 def add_bg_from_local(image_file):
     if os.path.exists(image_file):
@@ -422,7 +429,7 @@ else:
                             notas_save[f"NOTA_{i}"] = nota_numerica
                             st.divider()
                         
-                        obs = st.text_area("Comentario relevante", height=100)
+                        obs = st.text_area("Sustento de la Nota Final", height=100)
                         enviar = st.form_submit_button("✅ GUARDAR EVALUACIÓN", use_container_width=True)
                         
                         if enviar:
