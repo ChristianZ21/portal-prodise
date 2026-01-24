@@ -67,13 +67,14 @@ JERARQUIA = {
         'targets': ['PLANNER', 'CONDUCTOR']
     },
     
+    # CORRECCIÓN AQUÍ: LIDER MECANICO AHORA SOLO VE SU GRUPO
     'LIDER MECANICO': {
-        'scope': 'HYBRID', 
-        'targets': ['SUPERVISOR DE OPERACIONES', 'SUPERVISOR DE SEGURIDAD']
+        'scope': 'GROUP', 
+        'targets': []
     },
     
     'OPERADOR DE GRUA': {
-        'scope': 'GROUP', # SOLO Grupo/Turno
+        'scope': 'GROUP', 
         'targets': []
     },
 }
@@ -219,17 +220,11 @@ def load_data():
                 
                 # --- LIMPIEZA INTELIGENTE ---
                 for c in df.columns:
-                    # 1. Base a string y quitar espacios
                     df[c] = df[c].astype(str).str.strip()
-                    
-                    # 2. FIX: NO TOCAR MAYÚSCULAS DE CONTRASEÑA
                     if c != 'PASS':
                         df[c] = df[c].str.upper()
-                        
-                    # 3. Fix Grupos (2.0 -> 2)
                     if c in ['ID_GRUPO', 'GRUPO']:
                         df[c] = df[c].str.replace('.0', '', regex=False)
-                
                 return df, t
             except: return pd.DataFrame(), None
             
@@ -288,7 +283,6 @@ if not st.session_state.usuario:
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("INICIAR SESIÓN", use_container_width=True):
             if df_users is not None and not df_users.empty:
-                # Busqueda exacta normalizada (Usuario Uppercase, Pass Original)
                 u = df_users[df_users['USUARIO'] == user.strip().upper()]
                 if not u.empty and str(u.iloc[0]['PASS']) == pw and u.iloc[0]['ESTADO'] == 'ACTIVO':
                     st.session_state.usuario = user
@@ -302,11 +296,8 @@ if not st.session_state.usuario:
 else:
     # --- SIDEBAR (CON RESTRICCIONES) ---
     rol_actual = st.session_state.rol
-    
-    # 1. Menú Básico (Para todos)
     opciones = ["📝 Evaluar Personal"]
     
-    # 2. Menú Avanzado (Solo si NO es un rol restringido)
     if rol_actual not in ROLES_RESTRINGIDOS:
         if rol_actual == 'ADMIN':
             opciones = ["📝 Evaluar Personal", "🏆 Ranking Global", "📂 Mi Historial"]
@@ -325,57 +316,46 @@ else:
             st.rerun()
 
     # ==============================================================
-    # LÓGICA DE FILTRADO MAESTRA (JERARQUÍA + GRUPOS NORMALIZADOS)
+    # LÓGICA DE FILTRADO MAESTRA
     # ==============================================================
     data_view = df_personal[df_personal['ESTADO'] == 'ACTIVO'] if df_personal is not None else pd.DataFrame()
     
     if not data_view.empty:
-        # 1. Obtener Permisos del Rol Actual
         permisos = JERARQUIA.get(rol_actual, {'scope': 'GROUP', 'targets': []}) 
         scope = permisos.get('scope', 'GROUP')
         targets = permisos.get('targets', [])
         
-        # 2. Datos del Usuario Logueado (Para saber su grupo)
         me = data_view[data_view['DNI'] == st.session_state.dni_user]
         grp_supervisor = str(me.iloc[0]['ID_GRUPO']).replace('.0','').strip() if not me.empty else ""
         trn = me.iloc[0]['TURNO'] if not me.empty else ""
 
-        # Función auxiliar robusta
         def check_grupo_match(grupos_trabajador, grupo_buscado):
             if not grupo_buscado: return False
             lista = [g.replace('.0','').strip() for g in str(grupos_trabajador).split(',')]
             return grupo_buscado in lista
 
-        # 3. Aplicar Filtro Según Scope
         if scope == 'ALL':
-            pass # Ve todo
-            
+            pass 
         elif scope == 'SPECIFIC':
             data_view = data_view[data_view['CARGO_ACTUAL'].isin(targets)]
-            
         elif scope == 'GROUP':
-            # Solo su grupo y turno
             mask_grupo = data_view['ID_GRUPO'].apply(lambda x: check_grupo_match(x, grp_supervisor))
             mask_turno = data_view['TURNO'] == trn
             data_view = data_view[mask_grupo & mask_turno]
-            
         elif scope == 'HYBRID':
-            # Cargos Específicos OR (Grupo y Turno)
             mask_cargos = data_view['CARGO_ACTUAL'].isin(targets)
             mask_grupo = data_view['ID_GRUPO'].apply(lambda x: check_grupo_match(x, grp_supervisor))
             mask_turno = data_view['TURNO'] == trn
             data_view = data_view[mask_cargos | (mask_grupo & mask_turno)]
 
-        # SIEMPRE: Excluirse a uno mismo
         data_view = data_view[data_view['DNI'] != st.session_state.dni_user]
 
     # ----------------------------------------
-    # 1. EVALUACIÓN (SELECTOR ÚNICO)
+    # 1. EVALUACIÓN
     # ----------------------------------------
     if seleccion == "📝 Evaluar Personal":
         st.title(f"📝 Evaluación - {parada_actual}")
         
-        # --- FILTRO: EXCLUIR YA EVALUADOS ---
         dnis_ya_evaluados = []
         if df_historial is not None and not df_historial.empty:
             filtro_historial = df_historial[
@@ -386,20 +366,15 @@ else:
         
         if not data_view.empty:
             data_view = data_view[~data_view['DNI'].isin(dnis_ya_evaluados)]
-        # ------------------------------------
 
         if data_view.empty:
             st.balloons()
             st.success("✅ Has completado todas las evaluaciones disponibles.")
         else:
             lista_final = data_view['NOMBRE_COMPLETO'].unique().tolist()
-            
             sel_nombre = st.selectbox(
                 f"Seleccionar Colaborador ({len(lista_final)} pendientes):", 
-                lista_final,
-                index=None, 
-                placeholder="👇 Haz clic aquí para desplegar la lista...",
-                key="selector_final"
+                lista_final, index=None, placeholder="👇 Haz clic aquí para desplegar la lista...", key="selector_final"
             )
             
             if sel_nombre:
@@ -433,13 +408,7 @@ else:
                         st.markdown("### Criterios de Desempeño")
                         for i, (idx, row) in enumerate(preguntas.iterrows(), 1):
                             st.markdown(f"**{i}. {row['CRITERIO']}** <span style='font-size:0.85em; color:#888'>({row['PORCENTAJE']*100:.0f}%)</span>", unsafe_allow_html=True)
-                            opciones = [
-                                str(row.get('NIVEL_1', 'Nivel 1')),
-                                str(row.get('NIVEL_2', 'Nivel 2')),
-                                str(row.get('NIVEL_3', 'Nivel 3')),
-                                str(row.get('NIVEL_4', 'Nivel 4')),
-                                str(row.get('NIVEL_5', 'Nivel 5'))
-                            ]
+                            opciones = [str(row.get(f'NIVEL_{j}')) for j in range(1, 6)]
                             seleccion_texto = st.radio(label=f"r_{i}", options=opciones, key=f"rad_{i}", horizontal=False, label_visibility="collapsed")
                             nota_numerica = opciones.index(seleccion_texto) + 1
                             score_total += nota_numerica * row['PORCENTAJE']
@@ -480,7 +449,6 @@ else:
             df_historial['DNI_TRABAJADOR'] = df_historial['DNI_TRABAJADOR'].astype(str)
             df_personal['DNI'] = df_personal['DNI'].astype(str)
             
-            # --- CÁLCULO PONDERADO ---
             datos_actuales = df_historial[df_historial['COD_PARADA'] == parada_actual]
             datos_historicos = df_historial[df_historial['COD_PARADA'] != parada_actual]
             
@@ -504,7 +472,6 @@ else:
             score_df['PROMEDIO_FINAL'] = score_df['PROMEDIO_FINAL'].round(2)
             
             ranking = pd.merge(score_df, df_personal, on='DNI', how='left')
-            
             cargos_disp = ["TODOS"] + sorted(ranking['CARGO_ACTUAL'].dropna().unique().tolist())
             filtro_cargo = st.selectbox("Filtrar por Cargo:", cargos_disp)
             if filtro_cargo != "TODOS": ranking = ranking[ranking['CARGO_ACTUAL'] == filtro_cargo]
@@ -551,8 +518,7 @@ else:
                     "PROMEDIO_FINAL": st.column_config.ProgressColumn("Nota Global (Ponderada)", min_value=0, max_value=5, format="%.2f"), 
                     "NOMBRE_COMPLETO": "Colaborador", 
                     "CARGO_ACTUAL": "Cargo"
-                },
-                hide_index=True, use_container_width=True, disabled=True
+                }, hide_index=True, use_container_width=True, disabled=True
             )
         else: st.info("No hay datos de ranking disponibles.")
 
@@ -566,7 +532,6 @@ else:
             df_historial['DNI_TRABAJADOR'] = df_historial['DNI_TRABAJADOR'].astype(str)
             df_personal['DNI'] = df_personal['DNI'].astype(str)
             
-            # --- FILTRO: SOLO VER LO QUE PUEDES EVALUAR ---
             if not data_view.empty:
                 dnis_permitidos = data_view['DNI'].unique().tolist()
                 df_historial = df_historial[df_historial['DNI_TRABAJADOR'].isin(dnis_permitidos)]
