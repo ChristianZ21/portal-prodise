@@ -240,8 +240,8 @@ JERARQUIA = {
     'COORDINADOR DE SEGURIDAD': {'scope': 'SPECIFIC', 'targets': ['SUPERVISOR DE SEGURIDAD']},
     'VALORIZADORA': {'scope': 'SPECIFIC', 'targets': ['ASISTENTE DE PLANIFICACION', 'ASISTENTE ADMINISTRATIVO', 'PROGRAMADOR', 'PLANNER']},
     
-    # IMPORTANTE: Definimos 'HYBRID' aquí, pero la lógica detallada está más abajo en el código
-    'SUPERVISOR DE OPERACIONES': {'scope': 'HYBRID', 'targets': ['PLANNER', 'CONDUCTOR', 'SUPERVISOR DE SEGURIDAD']},
+    # HYBRID: Se filtra más abajo en el código
+    'SUPERVISOR DE OPERACIONES': {'scope': 'HYBRID', 'targets': ['PLANNER', 'CONDUCTOR', 'SUPERVISOR DE SEGURIDAD', 'RESIDENTE', 'COORDINADOR']},
     
     'LIDER MECANICO': {'scope': 'GROUP', 'targets': []}, 
     'OPERADOR DE GRUA': {'scope': 'GROUP', 'targets': []}, 
@@ -330,36 +330,33 @@ else:
 
         # --------------------------------------------------------------------------------
         # 🔥 FILTRO ESPECIAL: SUPERVISOR DE OPERACIONES 🔥
-        # REGLAS:
-        # 1. PLANNER: Ve a todos.
-        # 2. CONDUCTOR: Solo los de su mismo TURNO.
-        # 3. SUPERVISOR DE SEGURIDAD: Solo mismo TURNO y GRUPO.
-        # 4. MI EQUIPO (GENERAL): Cualquiera que esté en mi TURNO y mi GRUPO.
         # --------------------------------------------------------------------------------
         if rol_actual == 'SUPERVISOR DE OPERACIONES':
             
-            # Condición 1: PLANNER (Todos)
+            # 1. PLANNER: Todos (Sin restricción)
             cond_planner = (data_view['CARGO_ACTUAL'] == 'PLANNER')
             
-            # Condición 2: CONDUCTOR (Solo mismo turno)
+            # 2. JEFES: RESIDENTE y COORDINADOR (TODOS, sin importar turno)
+            cond_jefes = data_view['CARGO_ACTUAL'].isin(['RESIDENTE', 'COORDINADOR'])
+            
+            # 3. CONDUCTOR: Solo mismo turno
             cond_conductor = (data_view['CARGO_ACTUAL'] == 'CONDUCTOR') & (data_view['TURNO'] == trn)
             
-            # Condición 3: SUPERVISOR DE SEGURIDAD (Mismo turno y Mismo Grupo)
+            # 4. SUPERVISOR DE SEGURIDAD: Solo mismo turno y Mismo Grupo
             cond_sup_seg = (
                 (data_view['CARGO_ACTUAL'] == 'SUPERVISOR DE SEGURIDAD') & 
                 (data_view['TURNO'] == trn) & 
                 (data_view['ID_GRUPO'].apply(lambda x: check_grupo(x, grp_supervisor)))
             )
 
-            # Condición 4: MI PROPIO EQUIPO (Cualquier cargo, pero mismo Turno y Grupo)
-            # Esto soluciona que no veías a tu personal a cargo
+            # 5. MI EQUIPO (GENERAL): Cualquier cargo, si es mi TURNO y mi GRUPO
             cond_my_team = (
                 (data_view['TURNO'] == trn) &
                 (data_view['ID_GRUPO'].apply(lambda x: check_grupo(x, grp_supervisor)))
             )
             
-            # Aplicamos el filtro combinando todas las opciones válidas
-            data_view = data_view[cond_planner | cond_conductor | cond_sup_seg | cond_my_team]
+            # Combinar condiciones (Cualquiera que sea verdadera sirve)
+            data_view = data_view[cond_planner | cond_jefes | cond_conductor | cond_sup_seg | cond_my_team]
 
     # ==============================================================================
     # 1. DASHBOARD GERENCIAL
