@@ -240,7 +240,6 @@ JERARQUIA = {
     'COORDINADOR DE SEGURIDAD': {'scope': 'SPECIFIC', 'targets': ['SUPERVISOR DE SEGURIDAD']},
     'VALORIZADORA': {'scope': 'SPECIFIC', 'targets': ['ASISTENTE DE PLANIFICACION', 'ASISTENTE ADMINISTRATIVO', 'PROGRAMADOR', 'PLANNER']},
     
-    # HYBRID: Se filtra más abajo en el código
     'SUPERVISOR DE OPERACIONES': {'scope': 'HYBRID', 'targets': ['PLANNER', 'CONDUCTOR', 'SUPERVISOR DE SEGURIDAD', 'RESIDENTE', 'COORDINADOR']},
     
     'LIDER MECANICO': {'scope': 'GROUP', 'targets': []}, 
@@ -332,11 +331,10 @@ else:
         # 🔥 FILTRO ESPECIAL: SUPERVISOR DE OPERACIONES 🔥
         # --------------------------------------------------------------------------------
         if rol_actual == 'SUPERVISOR DE OPERACIONES':
-            
-            # 1. PLANNER: Todos (Sin restricción)
+            # 1. PLANNER: Todos
             cond_planner = (data_view['CARGO_ACTUAL'] == 'PLANNER')
             
-            # 2. JEFES: RESIDENTE y COORDINADOR (TODOS, sin importar turno)
+            # 2. JEFES: RESIDENTE y COORDINADOR (TODOS)
             cond_jefes = data_view['CARGO_ACTUAL'].isin(['RESIDENTE', 'COORDINADOR'])
             
             # 3. CONDUCTOR: Solo mismo turno
@@ -355,7 +353,6 @@ else:
                 (data_view['ID_GRUPO'].apply(lambda x: check_grupo(x, grp_supervisor)))
             )
             
-            # Combinar condiciones (Cualquiera que sea verdadera sirve)
             data_view = data_view[cond_planner | cond_jefes | cond_conductor | cond_sup_seg | cond_my_team]
 
     # ==============================================================================
@@ -490,7 +487,7 @@ else:
                                 rec.update(notas_save)
                                 try: 
                                     tbl_historial.create(rec)
-                                    st.balloons() 
+                                    st.balloons()
                                     st.success(f"Guardado. Nota: {round(score, 2)}")
                                     time.sleep(1.5)
                                     st.cache_data.clear()
@@ -563,7 +560,7 @@ else:
         else: st.info("Sin datos.")
 
     # ==============================================================================
-    # 4. HISTORIAL
+    # 4. HISTORIAL (CON BUSCADOR Y EVALUADOR)
     # ==============================================================================
     elif seleccion == "📂 Mi Historial":
         st.title("📂 Historial")
@@ -572,7 +569,16 @@ else:
             if not data_view.empty: df_historial = df_historial[df_historial['DNI_TRABAJADOR'].isin(data_view['DNI'].unique())]
             merged = pd.merge(df_historial, df_personal[['DNI', 'NOMBRE_COMPLETO']], left_on='DNI_TRABAJADOR', right_on='DNI', how='left')
             merged['NOMBRE_COMPLETO'] = merged['NOMBRE_COMPLETO'].fillna(merged['DNI_TRABAJADOR'])
-            cols = ['COD_PARADA', 'NOMBRE_COMPLETO', 'NOTA_FINAL', 'COMENTARIOS']
+            
+            # --- BUSCADOR AÑADIDO ---
+            nombres_disp = sorted(merged['NOMBRE_COMPLETO'].dropna().unique().tolist())
+            search_name = st.selectbox("🔍 Buscar por Nombre:", ["TODOS"] + nombres_disp)
+            
+            if search_name != "TODOS":
+                merged = merged[merged['NOMBRE_COMPLETO'] == search_name]
+            
+            # --- COLUMNA EVALUADOR ---
+            cols = ['COD_PARADA', 'NOMBRE_EVALUADOR', 'NOMBRE_COMPLETO', 'NOTA_FINAL', 'COMENTARIOS']
             st.dataframe(merged[[c for c in cols if c in merged.columns]], use_container_width=True, hide_index=True)
             csv = merged.to_csv(index=False).encode('utf-8')
             st.download_button("📥 Descargar Excel", csv, "Reporte.csv", "text/csv")
