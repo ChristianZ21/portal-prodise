@@ -226,7 +226,7 @@ def load_data():
 df_users, df_personal, df_roles, df_historial, tbl_historial, df_config = load_data()
 
 # ==========================================
-# JERARQUÍA DE PERMISOS (ACTUALIZADA)
+# JERARQUÍA DE PERMISOS
 # ==========================================
 JERARQUIA = {
     'ADMIN': {'scope': 'ALL'}, 
@@ -240,7 +240,7 @@ JERARQUIA = {
     'COORDINADOR DE SEGURIDAD': {'scope': 'SPECIFIC', 'targets': ['SUPERVISOR DE SEGURIDAD']},
     'VALORIZADORA': {'scope': 'SPECIFIC', 'targets': ['ASISTENTE DE PLANIFICACION', 'ASISTENTE ADMINISTRATIVO', 'PROGRAMADOR', 'PLANNER']},
     
-    # IMPORTANTE: Añadimos 'SUPERVISOR DE SEGURIDAD' a la lista base para que pase el primer filtro
+    # IMPORTANTE: Definimos 'HYBRID' aquí, pero la lógica detallada está más abajo en el código
     'SUPERVISOR DE OPERACIONES': {'scope': 'HYBRID', 'targets': ['PLANNER', 'CONDUCTOR', 'SUPERVISOR DE SEGURIDAD']},
     
     'LIDER MECANICO': {'scope': 'GROUP', 'targets': []}, 
@@ -330,28 +330,36 @@ else:
 
         # --------------------------------------------------------------------------------
         # 🔥 FILTRO ESPECIAL: SUPERVISOR DE OPERACIONES 🔥
-        # 1. PLANNER: Todos
-        # 2. CONDUCTOR: Solo mismo turno
-        # 3. SUPERVISOR DE SEGURIDAD: Solo mismo turno Y mismo grupo
+        # REGLAS:
+        # 1. PLANNER: Ve a todos.
+        # 2. CONDUCTOR: Solo los de su mismo TURNO.
+        # 3. SUPERVISOR DE SEGURIDAD: Solo mismo TURNO y GRUPO.
+        # 4. MI EQUIPO (GENERAL): Cualquiera que esté en mi TURNO y mi GRUPO.
         # --------------------------------------------------------------------------------
         if rol_actual == 'SUPERVISOR DE OPERACIONES':
             
-            # Condición 1: PLANNER (Pasan todos)
+            # Condición 1: PLANNER (Todos)
             cond_planner = (data_view['CARGO_ACTUAL'] == 'PLANNER')
             
             # Condición 2: CONDUCTOR (Solo mismo turno)
             cond_conductor = (data_view['CARGO_ACTUAL'] == 'CONDUCTOR') & (data_view['TURNO'] == trn)
             
             # Condición 3: SUPERVISOR DE SEGURIDAD (Mismo turno y Mismo Grupo)
-            # Usamos la función check_grupo para ver si el ID_GRUPO del evaluado contiene el grupo del supervisor
             cond_sup_seg = (
                 (data_view['CARGO_ACTUAL'] == 'SUPERVISOR DE SEGURIDAD') & 
                 (data_view['TURNO'] == trn) & 
                 (data_view['ID_GRUPO'].apply(lambda x: check_grupo(x, grp_supervisor)))
             )
+
+            # Condición 4: MI PROPIO EQUIPO (Cualquier cargo, pero mismo Turno y Grupo)
+            # Esto soluciona que no veías a tu personal a cargo
+            cond_my_team = (
+                (data_view['TURNO'] == trn) &
+                (data_view['ID_GRUPO'].apply(lambda x: check_grupo(x, grp_supervisor)))
+            )
             
-            # Aplicamos el filtro combinando las 3 condiciones con "O" (cualquiera es válida)
-            data_view = data_view[cond_planner | cond_conductor | cond_sup_seg]
+            # Aplicamos el filtro combinando todas las opciones válidas
+            data_view = data_view[cond_planner | cond_conductor | cond_sup_seg | cond_my_team]
 
     # ==============================================================================
     # 1. DASHBOARD GERENCIAL
@@ -478,14 +486,14 @@ else:
                             notas_save[f"NOTA_{i}"] = nota
                             st.divider()
                         
-                        obs = st.text_area("Comentario (Obligatorio)", height=100)
+                        obs = st.text_area("Observaciones (Obligatorio)", height=100)
                         if st.form_submit_button("💾 GUARDAR EVALUACIÓN", use_container_width=True):
                             if obs and tbl_historial:
                                 rec = {"FECHA_HORA": datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "COD_PARADA": parada_actual, "DNI_EVALUADOR": st.session_state.dni_user, "NOMBRE_EVALUADOR": st.session_state.nombre_real, "DNI_TRABAJADOR": str(p['DNI']), "NOMBRE_TRABAJADOR": str(p['NOMBRE_COMPLETO']), "CARGO_MOMENTO": str(p['CARGO_ACTUAL']), "GRUPO_MOMENTO": str(p['ID_GRUPO']), "TURNO_MOMENTO": str(p['TURNO']), "NOTA_FINAL": round(score, 2), "COMENTARIOS": obs}
                                 rec.update(notas_save)
                                 try: 
                                     tbl_historial.create(rec)
-                                    st.balloons()
+                                    st.balloons() 
                                     st.success(f"Guardado. Nota: {round(score, 2)}")
                                     time.sleep(1.5)
                                     st.cache_data.clear()
