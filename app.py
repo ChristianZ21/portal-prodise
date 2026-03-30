@@ -210,7 +210,7 @@ def load_data():
                     if c in cols_upper: df[c] = df[c].str.upper()
                     if c in cols_grupo: df[c] = df[c].str.upper().str.replace('.0', '', regex=False)
                 return df, t
-           except Exception as e: 
+            except Exception as e: 
                 st.error(f"❌ ¡Airtable rechazó la tabla '{t_name}'! Detalle: {e}")
                 return pd.DataFrame(), None
             
