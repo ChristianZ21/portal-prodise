@@ -195,6 +195,7 @@ def load_data():
         api = Api(AIRTABLE_API_TOKEN)
         def get_df(t_name):
             try:
+                time.sleep(0.5)  # ⏱️ EL FRENO: Pausa de medio segundo para no saturar Airtable
                 t = api.table(AIRTABLE_BASE_ID, t_name)
                 recs = t.all()
                 if not recs: return pd.DataFrame(), t
