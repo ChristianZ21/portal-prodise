@@ -174,8 +174,8 @@ LOGO_FILE = "logo.png"
 try:
     AIRTABLE_API_TOKEN = st.secrets["AIRTABLE_API_TOKEN"]
     AIRTABLE_BASE_ID = st.secrets["AIRTABLE_BASE_ID"]
-except:
-    st.error("⚠️ Error: Configura las claves en Secrets.")
+except Exception as e:
+    st.error(f"⚠️ Error de conexión detallado: {e}")
     st.stop()
 
 def get_default_profile_pic():
